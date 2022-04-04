@@ -1,8 +1,9 @@
 from aiogram import types
 from aiogram.dispatcher.filters.builtin import CommandStart
 
+import bot
 from keyboards.default import menu
-from loader import dp
+from loader import dp, bot
 
 
 @dp.message_handler(CommandStart())
@@ -13,4 +14,12 @@ async def bot_start(message: types.Message):
     await message.answer('Введите или выберите ячейку', reply_markup=menu)
 
 
+@dp.message_handler()
+async def bot_message(message: types.Message):
 
+    if message.text == 'VSL':
+        await bot.send_message(message.from_user.id, 'vls')
+    elif message.text == 'Brak':
+        await  bot.send_message(message.from_user.id, 'brak')
+    else:
+        await bot.send_message(message.from_user.id, 'sadsadsad')
