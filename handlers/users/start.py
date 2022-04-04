@@ -5,6 +5,7 @@ from keyboards.default import menu
 from loader import dp
 
 
+
 @dp.message_handler(CommandStart())
 async def bot_start(message: types.Message):
     await message.answer('Добро пожаловать, {}!'
