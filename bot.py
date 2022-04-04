@@ -1,6 +1,8 @@
 from aiogram import executor
 from loguru import logger
 from loader import dp
+from utils.notify_admins import on_startup_notify
+from utils.set_bot_commands import set_default_commands
 import handlers
 
 
