@@ -49,7 +49,8 @@ async def bot_message(message: types.Message):
                     qrc = open('qcodes/{}.jpg'.format(message.text), 'rb')
                     await bot.send_photo(message.chat.id, qrc)
                 else:
-                    await bot.send_message(message.from_user.id, 'Неверно указана ячейка!')
+                    await bot.send_message(message.from_user.id,
+                                           'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
             elif len(ans) == 4 and int(ans[0]) == 1:
                 if int(ans[2]) < 9 and int(ans[3]) < 5:
 
@@ -70,8 +71,10 @@ async def bot_message(message: types.Message):
                     qrc = open('qcodes/{}.jpg'.format(message.text), 'rb')
                     await bot.send_photo(message.chat.id, qrc)
                 else:
-                    await bot.send_message(message.from_user.id, 'Неверно указана ячейка!')
+                    await bot.send_message(message.from_user.id,
+                                           'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
             else:
-                await bot.send_message(message.from_user.id, 'Неверно указана ячейка!')
+                await bot.send_message(message.from_user.id,
+                                       'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
         else:
             await bot.send_message(message.from_user.id, 'Многа букафф')
