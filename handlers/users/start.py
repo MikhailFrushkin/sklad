@@ -18,14 +18,18 @@ async def bot_start(message: types.Message):
 @dp.message_handler()
 async def bot_message(message: types.Message):
 
-    if message.text == 'VSL':
-        await bot.send_message(message.from_user.id, 'vls')
+    if message.text == 'V_Sales-825':
+        await bot.send_message(message.from_user.id, 'V_Sales-825')
 
         qrc = open('V_Sales-825.jpg', 'rb')
         await bot.send_photo(message.chat.id, qrc)
 
-    elif message.text == 'Brak':
-        await bot.send_message(message.from_user.id, 'Доделаю когда-нибудь -)')
+    elif message.text == 'R12_BrakIn_825':
+        await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
+
+        qrc = open('R12_BrakIn_825.jpg', 'rb')
+        await bot.send_photo(message.chat.id, qrc)
+
     else:
         ans = message.text
         if ans.isdigit():
@@ -63,7 +67,7 @@ async def bot_message(message: types.Message):
                         box_size=10,
                         border=4,
                     )
-                    qr.add_data('012_825-0{}{}-0{}-{}'
+                    qr.add_data('012_825-{}{}-0{}-{}'
                                 .format(message.text[0], message.text[1], message.text[2], message.text[3]))
                     qr.make(fit=True)
                     img = qr.make_image(fill_color="black", back_color="white")
