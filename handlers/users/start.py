@@ -1,6 +1,7 @@
 from aiogram import types
 from aiogram.dispatcher.filters.builtin import CommandStart
 import qrcode
+from aiogram.types import InlineKeyboardButton
 
 import bot
 from keyboards.default import menu
@@ -15,9 +16,14 @@ async def bot_start(message: types.Message):
     await message.answer('Введите или выберите ячейку', reply_markup=menu)
 
 
+@dp.message_handler(commands='Шоу-рум')
+async def bot_any_text(message: types.Message):
+    inline_btn_1 = InlineKeyboardButton('Выберите рум', callback_data='button1')
+    await bot.send_message(message.from_user.id, '')
+
+
 @dp.message_handler()
 async def bot_message(message: types.Message):
-
     if message.text == 'V_Sales-825':
         await bot.send_message(message.from_user.id, 'V_Sales-825')
 
