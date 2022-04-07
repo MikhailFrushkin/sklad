@@ -16,18 +16,12 @@ async def bot_start(message: types.Message):
     await message.answer('Введите или выберите ячейку', reply_markup=menu)
 
 
-@dp.message_handler(commands='Шоу-рум')
-async def bot_any_text(message: types.Message):
-    inline_btn_1 = InlineKeyboardButton('Выберите рум', callback_data='button1')
-    await bot.send_message(message.from_user.id, '')
-
-
-@dp.message_handler()
+@dp.message_handler(content_types=['text'])
 async def bot_message(message: types.Message):
-    if message.text == 'V_Sales-825':
-        await bot.send_message(message.from_user.id, 'V_Sales-825')
+    if message.text == 'V-Sales_825':
+        await bot.send_message(message.from_user.id, 'V-Sales_825')
 
-        qrc = open('V_Sales-825.jpg', 'rb')
+        qrc = open('V-Sales_825.jpg', 'rb')
         await bot.send_photo(message.chat.id, qrc)
 
     elif message.text == 'R12_BrakIn_825':
@@ -40,7 +34,7 @@ async def bot_message(message: types.Message):
         ans = message.text
         if ans.isdigit():
             if len(ans) == 3:
-                if int(ans[1]) < 9 and int(ans[2]) < 5:
+                if 0 < int(ans[1]) < 9 and int(ans[2]) < 5:
 
                     await bot.send_message(message.from_user.id, '{} ряд {} секция {} ячейка'.
                                            format(ans[0], ans[1], ans[2]))
@@ -61,8 +55,8 @@ async def bot_message(message: types.Message):
                 else:
                     await bot.send_message(message.from_user.id,
                                            'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
-            elif len(ans) == 4 and int(ans[0]) == 1:
-                if int(ans[2]) < 9 and int(ans[3]) < 5:
+            elif len(ans) == 4 and int(ans[0]) == 1 and 0 < int(ans[1]) < 8:
+                if 0 < int(ans[2]) < 9 and int(ans[3]) < 5:
 
                     await bot.send_message(message.from_user.id, '{}{} ряд {} секция {} ячейка'.
                                            format(ans[0], ans[1], ans[2], ans[3]))
