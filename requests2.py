@@ -1,4 +1,6 @@
 import re
+
+from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
@@ -15,30 +17,24 @@ def get_photo(art):
         result = re.search(pattern, text)
         url_page1 = 'https://hoff.ru' + result[0][:-1]
         url = url_page1.replace('\\', '')
-        print('URL товара - ', url)
+
+        logger.info('URL товара - {}'.format(url))
 
         driver = webdriver.Chrome()
         driver.get(url)
         time.sleep(3)
         try:
             img = driver.find_element(
-                by=By.XPATH,
-                value='//*[@id="hoff-app"]/section/section/div[2]/div/div[2]/div[1]/div/div[2]/div[1]/div[1]/div[1]/div[1]/div/a/img')
-            src = img.get_attribute('src')
-            print('первый', src)
-            return src
-        except Exception as ex:
-            print(ex)
-        try:
-            img = driver.find_element(
-                by=By.XPATH,
-                value='//*[@id="hoff-app"]/section/section/div[2]/div/div[3]/div[1]/div/div[2]/div[1]/div[1]/div[1]/div[1]/div/a/img')
-            src = img.get_attribute('src')
-            print('второй', src)
-            return src
-        except Exception as ex:
-            print(ex)
+                by=By.CLASS_NAME,
+                value='preview')
+            src = img.get_attribute('style')
+            pattern = r'(?<=").+?[g]'
+            url_img = re.search(pattern, src)
 
+            logger.info('URL картинки - {}'.format(url_img[0]))
+            return url_img[0]
+        except Exception as ex:
+            print(ex)
     except Exception as ex:
         print(ex)
     finally:

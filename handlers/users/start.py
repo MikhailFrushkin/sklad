@@ -39,7 +39,6 @@ async def show_photo(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Showphoto.show)
 async def show(message: types.Message, state: FSMContext):
     answer = message.text.lower()
-    print(answer)
     if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
         try:
             await message.answer_photo(get_photo(answer))
