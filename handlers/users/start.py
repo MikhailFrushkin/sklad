@@ -1,3 +1,9 @@
+import asyncio
+from contextlib import suppress
+
+from aiogram import types
+from aiogram.utils.exceptions import (MessageToEditNotFound, MessageCantBeEdited, MessageCantBeDeleted,
+                                      MessageToDeleteNotFound)
 import qrcode
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -38,12 +44,23 @@ async def show_photo(message: types.Message, state: FSMContext):
     await Showphoto.show.set()
 
 
+async def delete_message(message: types.Message, sleep_time: int = 0):
+    await asyncio.sleep(sleep_time)
+    with suppress(MessageCantBeDeleted, MessageToDeleteNotFound):
+        await message.delete()
+
+
 @dp.message_handler(state=Showphoto.show)
 async def show(message: types.Message, state: FSMContext):
     answer = message.text.lower()
     if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
         try:
+            sticker = open('stikers/seach.tgs', 'rb')
+            sticker = await bot.send_sticker(message.chat.id, sticker)
+
             await message.answer_photo(get_photo(answer))
+            asyncio.create_task(delete_message(sticker))
+
             await state.reset_state()
             logger.info('Очистил state')
 
