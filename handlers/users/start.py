@@ -1,17 +1,18 @@
-from loguru import logger
-from aiogram.dispatcher.filters.builtin import CommandStart
 import qrcode
+from aiogram import types
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.builtin import CommandStart
+from loguru import logger
+
 import bot
 from keyboards.default import menu
-from aiogram import types
 from loader import dp, bot
-from state.show_photo import Showphoto
-from aiogram.dispatcher import FSMContext
 from requests2 import get_photo
+from state.show_photo import Showphoto
 
 
 @dp.message_handler(CommandStart())
-async def bot_start(message: types.Message):
+async def bot_start(message: types.Message, state: FSMContext):
     sticker = open('stikers/AnimatedSticker.tgs', 'rb')
     await bot.send_sticker(message.chat.id, sticker)
     await message.answer('Добро пожаловать, {}!'
@@ -23,10 +24,11 @@ async def bot_start(message: types.Message):
 
 @dp.message_handler(commands=['showphoto'], state='*')
 async def show_photo(message: types.Message, state: FSMContext):
-
-    logger.info('Пользователь {}: {} запросил команду /showphoto'.format(
+    logger.info('Пользователь {}: {} {} запросил команду /showphoto'.format(
         message.from_user.id,
-        message.from_user.username))
+        message.from_user.first_name,
+        message.from_user.username
+    ))
 
     await bot.send_message(message.from_user.id, 'Введите артикул. Пример: 80264335')
     async with state.proxy() as data:

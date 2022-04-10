@@ -1,9 +1,9 @@
 import re
+import time
 
 from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-import time
 
 
 def get_photo(art):
@@ -20,7 +20,6 @@ def get_photo(art):
 
         logger.info('URL товара - {}'.format(url))
 
-        driver = webdriver.Chrome()
         driver.get(url)
         time.sleep(3)
         try:
