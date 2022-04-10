@@ -12,9 +12,12 @@ from requests2 import get_photo
 
 @dp.message_handler(CommandStart())
 async def bot_start(message: types.Message):
+    sticker = open('stikers/AnimatedSticker.tgs', 'rb')
+    await bot.send_sticker(message.chat.id, sticker)
     await message.answer('Добро пожаловать, {}!'
-                         '\nЯ бот - для показа Qcode ячеек склада'
-                         '\nвведите ряд, секцию, ячейку без нулей и пробела'.format(message.from_user.first_name))
+                         '\nЯ бот - для показа Qrcode ячеек склада и изображений товара'
+                         '\nДля показа Qrcode введите ряд, секцию, ячейку без нулей и пробела'
+                         '\nДля показа фото нажмите на "Показать артикул"'.format(message.from_user.first_name))
     await message.answer('Введите или выберите ячейку', reply_markup=menu)
 
 
@@ -40,11 +43,13 @@ async def show(message: types.Message, state: FSMContext):
     if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
         try:
             await message.answer_photo(get_photo(answer))
-        except Exception as ex:
-            print(ex)
-        finally:
             await state.reset_state()
             logger.info('Очистил state')
+
+        except Exception as ex:
+            await bot.send_message(message.from_user.id, 'Неверно указан артикул')
+            await show_photo(message, state)
+            print(ex)
     else:
         await bot.send_message(message.from_user.id, 'Неверно указан артикул')
         await show_photo(message, state)
