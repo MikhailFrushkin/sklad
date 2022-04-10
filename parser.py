@@ -1,18 +1,31 @@
-from bs4 import BeautifulSoup
+from base64 import b64decode
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 
-with open('Hoff.html', 'rb') as file:
-    crs = file.read()
-    # print(crs)
 
-soup = BeautifulSoup(crs, 'lxml')
+def get_photo():
+    art = 80403089
+    key = 'hoff {}'.format(art)
+    url = 'https://www.google.ru/search?q={}&newwindow=1&espv=2&source=lnms&tbm=isch&sa=X'.format(key)
 
-# title = soup.title
-# print(title.string)
-menu = soup.find(class_='c-input__container')
-print(menu)
+    try:
+        driver = webdriver.Chrome()
+        driver.implicitly_wait(3)
+        driver.get(url)
 
-# all_a = soup.find_all('a')
-# for i in all_a:
-#     i_text = i.text
-#     i_url = i.get('href')
-#     print('{}:{}'.format(i_text, i_url))
+        img = driver.find_element(by=By.XPATH, value='//img[starts-with(@src, "data:image/jpeg;base64,")]')
+        src = img.get_attribute('src')
+        src = src.split('data:image/jpeg;base64,')[1]
+
+        img_data = b64decode(src)
+
+        with open('photo\\{}.jpg'.format(art), 'wb') as f:
+            f.write(img_data)
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.quit()
+
+
+if __name__ == '__main__':
+    get_photo()

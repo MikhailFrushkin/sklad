@@ -1,7 +1,5 @@
-from aiogram import types
-from aiogram.dispatcher.filters.builtin import CommandStart
 import qrcode
-from aiogram.types import InlineKeyboardButton
+
 
 qr = qrcode.QRCode(
     version=1,

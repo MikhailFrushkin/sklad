@@ -1,23 +1,58 @@
+import re
+import time
+from urllib.request import urlopen
 import requests
-import json
+import os
 
+from requests_html import HTMLSession
+from tqdm import tqdm
+from bs4 import BeautifulSoup as bs
+from urllib.parse import urljoin, urlparse
 
-def get_data(url):
-    headers = {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'accept - encoding': 'gzip, deflate, br',
-        'accept - language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'cache - control': 'no - cache',
-        'user - agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36'
-    }
-    response = requests.get(url=url, headers=headers)
-
-    with open('search.html', 'w', encoding='utf-8') as file:
-        file.write(response.text)
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 def main():
-    get_data('https://hoff.ru/vue/search/?fromSearch=direct&search=80264355&redirect_search=true')
+    art = 80264355
+    s = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=s)
+
+    driver.get('https://hoff.ru/vue/search/?fromSearch=direct&search={}&redirect_search=true'.format(art))
+
+    try:
+        text = driver.page_source
+        pattern = r'(?<=\\).+?["]'
+        result = re.search(pattern, text)
+        url_page1 = 'https://hoff.ru' + result[0][:-1]
+        url = url_page1.replace('\\', '')
+        time.sleep(5)
+        get_photo('https://hoff.ru')
+
+    except Exception as _ex:
+        print(_ex)
+    finally:
+        driver.close()
+        driver.quit()
+
+
+def get_photo(url):
+    session = HTMLSession()
+    response = session.get(url)
+    response.html.render(timeout=20)
+    soup = bs(response.html.html, "html.parser")
+    urls = []
+    for img in tqdm(soup.find_all("img"), "Извлечено изображение"):
+        img_url = img.attrs.get("src") or img.attrs.get("data-src") or img.attrs.get("data-original")
+        print(img_url)
+        if not img_url:
+
+            continue
+
+        urls.append(img_url)
+    session.close()
+    return urls
 
 
 if __name__ == '__main__':
