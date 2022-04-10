@@ -13,12 +13,16 @@ def get_photo(art):
         driver.implicitly_wait(3)
         driver.get(url)
         driver.find_element(by=By.XPATH, value='//img[starts-with(@src, "data:image/jpeg;base64,")]').click()
-        time.sleep(1)
+        time.sleep(2)
         img = driver.find_element(
             by=By.XPATH,
             value='//*[@id="Sva75c"]/div/div/div[3]/div[2]/c-wiz/div/div[1]/div[1]/div[2]/div/a/img')
+
         src = img.get_attribute('src')
         print(src)
+        if 'data:image/jpeg;base64,' in src:
+            src = src.split('data:image/jpeg;base64,')[1]
+            print(src)
         return src
 
     except Exception as ex:

@@ -7,7 +7,7 @@ from aiogram import types
 from loader import dp, bot
 from state.show_photo import Showphoto
 from aiogram.dispatcher import FSMContext
-from parser import get_photo
+from requests2 import get_photo
 
 
 @dp.message_handler(CommandStart())
@@ -36,14 +36,18 @@ async def show_photo(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Showphoto.show)
 async def show(message: types.Message, state: FSMContext):
     answer = message.text.lower()
-    try:
-
-        await message.answer_photo(get_photo(answer))
-    except Exception as ex:
-        print(ex)
-    finally:
-        await state.reset_state()
-        logger.info('Очистил state')
+    print(answer)
+    if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
+        try:
+            await message.answer_photo(get_photo(answer))
+        except Exception as ex:
+            print(ex)
+        finally:
+            await state.reset_state()
+            logger.info('Очистил state')
+    else:
+        await bot.send_message(message.from_user.id, 'Неверно указан артикул')
+        await show_photo(message, state)
 
 
 @dp.message_handler(content_types=['text'], state='*')
