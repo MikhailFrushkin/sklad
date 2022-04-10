@@ -7,6 +7,7 @@ from aiogram import types
 from loader import dp, bot
 from state.show_photo import Showphoto
 from aiogram.dispatcher import FSMContext
+from parser import get_photo
 
 
 @dp.message_handler(CommandStart())
@@ -36,9 +37,8 @@ async def show_photo(message: types.Message, state: FSMContext):
 async def show(message: types.Message, state: FSMContext):
     answer = message.text.lower()
     try:
-        photo = open('photo/{}.jpg.'.format(answer), 'rb')
 
-        await bot.send_photo(message.from_user.id, photo)
+        await message.answer_photo(get_photo(answer))
     except Exception as ex:
         print(ex)
     finally:
