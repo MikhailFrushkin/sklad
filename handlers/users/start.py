@@ -1,20 +1,25 @@
 import asyncio
 from contextlib import suppress
 
-from aiogram import types
-from aiogram.utils.exceptions import (MessageToEditNotFound, MessageCantBeEdited, MessageCantBeDeleted,
-                                      MessageToDeleteNotFound)
 import qrcode
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart
+from aiogram.utils.exceptions import (MessageCantBeDeleted,
+                                      MessageToDeleteNotFound)
 from loguru import logger
 
 import bot
 from keyboards.default import menu
 from loader import dp, bot
-from requests2 import get_photo
+from requests_mediagroup import get_photo
 from state.show_photo import Showphoto
+
+
+async def delete_message(message: types.Message, sleep_time: int = 0):
+    await asyncio.sleep(sleep_time)
+    with suppress(MessageCantBeDeleted, MessageToDeleteNotFound):
+        await message.delete()
 
 
 @dp.message_handler(CommandStart())
@@ -44,21 +49,31 @@ async def show_photo(message: types.Message, state: FSMContext):
     await Showphoto.show.set()
 
 
-async def delete_message(message: types.Message, sleep_time: int = 0):
-    await asyncio.sleep(sleep_time)
-    with suppress(MessageCantBeDeleted, MessageToDeleteNotFound):
-        await message.delete()
-
-
 @dp.message_handler(state=Showphoto.show)
 async def show(message: types.Message, state: FSMContext):
     answer = message.text.lower()
     if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
         try:
-            sticker = open('stikers/seach.tgs', 'rb')
-            sticker = await bot.send_sticker(message.chat.id, sticker)
+            with open('stikers/seach.tgs', 'rb') as sticker:
+                sticker = await bot.send_sticker(message.chat.id, sticker)
 
-            await message.answer_photo(get_photo(answer))
+            url_list = get_photo(answer)
+            await bot.send_message(message.from_user.id, url_list[1].replace('#', 'Артикул: '))
+
+            logger.info('Функция вернула список урл - {}'.format(url_list))
+            if len(url_list[0]) >= 2:
+                media = types.MediaGroup()
+                if len(url_list[0]) < 10:
+                    for i_photo in url_list[0]:
+                        media.attach_photo(i_photo)
+
+                    await message.answer_media_group(media)
+                else:
+                    for i_photo in range(10):
+                        media.attach_photo(url_list[0][i_photo])
+                    await message.answer_media_group(media)
+            else:
+                await message.answer_photo(url_list)
             asyncio.create_task(delete_message(sticker))
 
             await state.reset_state()
@@ -66,6 +81,7 @@ async def show(message: types.Message, state: FSMContext):
 
         except Exception as ex:
             await bot.send_message(message.from_user.id, 'Неверно указан артикул')
+            asyncio.create_task(delete_message(sticker))
             await show_photo(message, state)
             print(ex)
     else:
