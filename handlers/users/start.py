@@ -74,6 +74,10 @@ async def show(message: types.Message, state: FSMContext):
                     await message.answer_media_group(media)
             else:
                 await message.answer_photo(url_list)
+
+            for item in url_list[2]:
+                await bot.send_message(message.from_user.id, item)
+
             asyncio.create_task(delete_message(sticker))
 
             await state.reset_state()

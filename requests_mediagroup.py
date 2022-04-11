@@ -28,12 +28,22 @@ def get_photo(art):
 
         driver.get(url)
         time.sleep(3)
-        name = driver.find_element(
-                by=By.CLASS_NAME,
-                value='page-title')
-        name_item = name.text
+
 
         try:
+            name = driver.find_element(
+                by=By.CLASS_NAME,
+                value='page-title')
+            name_item = name.text
+
+            list_param = []
+            params = driver.find_elements(
+                by=By.CLASS_NAME,
+                value='product-params-item')
+            for i_item in params:
+                list_param.append(i_item.text)
+            print(list_param)
+
             img = driver.find_elements(
                 by=By.CLASS_NAME,
                 value='preview')
@@ -50,7 +60,7 @@ def get_photo(art):
                     break
             logger.info(url_list)
             logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
-            return url_list, name_item
+            return url_list, name_item, list_param
         except Exception as ex:
             print(ex)
     except Exception as ex:
