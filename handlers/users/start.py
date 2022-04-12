@@ -147,21 +147,23 @@ async def bot_message(message: types.Message, state: FSMContext):
     Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
     иначе идем циклом по кортежу и выводим инф
     """
-    if message.text == 'V-Sales_825':
+    if message.text == '🆚 V-Sales_825':
         await bot.send_message(message.from_user.id, 'V-Sales_825')
 
         qrc = open('qcodes/V-Sales_825.jpg', 'rb')
         await bot.send_photo(message.chat.id, qrc)
 
-    elif message.text == 'R12_BrakIn_825':
+    elif message.text == '☣ R12_BrakIn_825':
         await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
 
         qrc = open('qcodes/R12_BrakIn_825.jpg', 'rb')
         await bot.send_photo(message.chat.id, qrc)
 
-    elif message.text == 'Показать qrcode ячейки':
+    elif message.text == '🤖 Показать Qrcode ячейки':
         await show_qr(message, state)
-
+    elif message.text == 'ℹ Информация':
+        await bot.send_message(message.from_user.id,
+                               'По всем вопросам обращаться к Михаилу, БЮ 825(склад), почта - muxazila@mail.ru')
     else:
         answer = message.text.lower()
         logger.info('Пользователь {} {}: запросил артикул {}'.format(

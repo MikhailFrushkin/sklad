@@ -22,7 +22,7 @@ def get_info(art: str) -> tuple:
         prefs = {"profile.managed_default_content_settings.images": 2}
         chromeOptions.add_experimental_option("prefs", prefs)
         driver = webdriver.Chrome(chrome_options=chromeOptions)
-
+        driver.minimize_window()
         driver.get(url)
         text = driver.page_source
         pattern = r'(?<=\\).+?["]'
