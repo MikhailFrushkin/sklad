@@ -13,6 +13,7 @@ from loguru import logger
 
 import bot
 from keyboards.default import menu
+from keyboards.inline.quit import exitqr
 from loader import dp, bot
 from requests_mediagroup import get_photo
 from state.show_photo import Showphoto
@@ -30,7 +31,6 @@ async def bot_start(message: types.Message, state: FSMContext):
     await bot.send_sticker(message.chat.id, sticker)
     await message.answer('Добро пожаловать, {}!'
                          '\nЯ бот - для показа Qrcode ячеек склада и изображений товара'
-                         '\nДля показа Qrcode введите ряд, секцию, ячейку без нулей и пробела'
                          '\nДля показа Qrcode нажмите на "Показать qrcode ячейки"'.format(message.from_user.first_name))
     await message.answer('Введите артикул. Пример: 80264335', reply_markup=menu)
 
@@ -79,7 +79,8 @@ async def showqr(message: types.Message, state: FSMContext):
                 logger.info('Очистил state')
             else:
                 await bot.send_message(message.from_user.id,
-                                       'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
+                                       'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела',
+                                       reply_markup=exitqr)
         elif len(ans) == 4 and int(ans[0]) == 1 and 0 < int(ans[1]) < 8:
             if 0 < int(ans[2]) < 9 and int(ans[3]) < 5:
 
@@ -103,12 +104,25 @@ async def showqr(message: types.Message, state: FSMContext):
                 logger.info('Очистил state')
             else:
                 await bot.send_message(message.from_user.id,
-                                       'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
+                                       'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела',
+                                       reply_markup=exitqr)
         else:
             await bot.send_message(message.from_user.id,
-                                   'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
+                                   'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела',
+                                   reply_markup=exitqr)
     else:
-        await bot.send_message(message.from_user.id, 'Введены буквы или символы')
+        await bot.send_message(message.from_user.id, 'Введены буквы или символы',
+                               reply_markup=exitqr)
+
+
+@dp.callback_query_handler(state=Showphoto.show_qr)
+async def answer_exit(call: types.CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
+    answer: str = call.data
+    logger.info('Получил ответ: {}. Сохраняю в state'.format(answer))
+    await call.message.answer('Введите артикул. Пример: 80264335')
+    await state.reset_state()
+    logger.info('Очистил state')
 
 
 @dp.message_handler(content_types=['text'], state='*')
@@ -188,5 +202,3 @@ async def bot_message(message: types.Message, state: FSMContext):
                     print(ex)
         else:
             await bot.send_message(message.from_user.id, 'Неверно указан артикул. Пример: 80422781')
-
-
