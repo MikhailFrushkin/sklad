@@ -1,8 +1,8 @@
 import asyncio
 import json
+import os.path
 from contextlib import suppress
 
-import os.path
 import qrcode
 from aiogram import types
 from aiogram.dispatcher import FSMContext
