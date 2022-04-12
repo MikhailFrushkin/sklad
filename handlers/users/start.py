@@ -15,11 +15,12 @@ import bot
 from keyboards.default import menu
 from keyboards.inline.quit import exitqr
 from loader import dp, bot
-from requests_mediagroup import get_photo
+from requests_mediagroup import get_info
 from state.show_photo import Showphoto
 
 
 async def delete_message(message: types.Message, sleep_time: int = 0):
+    """Удаление сообщений, в данном случае стикера ожидания"""
     await asyncio.sleep(sleep_time)
     with suppress(MessageCantBeDeleted, MessageToDeleteNotFound):
         await message.delete()
@@ -27,6 +28,9 @@ async def delete_message(message: types.Message, sleep_time: int = 0):
 
 @dp.message_handler(CommandStart())
 async def bot_start(message: types.Message):
+    """
+    Старт бота
+    """
     sticker = open('stikers/AnimatedSticker.tgs', 'rb')
     await bot.send_sticker(message.chat.id, sticker)
     await message.answer('Добро пожаловать, {}!'
@@ -37,6 +41,9 @@ async def bot_start(message: types.Message):
 
 @dp.message_handler(commands=['showqr'], state='*')
 async def show_qr(message: types.Message, state: FSMContext):
+    """
+    Тригер на команду showqr и с кнопки.
+    """
     logger.info('Пользователь {}: {} {} запросил команду /showqr'.format(
         message.from_user.id,
         message.from_user.first_name,
@@ -53,6 +60,11 @@ async def show_qr(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=Showphoto.show_qr)
 async def showqr(message: types.Message, state: FSMContext):
+    """
+    Функция отправки qcodes.
+    Ели сообщение удовлетворяет условию, генерирует код и отправляет.
+    Скидывает стате.
+    """
     ans = message.text
     if ans.isdigit():
         if len(ans) == 3:
@@ -117,6 +129,9 @@ async def showqr(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(state=Showphoto.show_qr)
 async def answer_exit(call: types.CallbackQuery, state: FSMContext):
+    """
+    Инлайн клавиатура для выхода, после неверно введенной ячейки
+    """
     await call.answer(cache_time=60)
     answer: str = call.data
     logger.info('Получил ответ: {}. Сохраняю в state'.format(answer))
@@ -127,6 +142,11 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(content_types=['text'], state='*')
 async def bot_message(message: types.Message, state: FSMContext):
+    """
+    Выводим сохраненные qcode ячеек, стандартные.
+    Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
+    иначе идем циклом по кортежу и выводим инф
+    """
     if message.text == 'V-Sales_825':
         await bot.send_message(message.from_user.id, 'V-Sales_825')
 
@@ -179,7 +199,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                     with open('stikers/seach.tgs', 'rb') as sticker:
                         sticker = await bot.send_sticker(message.chat.id, sticker)
 
-                    url_list = get_photo(answer)
+                    url_list = get_info(answer)
                     await bot.send_message(message.from_user.id, url_list[1].replace('#', 'Артикул: '))
                     logger.info('Функция вернула список урл - {}'.format(url_list))
                     if len(url_list[0]) >= 2:

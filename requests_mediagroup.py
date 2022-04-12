@@ -7,11 +7,17 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-def get_photo(art):
-    url = 'https://hoff.ru/vue/search/?fromSearch=direct&search={}&redirect_search=true'.format(art)
-
+def get_info(art: str) -> tuple:
+    """
+    Получение от пользователя артикула, парсим первый сайт для получения урла товара.
+    После парсим урл товара, берем нужную инфу, возвращаем ее кортежем.
+    :param art: srt
+    :return: tuple
+    """
+    url: str = 'https://hoff.ru/vue/search/?fromSearch=direct&search={}&redirect_search=true'.format(art)
     try:
         start_time = time.time()
+
         chromeOptions = webdriver.ChromeOptions()
         prefs = {"profile.managed_default_content_settings.images": 2}
         chromeOptions.add_experimental_option("prefs", prefs)
@@ -88,4 +94,4 @@ def get_photo(art):
 
 
 if __name__ == '__main__':
-    get_photo('80368069')
+    get_info('80368069')
