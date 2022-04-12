@@ -2,6 +2,7 @@ import re
 import time
 import json
 
+
 from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.common.by import By

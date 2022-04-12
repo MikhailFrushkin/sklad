@@ -1,6 +1,8 @@
 import asyncio
+import json
 from contextlib import suppress
 
+import os.path
 import qrcode
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -52,39 +54,60 @@ async def show_photo(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Showphoto.show)
 async def show(message: types.Message, state: FSMContext):
     answer = message.text.lower()
-
-
     if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
-        try:
-            with open('stikers/seach.tgs', 'rb') as sticker:
-                sticker = await bot.send_sticker(message.chat.id, sticker)
 
-            url_list = get_photo(answer)
-            await bot.send_message(message.from_user.id, url_list[1].replace('#', 'Артикул: '))
-            logger.info('Функция вернула список урл - {}'.format(url_list))
-            if len(url_list[0]) >= 2:
-                media = types.MediaGroup()
-                if len(url_list[0]) < 10:
-                    for i_photo in url_list[0]:
-                        media.attach_photo(i_photo)
-                    await message.answer_media_group(media)
+        #Проверка, если есть в базе не парсим сайт, а берем инфу из json
+        if os.path.exists('base/{}.json'.format(answer)):
+            with open('base/{}.json'.format(answer), "r") as read_file:
+                data = json.load(read_file)
+                await bot.send_message(message.from_user.id, data['name'].replace('#', 'Артикул: '))
+                if len(data['url_imgs']) >= 2:
+                    media = types.MediaGroup()
+                    if len(data['url_imgs']) < 10:
+                        for i_photo in data['url_imgs']:
+                            media.attach_photo(i_photo)
+                        await message.answer_media_group(media)
+                    else:
+                        for i_photo in range(10):
+                            media.attach_photo(data['url_imgs'][i_photo])
+                        await message.answer_media_group(media)
                 else:
-                    for i_photo in range(10):
-                        media.attach_photo(url_list[0][i_photo])
-                    await message.answer_media_group(media)
-            else:
-                await message.answer_photo(url_list)
-            await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
-            asyncio.create_task(delete_message(sticker))
+                    await message.answer_photo(data['url_imgs'])
+                await bot.send_message(message.from_user.id, '\n'.join(data['params']))
+                await state.reset_state()
+                logger.info('Очистил state')
 
-            await state.reset_state()
-            logger.info('Очистил state')
+        else:
+            try:
+                with open('stikers/seach.tgs', 'rb') as sticker:
+                    sticker = await bot.send_sticker(message.chat.id, sticker)
 
-        except Exception as ex:
-            await bot.send_message(message.from_user.id, 'Неверно указан артикул')
-            asyncio.create_task(delete_message(sticker))
-            await show_photo(message, state)
-            print(ex)
+                url_list = get_photo(answer)
+                await bot.send_message(message.from_user.id, url_list[1].replace('#', 'Артикул: '))
+                logger.info('Функция вернула список урл - {}'.format(url_list))
+                if len(url_list[0]) >= 2:
+                    media = types.MediaGroup()
+                    if len(url_list[0]) < 10:
+                        for i_photo in url_list[0]:
+                            media.attach_photo(i_photo)
+                        await message.answer_media_group(media)
+                    else:
+                        for i_photo in range(10):
+                            media.attach_photo(url_list[0][i_photo])
+                        await message.answer_media_group(media)
+                else:
+                    await message.answer_photo(url_list[0][0])
+                await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
+                asyncio.create_task(delete_message(sticker))
+
+                await state.reset_state()
+                logger.info('Очистил state')
+
+            except Exception as ex:
+                await bot.send_message(message.from_user.id, 'Неверно указан артикул')
+                asyncio.create_task(delete_message(sticker))
+                await show_photo(message, state)
+                print(ex)
     else:
         await bot.send_message(message.from_user.id, 'Неверно указан артикул')
         await show_photo(message, state)
