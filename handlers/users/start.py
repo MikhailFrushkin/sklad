@@ -52,6 +52,8 @@ async def show_photo(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Showphoto.show)
 async def show(message: types.Message, state: FSMContext):
     answer = message.text.lower()
+
+
     if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
         try:
             with open('stikers/seach.tgs', 'rb') as sticker:
@@ -59,14 +61,12 @@ async def show(message: types.Message, state: FSMContext):
 
             url_list = get_photo(answer)
             await bot.send_message(message.from_user.id, url_list[1].replace('#', 'Артикул: '))
-
             logger.info('Функция вернула список урл - {}'.format(url_list))
             if len(url_list[0]) >= 2:
                 media = types.MediaGroup()
                 if len(url_list[0]) < 10:
                     for i_photo in url_list[0]:
                         media.attach_photo(i_photo)
-
                     await message.answer_media_group(media)
                 else:
                     for i_photo in range(10):
@@ -74,10 +74,7 @@ async def show(message: types.Message, state: FSMContext):
                     await message.answer_media_group(media)
             else:
                 await message.answer_photo(url_list)
-
-            for item in url_list[2]:
-                await bot.send_message(message.from_user.id, item)
-
+            await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
             asyncio.create_task(delete_message(sticker))
 
             await state.reset_state()

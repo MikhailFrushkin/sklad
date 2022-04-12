@@ -1,5 +1,6 @@
 import re
 import time
+import json
 
 from loguru import logger
 from selenium import webdriver
@@ -28,7 +29,6 @@ def get_photo(art):
 
         driver.get(url)
         time.sleep(3)
-
 
         try:
             name = driver.find_element(
@@ -60,6 +60,15 @@ def get_photo(art):
                     break
             logger.info(url_list)
             logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
+
+            data = {
+                'url_imgs': url_list,
+                'name': name_item,
+                'params': list_param
+            }
+            with open("base/{}.json".format(art), "w",) as write_file:
+                json.dump(data, write_file, indent=4)
+
             return url_list, name_item, list_param
         except Exception as ex:
             print(ex)
