@@ -26,7 +26,7 @@ async def delete_message(message: types.Message, sleep_time: int = 0):
 
 
 @dp.message_handler(CommandStart())
-async def bot_start(message: types.Message, state: FSMContext):
+async def bot_start(message: types.Message):
     sticker = open('stikers/AnimatedSticker.tgs', 'rb')
     await bot.send_sticker(message.chat.id, sticker)
     await message.answer('Добро пожаловать, {}!'
@@ -153,7 +153,7 @@ async def bot_message(message: types.Message, state: FSMContext):
 
             if os.path.exists('base/{}.json'.format(answer)):
                 logger.info('нашел json и вывел результат')
-                with open('base/{}.json'.format(answer), "r") as read_file:
+                with open('base/{}.json'.format(answer), "r", encoding='utf-8') as read_file:
                     data = json.load(read_file)
                     await bot.send_message(message.from_user.id, data['name'].replace('#', 'Артикул: '))
                     if len(data['url_imgs']) >= 2:
@@ -169,6 +169,8 @@ async def bot_message(message: types.Message, state: FSMContext):
                     else:
                         await message.answer_photo(data['url_imgs'])
                     await bot.send_message(message.from_user.id, '\n'.join(data['params']))
+                    await bot.send_message(message.from_user.id,
+                                           'Специально для Степы, цена, но это не точно =) - {}'.format(data['price']))
                     await state.reset_state()
                     logger.info('Очистил state')
 
@@ -193,6 +195,8 @@ async def bot_message(message: types.Message, state: FSMContext):
                     else:
                         await message.answer_photo(url_list[0][0])
                     await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
+                    await bot.send_message(message.from_user.id,
+                                           'Специально для Степы, цена, но это не точно =) - {}'.format(url_list[3]))
                     asyncio.create_task(delete_message(sticker))
 
                 except Exception as ex:

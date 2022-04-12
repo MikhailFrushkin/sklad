@@ -2,7 +2,6 @@ import re
 import time
 import json
 
-
 from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -13,7 +12,6 @@ def get_photo(art):
 
     try:
         start_time = time.time()
-
         chromeOptions = webdriver.ChromeOptions()
         prefs = {"profile.managed_default_content_settings.images": 2}
         chromeOptions.add_experimental_option("prefs", prefs)
@@ -59,18 +57,28 @@ def get_photo(art):
                     logger.info('URL картинки - {}'.format(url_img[0]))
                 else:
                     break
+            try:
+                price = driver.find_element(
+                    by=By.CLASS_NAME,
+                    value='product-price-benefits').find_element(by=By.CLASS_NAME,
+                                                                 value='product-price')
+                price = price.text
+            except Exception as ex:
+                logger.info('Нет цены', ex)
+                price = 'Упс. Нет цены на сайте'
             logger.info(url_list)
             logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
 
             data = {
                 'url_imgs': url_list,
                 'name': name_item,
-                'params': list_param
+                'params': list_param,
+                'price': price
             }
-            with open("base/{}.json".format(art), "w",) as write_file:
-                json.dump(data, write_file, indent=4)
+            with open("base/{}.json".format(art), "w", encoding='utf-8') as write_file:
+                json.dump(data, write_file, indent=4, ensure_ascii=False)
 
-            return url_list, name_item, list_param
+            return url_list, name_item, list_param, price
         except Exception as ex:
             print(ex)
     except Exception as ex:
