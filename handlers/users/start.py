@@ -192,7 +192,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                         await message.answer_photo(data['url_imgs'])
                     await bot.send_message(message.from_user.id, '\n'.join(data['params']))
                     await bot.send_message(message.from_user.id,
-                                           'Специально для Степы, цена, но это не точно =) - {}'.format(data['price']))
+                                           'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(data['price']))
                     await state.reset_state()
                     logger.info('Очистил state')
 
@@ -218,7 +218,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                         await message.answer_photo(url_list[0][0])
                     await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
                     await bot.send_message(message.from_user.id,
-                                           'Специально для Степы, цена, но это не точно =) - {}'.format(url_list[3]))
+                                           'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(url_list[3]))
                     asyncio.create_task(delete_message(sticker))
 
                 except Exception as ex:

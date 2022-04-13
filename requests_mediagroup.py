@@ -47,7 +47,7 @@ def get_info(art: str) -> tuple:
                 value='product-params-item')
             for i_item in params:
                 list_param.append(i_item.text)
-            print(list_param)
+            logger.info('Список параметров - {}'.format(list_param))
 
             img = driver.find_elements(
                 by=By.CLASS_NAME,
@@ -86,9 +86,9 @@ def get_info(art: str) -> tuple:
 
             return url_list, name_item, list_param, price
         except Exception as ex:
-            print(ex)
+            logger.debug('{}'.format(ex))
     except Exception as ex:
-        print(ex)
+        logger.debug('{}'.format(ex))
     finally:
         driver.quit()
 
