@@ -188,7 +188,7 @@ async def bot_message(message: types.Message, state: FSMContext):
 
                     url_list = get_info(answer)
                     await bot.send_message(message.from_user.id, url_list[1].replace('#', 'Артикул: '))
-                    logger.info('Функция вернула список урл - {}'.format(url_list))
+                    logger.info('Функция вернула список урл - {}\n'.format(url_list))
                     if len(url_list[0]) >= 2:
                         media = types.MediaGroup()
                         if len(url_list[0]) < 10:
@@ -210,6 +210,6 @@ async def bot_message(message: types.Message, state: FSMContext):
                     await bot.send_message(message.from_user.id, 'Неверно указан артикул. Пример: 80422781')
                     asyncio.create_task(delete_message(sticker))
 
-                    print(ex)
+                    logger.debug('{}'.format(ex))
         else:
             await bot.send_message(message.from_user.id, 'Неверно указан артикул. Пример: 80422781')
