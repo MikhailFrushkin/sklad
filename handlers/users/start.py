@@ -3,7 +3,6 @@ import json
 import os.path
 from contextlib import suppress
 
-import qrcode
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart
@@ -17,6 +16,7 @@ from keyboards.inline.quit import exitqr
 from loader import dp, bot
 from requests_mediagroup import get_info
 from state.show_photo import Showphoto
+from utils.new_qr import qr_code
 
 
 async def delete_message(message: types.Message, sleep_time: int = 0):
@@ -42,7 +42,7 @@ async def bot_start(message: types.Message):
 @dp.message_handler(commands=['showqr'], state='*')
 async def show_qr(message: types.Message, state: FSMContext):
     """
-    Тригер на команду showqr и с кнопки.
+    Тригер на команду showqr и отправляет с кнопки.
     """
     logger.info('Пользователь {}: {} {} запросил команду /showqr'.format(
         message.from_user.id,
@@ -73,19 +73,10 @@ async def showqr(message: types.Message, state: FSMContext):
                 await bot.send_message(message.from_user.id, '{} ряд {} секция {} ячейка'.
                                        format(ans[0], ans[1], ans[2]))
 
-                qr = qrcode.QRCode(
-                    version=1,
-                    error_correction=qrcode.constants.ERROR_CORRECT_L,
-                    box_size=10,
-                    border=4,
-                )
-                qr.add_data('012_825-0{}-0{}-{}'.format(message.text[0], message.text[1], message.text[2]))
-                qr.make(fit=True)
-
-                img = qr.make_image(fill_color="black", back_color="white")
-                img.save('qcodes/{}.jpg'.format(message.text), 'JPEG')
-                qrc = open('qcodes/{}.jpg'.format(message.text), 'rb')
-                await bot.send_photo(message.chat.id, qrc)
+                data = ('012_825-0{}-0{}-{}'.format(message.text[0], message.text[1], message.text[2]))
+                qr_code(message, data)
+                qrcod = open('qcodes/{}.jpg'.format(message.text), 'rb')
+                await bot.send_photo(message.from_user.id, qrcod)
 
                 await state.reset_state()
                 logger.info('Очистил state')
@@ -99,19 +90,13 @@ async def showqr(message: types.Message, state: FSMContext):
                 await bot.send_message(message.from_user.id, '{}{} ряд {} секция {} ячейка'.
                                        format(ans[0], ans[1], ans[2], ans[3]))
 
-                qr = qrcode.QRCode(
-                    version=1,
-                    error_correction=qrcode.constants.ERROR_CORRECT_L,
-                    box_size=10,
-                    border=4,
-                )
-                qr.add_data('012_825-{}{}-0{}-{}'
-                            .format(message.text[0], message.text[1], message.text[2], message.text[3]))
-                qr.make(fit=True)
-                img = qr.make_image(fill_color="black", back_color="white")
-                img.save('qcodes/{}.jpg'.format(message.text), 'JPEG')
-                qrc = open('qcodes/{}.jpg'.format(message.text), 'rb')
-                await bot.send_photo(message.chat.id, qrc)
+                data = ('012_825-{}{}-0{}-{}'
+                        .format(message.text[0], message.text[1], message.text[2], message.text[3]))
+
+                qr_code(message, data)
+                qrcod = open('qcodes/{}.jpg'.format(message.text), 'rb')
+                await bot.send_photo(message.from_user.id, qrcod)
+
                 await state.reset_state()
                 logger.info('Очистил state')
             else:

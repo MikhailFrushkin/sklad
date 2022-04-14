@@ -47,7 +47,7 @@ def get_info(art: str) -> tuple:
                 value='product-params-item')
             for i_item in params:
                 list_param.append(i_item.text)
-            logger.info('Список параметров - {}'.format(list_param))
+            logger.info('{} Список параметров -{}'.format(name_item, list_param))
 
             img = driver.find_elements(
                 by=By.CLASS_NAME,
@@ -56,11 +56,9 @@ def get_info(art: str) -> tuple:
             for item in range(len(img)):
                 if not item == 3:
                     src = img[item].get_attribute('style')
-                    logger.info(src)
                     pattern = r'(?<=").+?[g]'
                     url_img = re.search(pattern, src)
                     url_list.append(url_img[0])
-                    logger.info('URL картинки - {}'.format(url_img[0]))
                 else:
                     break
             try:
