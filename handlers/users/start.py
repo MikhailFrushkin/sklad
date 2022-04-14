@@ -15,6 +15,7 @@ from keyboards.default import menu
 from keyboards.inline.quit import exitqr
 from loader import dp, bot
 from requests_mediagroup import get_info
+from show_tabel import get_graf
 from state.show_photo import Showphoto
 from utils.new_qr import qr_code
 
@@ -31,12 +32,14 @@ async def bot_start(message: types.Message):
     """
     Старт бота
     """
-    sticker = open('stikers/AnimatedSticker.tgs', 'rb')
+    sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
     await bot.send_sticker(message.chat.id, sticker)
     await message.answer('Добро пожаловать, {}!'
-                         '\nЯ бот - для показа Qrcode ячеек склада и изображений товара'
-                         '\nДля показа Qrcode нажмите на "Показать qrcode ячейки"'.format(message.from_user.first_name))
-    await message.answer('Введите артикул. Пример: 80264335', reply_markup=menu)
+                         '\nДля показа фотографий товара, описания и цены с сайта'
+                         '\nВведите артикул. Пример: 80264335'
+                         '\nДля показа Qrcode ячейки на складе нажмите на '
+                         '"Показать qrcode ячейки" или воспользуйтесь наиболее часто используемые VSL и Brak'
+                         .format(message.from_user.first_name), reply_markup=menu)
 
 
 @dp.message_handler(commands=['showqr'], state='*')
@@ -56,6 +59,36 @@ async def show_qr(message: types.Message, state: FSMContext):
         data['message_id'] = message.message_id
 
     await Showphoto.show_qr.set()
+
+
+@dp.message_handler(commands=['graph'], state='*')
+async def show_graf(message: types.Message, state: FSMContext):
+    """
+    Тригер на команду showqr и отправляет с кнопки.
+    """
+    logger.info('Пользователь {}: {} {} запросил команду /Мой график'.format(
+        message.from_user.id,
+        message.from_user.first_name,
+        message.from_user.username
+    ))
+
+    await bot.send_message(message.from_user.id, 'График на текущий месяц')
+    async with state.proxy() as data:
+        data['command'] = message.get_command()
+        data['message_id'] = message.message_id
+
+    await Showphoto.graf.set()
+
+
+@dp.message_handler(state=Showphoto.graf)
+async def showgraf(message: types.Message, state: FSMContext):
+    try:
+        get_graf(message)
+        graf = open('base/graf/{}.png'.format(message.from_user.id), 'rb')
+        await bot.send_photo(message.chat.id, graf)
+
+    except Exception as ex:
+        logger.debug(ex)
 
 
 @dp.message_handler(state=Showphoto.show_qr)
@@ -146,6 +179,14 @@ async def bot_message(message: types.Message, state: FSMContext):
 
     elif message.text == '🤖 Показать Qrcode ячейки':
         await show_qr(message, state)
+
+    elif message.text == 'Мой график(в разработке)':
+        await showgraf(message, state)
+
+    elif message.text == 'Содержимое ячейки(в разработке)':
+        await bot.send_message(message.from_user.id, 'Пока ничего нет, для начало нужно как минимум брать инфу,'
+                               ' желательно ежедневно, в екселе или ...')
+
     elif message.text == 'ℹ Информация':
         await bot.send_message(message.from_user.id,
                                'По всем вопросам обращаться к Михаилу, БЮ 825(склад), почта - muxazila@mail.ru')
@@ -207,9 +248,11 @@ async def bot_message(message: types.Message, state: FSMContext):
                     asyncio.create_task(delete_message(sticker))
 
                 except Exception as ex:
-                    await bot.send_message(message.from_user.id, 'Неверно указан артикул. Пример: 80422781')
+                    await bot.send_message(message.from_user.id,
+                                           'Неверно указан артикул или его нет на сайте. Пример: 80422781')
                     asyncio.create_task(delete_message(sticker))
 
                     logger.debug('{}'.format(ex))
         else:
-            await bot.send_message(message.from_user.id, 'Неверно указан артикул. Пример: 80422781')
+            await bot.send_message(message.from_user.id,
+                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
