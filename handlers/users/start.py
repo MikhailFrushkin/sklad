@@ -12,12 +12,14 @@ from loguru import logger
 
 import bot
 from keyboards.default import menu
+from keyboards.inline.mesto import mesto1, mesto2, mesto3
 from keyboards.inline.quit import exitqr
 from loader import dp, bot
 from requests_mediagroup import get_info
 from show_tabel import get_graf
-from state.show_photo import Showphoto
+from state.show_photo import Showphoto, Place
 from utils.new_qr import qr_code
+from utils.open_exsel import place
 
 
 async def delete_message(message: types.Message, sleep_time: int = 0):
@@ -36,9 +38,10 @@ async def bot_start(message: types.Message):
     await bot.send_sticker(message.chat.id, sticker)
     await message.answer('Добро пожаловать, {}!'
                          '\nДля показа фотографий товара, описания и цены с сайта'
-                         '\nВведите артикул. Пример: 80264335'
+                         '\nВведите артикул. Пример: 80264335.'
                          '\nДля показа Qrcode ячейки на складе нажмите на '
-                         '"Показать qrcode ячейки" или воспользуйтесь наиболее часто используемые VSL и Brak'
+                         '"Показать qrcode ячейки" или воспользуйтесь кнопками.'
+                         '\nДля показа товара на ячейках нажмите "Содержимое ячейки".'
                          .format(message.from_user.first_name), reply_markup=menu)
 
 
@@ -158,6 +161,77 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
     logger.info('Очистил state')
 
 
+async def show_place(message, state):
+    logger.info('Пользователь {}: {} {} запустил просмотр ячеек'.format(
+        message.from_user.id,
+        message.from_user.first_name,
+        message.from_user.username
+    ))
+
+    mes1 = await bot.send_message(message.from_user.id, 'Данные на 15.04.22\nВыберите ряд:', reply_markup=mesto1)
+    async with state.proxy() as data:
+        data['command'] = message.get_command()
+        data['message_id'] = message.message_id
+        data['message1'] = mes1
+
+    await Place.mesto_1.set()
+
+
+@dp.callback_query_handler(state=Place.mesto_1)
+async def answer_exit(call: types.CallbackQuery, state: FSMContext):
+
+    await call.answer(cache_time=60)
+    answer: str = call.data
+    logger.info('Получил ряд: {}'.format(answer))
+    mes2 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
+    async with state.proxy() as data:
+        data['mesto1'] = answer
+        data['message2'] = mes2
+        asyncio.create_task(delete_message(data['message1']))
+    await Place.mesto_2.set()
+
+
+@dp.callback_query_handler(state=Place.mesto_2)
+async def answer_exit(call: types.CallbackQuery, state: FSMContext):
+
+    await call.answer(cache_time=60)
+    answer: str = call.data
+    logger.info('Получил секцию: {}'.format(answer))
+    mes3 = await call.message.answer('Выберите ячейку:', reply_markup=mesto3)
+    async with state.proxy() as data:
+        data['mesto2'] = answer
+        data['message3'] = mes3
+        asyncio.create_task(delete_message(data['message2']))
+    await Place.mesto_3.set()
+
+
+@dp.callback_query_handler(state=Place.mesto_3)
+async def answer_exit(call: types.CallbackQuery, state: FSMContext):
+
+    await call.answer(cache_time=60)
+    answer: str = call.data
+    logger.info('Получил ячейку: {}. '.format(answer))
+
+    async with state.proxy() as data:
+        data['mesto3'] = answer
+        asyncio.create_task(delete_message(data['message3']))
+        if len(data['mesto1']) == 1:
+            data['mesto1'] = '0{}'.format(data['mesto1'])
+
+        result = '012_825-{}-0{}-{}'.format(
+            data['mesto1'],
+            data['mesto2'],
+            data['mesto3']
+        )
+        await call.message.answer('Список товара на {}:'.format(result))
+        data['result'] = result
+        logger.info(data['result'])
+        await call.message.answer('\n'.join(place(result)))
+
+    await state.reset_state()
+    logger.info('Очистил state')
+
+
 @dp.message_handler(content_types=['text'], state='*')
 async def bot_message(message: types.Message, state: FSMContext):
     """
@@ -183,9 +257,8 @@ async def bot_message(message: types.Message, state: FSMContext):
     elif message.text == 'Мой график(в разработке)':
         await showgraf(message, state)
 
-    elif message.text == 'Содержимое ячейки(в разработке)':
-        await bot.send_message(message.from_user.id, 'Пока ничего нет, для начало нужно как минимум брать инфу,'
-                               ' желательно ежедневно, в екселе или ...')
+    elif message.text == '📦 Содержимое ячейки':
+        await show_place(message, state)
 
     elif message.text == 'ℹ Информация':
         await bot.send_message(message.from_user.id,
