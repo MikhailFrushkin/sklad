@@ -51,7 +51,7 @@ def get_graf(message):
                     setTimeout(f, 1000);
                 })();
             """)
-
+        time.sleep(2)
         for i in range(30):
             if "scroll-done" in driver.title:
                 break
