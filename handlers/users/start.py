@@ -5,7 +5,7 @@ from contextlib import suppress
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.builtin import CommandStart
+from aiogram.dispatcher.filters.builtin import CommandStart, CommandHelp
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from aiogram.utils.exceptions import (MessageCantBeDeleted,
@@ -47,6 +47,38 @@ async def bot_start(message: types.Message):
                          .format(message.from_user.first_name), reply_markup=menu)
 
 
+@dp.message_handler(CommandHelp())
+async def bot_help(message: types.Message):
+    """
+    Справка бота
+    """
+    await message.answer('\nДля показа фотографий товара, описания и цены с сайта'
+                         '\nВведите артикул. Пример: 80264335.'
+                         '\nДля показа Qrcode ячейки на складе нажмите на '
+                         '"Показать qrcode ячейки" или воспользуйтесь кнопками.'
+                         '\nДля показа товара на ячейках нажмите "Содержимое ячейки".'
+                         '\nПо всем вопросам обращаться к Михаилу, БЮ 825(склад), \nпочта - muxazila@mail.ru')
+
+
+@dp.message_handler(commands=['showqr'], state='*')
+async def show_qr(message: types.Message, state: FSMContext):
+    """
+    Тригер на команду showqr и отправляет с кнопки.
+    """
+    logger.info('Пользователь {}: {} {} запросил команду /showqr'.format(
+        message.from_user.id,
+        message.from_user.first_name,
+        message.from_user.username
+    ))
+
+    await bot.send_message(message.from_user.id, 'Для показа Qrcode введите ряд, секцию, ячейку без нулей и пробела')
+    async with state.proxy() as data:
+        data['command'] = message.get_command()
+        data['message_id'] = message.message_id
+
+    await Showphoto.show_qr.set()
+
+
 @dp.message_handler(state=Showphoto.show_qr)
 async def showqr(message: types.Message, state: FSMContext):
     """
@@ -66,7 +98,7 @@ async def showqr(message: types.Message, state: FSMContext):
                 qr_code(message, data)
                 qrcod = open('qcodes/{}.jpg'.format(message.text), 'rb')
                 await bot.send_photo(message.from_user.id, qrcod)
-
+                logger.info(data)
                 await state.reset_state()
                 logger.info('Очистил state')
             else:
@@ -133,20 +165,46 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
             data['photo'] = photo
 
 
-async def show_place(message, state):
-    logger.info('Пользователь {}: {} {} запустил просмотр ячеек'.format(
-        message.from_user.id,
-        message.from_user.first_name,
-        message.from_user.username
-    ))
+@dp.message_handler(content_types=['text'], state='*')
+async def bot_message(message: types.Message, state: FSMContext):
+    """
+    Выводим сохраненные qcode ячеек, стандартные.
+    Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
+    иначе идем циклом по кортежу и выводим инф
+    """
+    if message.text == '🆚 V-Sales_825':
+        await bot.send_message(message.from_user.id, 'V-Sales_825')
 
-    mes1 = await bot.send_message(message.from_user.id, 'Данные на 15.04.22\nВыберите ряд:', reply_markup=mesto1)
-    async with state.proxy() as data:
-        data['command'] = message.get_command()
-        data['message_id'] = message.message_id
-        data['message1'] = mes1
+        qrc = open('qcodes/V-Sales_825.jpg', 'rb')
+        await bot.send_photo(message.chat.id, qrc)
 
-    await Place.mesto_1.set()
+    elif message.text == '☣ R12_BrakIn_825':
+        await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
+
+        qrc = open('qcodes/R12_BrakIn_825.jpg', 'rb')
+        await bot.send_photo(message.chat.id, qrc)
+
+    elif message.text == '🤖 Показать Qrcode ячейки':
+        await show_qr(message, state)
+
+    elif message.text == '📦 Содержимое ячейки':
+        await show_place(message, state)
+
+    elif message.text == 'ℹ Информация':
+        await bot_help(message)
+    else:
+        answer = message.text.lower()
+        logger.info('Пользователь {} {}: запросил артикул {}'.format(
+            message.from_user.id,
+            message.from_user.first_name,
+            answer
+        ))
+
+        if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
+            await show_media(message, state)
+        else:
+            await bot.send_message(message.from_user.id,
+                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
 
 
 @dp.callback_query_handler(state=Place.mesto_1)
@@ -204,58 +262,34 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
         data['result'] = result
         logger.info(data['result'])
 
-        for item in place(result):
-            await call.message.answer(item,
-                                      reply_markup=InlineKeyboardMarkup().add(
-                                          InlineKeyboardButton(text='Показать фото',
-                                                               callback_data='{}'.format(
-                                                                   item[:8]
-                                                               ))))
+        if place(result):
+            for item in place(result):
+                await call.message.answer(item,
+                                          reply_markup=InlineKeyboardMarkup().add(
+                                              InlineKeyboardButton(text='Показать фото',
+                                                                   callback_data='{}'.format(
+                                                                       item[:8]
+                                                                   ))))
 
-        await Place.mesto_4.set()
-
-
-@dp.message_handler(content_types=['text'], state='*')
-async def bot_message(message: types.Message, state: FSMContext):
-    """
-    Выводим сохраненные qcode ячеек, стандартные.
-    Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
-    иначе идем циклом по кортежу и выводим инф
-    """
-    if message.text == '🆚 V-Sales_825':
-        await bot.send_message(message.from_user.id, 'V-Sales_825')
-
-        qrc = open('qcodes/V-Sales_825.jpg', 'rb')
-        await bot.send_photo(message.chat.id, qrc)
-
-    elif message.text == '☣ R12_BrakIn_825':
-        await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
-
-        qrc = open('qcodes/R12_BrakIn_825.jpg', 'rb')
-        await bot.send_photo(message.chat.id, qrc)
-
-    elif message.text == '🤖 Показать Qrcode ячейки':
-        await show_qr(message, state)
-
-    elif message.text == '📦 Содержимое ячейки':
-        await show_place(message, state)
-
-    elif message.text == 'ℹ Информация':
-        await bot.send_message(message.from_user.id,
-                               'По всем вопросам обращаться к Михаилу, БЮ 825(склад), почта - muxazila@mail.ru')
-    else:
-        answer = message.text.lower()
-        logger.info('Пользователь {} {}: запросил артикул {}'.format(
-            message.from_user.id,
-            message.from_user.first_name,
-            answer
-        ))
-
-        if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
-            await show_media(message, state)
+            await Place.mesto_4.set()
         else:
-            await bot.send_message(message.from_user.id,
-                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
+            await call.message.answer('Ячейка пустая')
+
+
+async def show_place(message, state):
+    logger.info('Пользователь {}: {} {} запустил просмотр ячеек'.format(
+        message.from_user.id,
+        message.from_user.first_name,
+        message.from_user.username
+    ))
+
+    mes1 = await bot.send_message(message.from_user.id, 'Данные на 15.04.22\nВыберите ряд:', reply_markup=mesto1)
+    async with state.proxy() as data:
+        data['command'] = message.get_command()
+        data['message_id'] = message.message_id
+        data['message1'] = mes1
+
+    await Place.mesto_1.set()
 
 
 async def show_media(message: types.Message, state: FSMContext):

@@ -7,6 +7,6 @@ async def set_default_commands(dp):
         [
             types.BotCommand('start', 'Запустить бота'),
             types.BotCommand('showqr', 'Показать qrcode'),
-            types.BotCommand('graph', ' Показать график работы')
+            types.BotCommand('help', 'Помощь')
         ]
     )

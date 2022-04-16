@@ -1,8 +1,11 @@
 import csv
 import time
-import pandas
+import pandas as pd
 
 from loguru import logger
+
+import io
+import requests
 
 
 def place(message):
@@ -34,5 +37,9 @@ def place(message):
     return answer
 
 
+def main():
+    url = 'https://docs.google.com/spreadsheets/d/1fp08EQdyLJMnn94inhRphbqXfRC4Jz4M'
+
+
 if __name__ == '__main__':
-    print(place('012_825-03-01-1'))
+    main()
