@@ -12,3 +12,4 @@ class Place(StatesGroup):
     mesto_2 = State()
     mesto_3 = State()
     mesto_4 = State()
+    mesto_5 = State()

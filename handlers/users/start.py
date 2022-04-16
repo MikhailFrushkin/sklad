@@ -6,13 +6,15 @@ from contextlib import suppress
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 from aiogram.utils.exceptions import (MessageCantBeDeleted,
                                       MessageToDeleteNotFound)
 from loguru import logger
 
 import bot
 from keyboards.default import menu
-from keyboards.inline.mesto import mesto1, mesto2, mesto3
+from keyboards.inline.mesto import mesto1, mesto2, mesto3, hide
 from keyboards.inline.quit import exitqr
 from loader import dp, bot
 from requests_mediagroup import get_info
@@ -148,17 +150,36 @@ async def showqr(message: types.Message, state: FSMContext):
                                reply_markup=exitqr)
 
 
-@dp.callback_query_handler(state=Showphoto.show_qr)
+@dp.callback_query_handler(state=[Showphoto.show_qr, Place.mesto_4])
 async def answer_exit(call: types.CallbackQuery, state: FSMContext):
-    """
-    Инлайн клавиатура для выхода, после неверно введенной ячейки
-    """
-    await call.answer(cache_time=60)
-    answer: str = call.data
-    logger.info('Получил ответ: {}. Сохраняю в state'.format(answer))
-    await call.message.answer('Введите артикул. Пример: 80264335')
-    await state.reset_state()
-    logger.info('Очистил state')
+    if call.data == 'exit':
+        await call.answer(cache_time=10)
+        answer: str = call.data
+        logger.info('Получил ответ: {}. Сохраняю в state'.format(answer))
+        await call.message.answer('Введите артикул. Пример: 80264335')
+        await state.reset_state()
+        logger.info('Очистил state')
+    elif call.data == 'hide':
+        async with state.proxy() as data:
+            asyncio.create_task(delete_message(data['photo']))
+    else:
+        logger.info('Пользователь запросил картинку на арт.{}'.format(call.data))
+        if os.path.exists('base/{}.json'.format(call.data)):
+            logger.info('нашел json и вывел результат')
+            with open('base/{}.json'.format(call.data), "r", encoding='utf-8') as read_file:
+                data = json.load(read_file)
+                media = types.MediaGroup()
+                photo = await call.message.answer_photo(data["url_imgs"][0],
+                                                        reply_markup=hide)
+        else:
+            with open('stikers/seach.tgs', 'rb') as sticker:
+                sticker = await call.message.answer_sticker(sticker)
+            url = get_info(call.data)
+            photo = await call.message.answer_photo(url[0][0],
+                                                    reply_markup=hide)
+            asyncio.create_task(delete_message(sticker))
+        async with state.proxy() as data:
+            data['photo'] = photo
 
 
 async def show_place(message, state):
@@ -178,23 +199,29 @@ async def show_place(message, state):
 
 
 @dp.callback_query_handler(state=Place.mesto_1)
-async def answer_exit(call: types.CallbackQuery, state: FSMContext):
-
-    await call.answer(cache_time=60)
-    answer: str = call.data
-    logger.info('Получил ряд: {}'.format(answer))
-    mes2 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
-    async with state.proxy() as data:
-        data['mesto1'] = answer
-        data['message2'] = mes2
-        asyncio.create_task(delete_message(data['message1']))
-    await Place.mesto_2.set()
+async def place_1(call: types.CallbackQuery, state: FSMContext):
+    if call.data == '012_825-OX':
+        async with state.proxy() as data:
+            data['mesto1'] = call.data
+            asyncio.create_task(delete_message(data['message1']))
+            await call.message.answer('\n'.join(place('012_825-OX')))
+            await state.reset_state()
+            logger.info('Очистил state')
+    else:
+        await call.answer(cache_time=10)
+        answer: str = call.data
+        logger.info('Получил ряд: {}'.format(answer))
+        mes2 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
+        async with state.proxy() as data:
+            data['mesto1'] = answer
+            data['message2'] = mes2
+            asyncio.create_task(delete_message(data['message1']))
+        await Place.mesto_2.set()
 
 
 @dp.callback_query_handler(state=Place.mesto_2)
-async def answer_exit(call: types.CallbackQuery, state: FSMContext):
-
-    await call.answer(cache_time=60)
+async def place_2(call: types.CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=10)
     answer: str = call.data
     logger.info('Получил секцию: {}'.format(answer))
     mes3 = await call.message.answer('Выберите ячейку:', reply_markup=mesto3)
@@ -206,9 +233,8 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
 
 
 @dp.callback_query_handler(state=Place.mesto_3)
-async def answer_exit(call: types.CallbackQuery, state: FSMContext):
-
-    await call.answer(cache_time=60)
+async def place_3(call: types.CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=10)
     answer: str = call.data
     logger.info('Получил ячейку: {}. '.format(answer))
 
@@ -226,10 +252,16 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer('Список товара на {}:'.format(result))
         data['result'] = result
         logger.info(data['result'])
-        await call.message.answer('\n'.join(place(result)))
 
-    await state.reset_state()
-    logger.info('Очистил state')
+        for item in place(result):
+            await call.message.answer(item,
+                                      reply_markup=InlineKeyboardMarkup().add(
+                                          InlineKeyboardButton(text='Показать фото',
+                                                               callback_data='{}'.format(
+                                                                   item[:8]
+                                                               ))))
+        await call.message.answer('Хотите выйти?', reply_markup=exitqr)
+        await Place.mesto_4.set()
 
 
 @dp.message_handler(content_types=['text'], state='*')
@@ -270,62 +302,67 @@ async def bot_message(message: types.Message, state: FSMContext):
             message.from_user.first_name,
             answer
         ))
+
         if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
-
-            if os.path.exists('base/{}.json'.format(answer)):
-                logger.info('нашел json и вывел результат')
-                with open('base/{}.json'.format(answer), "r", encoding='utf-8') as read_file:
-                    data = json.load(read_file)
-                    await bot.send_message(message.from_user.id, data['name'].replace('#', 'Артикул: '))
-                    if len(data['url_imgs']) >= 2:
-                        media = types.MediaGroup()
-                        if len(data['url_imgs']) < 10:
-                            for i_photo in data['url_imgs']:
-                                media.attach_photo(i_photo)
-                            await message.answer_media_group(media)
-                        else:
-                            for i_photo in range(10):
-                                media.attach_photo(data['url_imgs'][i_photo])
-                            await message.answer_media_group(media)
-                    else:
-                        await message.answer_photo(data['url_imgs'])
-                    await bot.send_message(message.from_user.id, '\n'.join(data['params']))
-                    await bot.send_message(message.from_user.id,
-                                           'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(data['price']))
-                    await state.reset_state()
-                    logger.info('Очистил state')
-
-            else:
-                try:
-                    with open('stikers/seach.tgs', 'rb') as sticker:
-                        sticker = await bot.send_sticker(message.chat.id, sticker)
-
-                    url_list = get_info(answer)
-                    await bot.send_message(message.from_user.id, url_list[1].replace('#', 'Артикул: '))
-                    logger.info('Функция вернула список урл - {}\n'.format(url_list))
-                    if len(url_list[0]) >= 2:
-                        media = types.MediaGroup()
-                        if len(url_list[0]) < 10:
-                            for i_photo in url_list[0]:
-                                media.attach_photo(i_photo)
-                            await message.answer_media_group(media)
-                        else:
-                            for i_photo in range(10):
-                                media.attach_photo(url_list[0][i_photo])
-                            await message.answer_media_group(media)
-                    else:
-                        await message.answer_photo(url_list[0][0])
-                    await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
-                    await bot.send_message(message.from_user.id,
-                                           'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(url_list[3]))
-                    asyncio.create_task(delete_message(sticker))
-
-                except Exception as ex:
-                    await bot.send_message(message.from_user.id,
-                                           'Неверно указан артикул или его нет на сайте. Пример: 80422781')
-                    asyncio.create_task(delete_message(sticker))
-
-                    logger.debug('{}'.format(ex))
+            await show_media(message, state)
         else:
             await bot.send_message(message.from_user.id,
                                    'Неверно указан артикул или его нет на сайте. Пример: 80422781')
+
+
+async def show_media(message: types.Message, state: FSMContext):
+    answer = message.text.lower()
+    if os.path.exists('base/{}.json'.format(answer)):
+        logger.info('нашел json и вывел результат')
+        with open('base/{}.json'.format(answer), "r", encoding='utf-8') as read_file:
+            data = json.load(read_file)
+            await bot.send_message(message.from_user.id, data['name'].replace('#', 'Артикул: '))
+            if len(data['url_imgs']) >= 2:
+                media = types.MediaGroup()
+                if len(data['url_imgs']) < 10:
+                    for i_photo in data['url_imgs']:
+                        media.attach_photo(i_photo)
+                    await message.answer_media_group(media)
+                else:
+                    for i_photo in range(10):
+                        media.attach_photo(data['url_imgs'][i_photo])
+                    await message.answer_media_group(media)
+            else:
+                await message.answer_photo(data['url_imgs'])
+            await bot.send_message(message.from_user.id, '\n'.join(data['params']))
+            await bot.send_message(message.from_user.id,
+                                   'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(data['price']))
+            await state.reset_state()
+            logger.info('Очистил state')
+
+    else:
+        try:
+            with open('stikers/seach.tgs', 'rb') as sticker:
+                sticker = await bot.send_sticker(message.chat.id, sticker)
+
+            url_list = get_info(answer)
+            await bot.send_message(message.from_user.id, url_list[1].replace('#', 'Артикул: '))
+            logger.info('Функция вернула список урл - {}\n'.format(url_list))
+            if len(url_list[0]) >= 2:
+                media = types.MediaGroup()
+                if len(url_list[0]) < 10:
+                    for i_photo in url_list[0]:
+                        media.attach_photo(i_photo)
+                    await message.answer_media_group(media)
+                else:
+                    for i_photo in range(10):
+                        media.attach_photo(url_list[0][i_photo])
+                    await message.answer_media_group(media)
+            else:
+                await message.answer_photo(url_list[0][0])
+            await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
+            await bot.send_message(message.from_user.id,
+                                   'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(url_list[3]))
+            asyncio.create_task(delete_message(sticker))
+
+        except Exception as ex:
+            await bot.send_message(message.from_user.id,
+                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
+            asyncio.create_task(delete_message(sticker))
+
+            logger.debug('{}'.format(ex))

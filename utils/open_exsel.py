@@ -23,17 +23,14 @@ def place(message):
         answer = []
         for row in reader:
             if row['Местоположение'] == message:
-                line1 = '{} - {}'.format(
+                line = '{} - {}\nДоступно: {} Резерв: {}'.format(
                     row['Код \nноменклатуры'],
-                    row['Описание товара'])
-                line = 'Доступно: {} Резерв: {}'.format(0 if row['Доступно'] == '' else row['Доступно'],
-                                                        0 if row['Зарезерви\nровано'] == '' else row[
-                                                            'Зарезерви\nровано']) \
+                    row['Описание товара'],
+                    0 if row['Доступно'] == '' else row['Доступно'],
+                    0 if row['Зарезерви\nровано'] == '' else row[
+                        'Зарезерви\nровано']) \
                     .replace('.0', '')
-
-                answer.append(line1)
                 answer.append(line)
-
     return answer
 
 
