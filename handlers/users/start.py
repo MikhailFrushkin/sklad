@@ -78,22 +78,22 @@ async def show_graf(message: types.Message, state: FSMContext):
     ))
 
     await bot.send_message(message.from_user.id, 'График на текущий месяц')
+    try:
+        with open('stikers/seach.tgs', 'rb') as sticker:
+            sticker = await bot.send_sticker(message.chat.id, sticker)
+        get_graf(message)
+        graf = open('base/graf/{}.png'.format(message.from_user.id), 'rb')
+        await bot.send_photo(message.chat.id, graf)
+        asyncio.create_task(delete_message(sticker))
+    except Exception as ex:
+        logger.debug(ex)
+
     async with state.proxy() as data:
         data['command'] = message.get_command()
         data['message_id'] = message.message_id
 
-    await Showphoto.graf.set()
-
-
-@dp.message_handler(state=Showphoto.graf)
-async def showgraf(message: types.Message, state: FSMContext):
-    try:
-        get_graf(message)
-        graf = open('base/graf/{}.png'.format(message.from_user.id), 'rb')
-        await bot.send_photo(message.chat.id, graf)
-
-    except Exception as ex:
-        logger.debug(ex)
+    await state.reset_state()
+    logger.info('Очистил state')
 
 
 @dp.message_handler(state=Showphoto.show_qr)
@@ -260,7 +260,7 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
                                                                callback_data='{}'.format(
                                                                    item[:8]
                                                                ))))
-        await call.message.answer('Хотите выйти?', reply_markup=exitqr)
+
         await Place.mesto_4.set()
 
 
@@ -287,7 +287,7 @@ async def bot_message(message: types.Message, state: FSMContext):
         await show_qr(message, state)
 
     elif message.text == 'Мой график(в разработке)':
-        await showgraf(message, state)
+        await show_graf(message, state)
 
     elif message.text == '📦 Содержимое ячейки':
         await show_place(message, state)

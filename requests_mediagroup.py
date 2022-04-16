@@ -14,15 +14,20 @@ def get_info(art: str) -> tuple:
     :param art: srt
     :return: tuple
     """
+    options = webdriver.ChromeOptions()
+    options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    prefs = {"profile.managed_default_content_settings.images": 2}
+    options.add_experimental_option("prefs", prefs)
+    options.add_argument("--headless")
+    driver = webdriver.Chrome(
+        executable_path="C:/Users/sklad/chromedriver.exe",
+        options=options
+    )
+
     url: str = 'https://hoff.ru/vue/search/?fromSearch=direct&search={}&redirect_search=true'.format(art)
     try:
         start_time = time.time()
-
-        chromeOptions = webdriver.ChromeOptions()
-        prefs = {"profile.managed_default_content_settings.images": 2}
-        chromeOptions.add_experimental_option("prefs", prefs)
-        driver = webdriver.Chrome(chrome_options=chromeOptions)
-        driver.minimize_window()
         driver.get(url)
         text = driver.page_source
         pattern = r'(?<=\\).+?["]'
@@ -33,7 +38,7 @@ def get_info(art: str) -> tuple:
         logger.info('URL товара - {}'.format(url))
 
         driver.get(url)
-        time.sleep(3)
+        time.sleep(2)
 
         try:
             name = driver.find_element(

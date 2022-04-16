@@ -8,11 +8,15 @@ from selenium.webdriver.common.by import By
 def get_graf(message):
     url: str = 'https://time.hoff.ru/timeman/timeman-verme.php?personal_page_id=user_timeman'
     options = webdriver.ChromeOptions()
-    options.add_argument(
-        'user_agent=Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) '
-        'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Mobile Safari/537.36')
-    driver = webdriver.Chrome(options=options)
-    driver.set_window_size(1000, 1000)
+    options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    prefs = {"profile.managed_default_content_settings.images": 2}
+    options.add_experimental_option("prefs", prefs)
+    options.add_argument("--headless")
+    driver = webdriver.Chrome(
+        executable_path="C:/Users/sklad/chromedriver.exe",
+        options=options
+    )
     try:
 
         driver.get(url)
@@ -31,7 +35,6 @@ def get_graf(message):
         time.sleep(1)
 
         driver.find_element(by=By.CLASS_NAME, value='login-btn').click()
-        time.sleep(2)
 
         driver.execute_script("""
                 (function () {
