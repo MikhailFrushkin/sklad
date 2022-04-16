@@ -6,6 +6,5 @@ menu = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('☣ R12_BrakIn_825')],
     [KeyboardButton('🤖 Показать Qrcode ячейки'),
      KeyboardButton('📦 Содержимое ячейки')],
-    [KeyboardButton('ℹ Информация'),
-     KeyboardButton('Мой график(в разработке)')]
+    [KeyboardButton('ℹ Информация')]
     ], resize_keyboard=True)

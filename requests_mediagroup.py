@@ -38,7 +38,7 @@ def get_info(art: str) -> tuple:
         logger.info('URL товара - {}'.format(url))
 
         driver.get(url)
-        time.sleep(2)
+        time.sleep(3)
 
         try:
             name = driver.find_element(

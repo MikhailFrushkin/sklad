@@ -47,55 +47,6 @@ async def bot_start(message: types.Message):
                          .format(message.from_user.first_name), reply_markup=menu)
 
 
-@dp.message_handler(commands=['showqr'], state='*')
-async def show_qr(message: types.Message, state: FSMContext):
-    """
-    Тригер на команду showqr и отправляет с кнопки.
-    """
-    logger.info('Пользователь {}: {} {} запросил команду /showqr'.format(
-        message.from_user.id,
-        message.from_user.first_name,
-        message.from_user.username
-    ))
-
-    await bot.send_message(message.from_user.id, 'Для показа Qrcode введите ряд, секцию, ячейку без нулей и пробела')
-    async with state.proxy() as data:
-        data['command'] = message.get_command()
-        data['message_id'] = message.message_id
-
-    await Showphoto.show_qr.set()
-
-
-@dp.message_handler(commands=['graph'], state='*')
-async def show_graf(message: types.Message, state: FSMContext):
-    """
-    Тригер на команду showqr и отправляет с кнопки.
-    """
-    logger.info('Пользователь {}: {} {} запросил команду /Мой график'.format(
-        message.from_user.id,
-        message.from_user.first_name,
-        message.from_user.username
-    ))
-
-    await bot.send_message(message.from_user.id, 'График на текущий месяц')
-    try:
-        with open('stikers/seach.tgs', 'rb') as sticker:
-            sticker = await bot.send_sticker(message.chat.id, sticker)
-        get_graf(message)
-        graf = open('base/graf/{}.png'.format(message.from_user.id), 'rb')
-        await bot.send_photo(message.chat.id, graf)
-        asyncio.create_task(delete_message(sticker))
-    except Exception as ex:
-        logger.debug(ex)
-
-    async with state.proxy() as data:
-        data['command'] = message.get_command()
-        data['message_id'] = message.message_id
-
-    await state.reset_state()
-    logger.info('Очистил state')
-
-
 @dp.message_handler(state=Showphoto.show_qr)
 async def showqr(message: types.Message, state: FSMContext):
     """
@@ -285,9 +236,6 @@ async def bot_message(message: types.Message, state: FSMContext):
 
     elif message.text == '🤖 Показать Qrcode ячейки':
         await show_qr(message, state)
-
-    elif message.text == 'Мой график(в разработке)':
-        await show_graf(message, state)
 
     elif message.text == '📦 Содержимое ячейки':
         await show_place(message, state)
