@@ -94,8 +94,6 @@ def get_info(art: str):
 
     except Exception as ex:
         logger.debug('{}'.format(ex))
-    finally:
-        driver.quit()
 
 
 def all_art():
