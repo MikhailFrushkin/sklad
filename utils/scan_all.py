@@ -9,7 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-def get_info(art: str) -> tuple:
+def get_info(art: str):
     """
     Получение от пользователя артикула, парсим первый сайт для получения урла товара.
     После парсим урл товара, берем нужную инфу, возвращаем ее кортежем.
