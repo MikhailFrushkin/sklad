@@ -12,3 +12,8 @@ class Place(StatesGroup):
     mesto_3 = State()
     mesto_4 = State()
     mesto_5 = State()
+
+
+class Search(StatesGroup):
+    art = State()
+    show_all = State()

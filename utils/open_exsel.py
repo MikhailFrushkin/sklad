@@ -26,7 +26,9 @@ def place(message):
         answer = []
         for row in reader:
             if row['Местоположение'] == message:
-                line = '{} - {}\nДоступно: {} Резерв: {}'.format(
+                line = '{} - {}\n' \
+                       '---------------------------------' \
+                       '\nДоступно: {} Резерв: {}'.format(
                     row['Код \nноменклатуры'],
                     row['Описание товара'],
                     0 if row['Доступно'] == '' else row['Доступно'],
@@ -34,12 +36,29 @@ def place(message):
                         'Зарезерви\nровано']) \
                     .replace('.0', '')
                 answer.append(line)
+                print(line)
     return answer
 
 
-def main():
-    url = 'https://docs.google.com/spreadsheets/d/1fp08EQdyLJMnn94inhRphbqXfRC4Jz4M'
+def search_articul(art):
+    with open('C:/Users/sklad/utils/file.csv', newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        answer = []
+        for row in reader:
+            if row['Код \nноменклатуры'] == art:
+                line = '{} - {}\n' \
+                       '---------------------------------' \
+                       '\nДоступно: {} Резерв: {}'.format(
+                    row['Местоположение'],
+                    row['Описание товара'],
+                    0 if row['Доступно'] == '' else row['Доступно'],
+                    0 if row['Зарезерви\nровано'] == '' else row[
+                        'Зарезерви\nровано']) \
+                    .replace('.0', '')
+                print(line)
+                answer.append(line)
+    return answer
 
 
 if __name__ == '__main__':
-    main()
+    print(search_articul('80419935'))

@@ -14,7 +14,7 @@ def get_graf(message):
     options.add_experimental_option("prefs", prefs)
     options.add_argument("--headless")
     driver = webdriver.Chrome(
-        executable_path="C:/Users/sklad/chromedriver.exe",
+        executable_path="/chromedriver.exe",
         options=options
     )
     try:

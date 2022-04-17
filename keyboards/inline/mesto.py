@@ -18,4 +18,4 @@ photo = InlineKeyboardMarkup(row_width=1)
 photo.add(InlineKeyboardButton(text='Показать фото', callback_data='photo'))
 
 hide = InlineKeyboardMarkup(row_width=1)
-hide.add(InlineKeyboardButton(text='Убрать', callback_data='hide'))
+hide.add(InlineKeyboardButton(text='Скрыть фото', callback_data='hide'))
