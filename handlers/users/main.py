@@ -2,6 +2,7 @@ import asyncio
 import json
 import os.path
 import time
+import sqlite3
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -36,7 +37,23 @@ async def bot_start(message: types.Message):
                          '\nДля показа Qrcode ячейки на складе нажмите на '
                          '"Показать qrcode ячейки" или воспользуйтесь кнопками.'
                          '\nДля показа товара на ячейках нажмите "Содержимое ячейки".'
+                         '\nДля поиска ячеек определенного артикула'
+                         '\nНажмите на "Поиск на складе"'
                          .format(message.from_user.first_name), reply_markup=menu)
+    connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
+    cursor = connect.cursor()
+
+    cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT)""")
+    connect.commit()
+
+    people_id = message.chat.id
+    cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(people_id))
+    data = cursor.fetchone()
+    if data is None:
+
+        user_id = [message.chat.id, message.from_user.first_name]
+        cursor.execute('INSERT INTO login_id VALUES(?,?);', user_id)
+        connect.commit()
 
 
 @dp.message_handler(commands=['help'], state='*')
@@ -48,7 +65,9 @@ async def bot_help(message: types.Message):
                          '\nВведите артикул. Пример: 80264335.'
                          '\nДля показа Qrcode ячейки на складе нажмите на '
                          '"Показать qrcode ячейки" или воспользуйтесь кнопками.'
-                         '\nДля показа товара на ячейках нажмите "Содержимое ячейки".'
+                         '\nДля показа товара на ячейке нажмите "Содержимое ячейки".'
+                         '\nДля поиска ячеек определенного артикула'
+                         '\nНажмите на "Поиск на складе"'
                          '\nПо всем вопросам обращаться к Михаилу, БЮ 825(склад), \nпочта - muxazila@mail.ru')
 
 
@@ -141,8 +160,9 @@ async def input_art(message: types.Message, state: FSMContext):
                                                                 ))))
                 await Search.show_all.set()
         else:
+            await bot.send_message(message.from_user.id, 'Артикул не найден')
             await state.reset_state()
-            logger.info('не нашел ортикул на складе Очистил state')
+            logger.info('не нашел артикул на складе Очистил state')
     except Exception as ex:
         await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе')
         logger.debug(ex)
@@ -201,7 +221,7 @@ async def bot_message(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(state=[Showphoto.show_qr, Place.mesto_4, Search.show_all])
 async def answer_exit(call: types.CallbackQuery, state: FSMContext):
     if call.data == 'exit':
-        await call.answer(cache_time=10)
+        await call.answer(cache_time=5)
         answer: str = call.data
         logger.info('Получил ответ: {}. Сохраняю в state'.format(answer))
         await call.message.answer('Введите артикул. Пример: 80264335')
@@ -211,6 +231,7 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
         async with state.proxy() as data:
             asyncio.create_task(delete_message(data['photo']))
     else:
+        start_time = time.time()
         logger.info('Пользователь запросил картинку на арт.{}'.format(call.data))
         if os.path.exists('base/{}.json'.format(call.data)):
             logger.info('нашел json и вывел результат')
@@ -227,6 +248,7 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
             asyncio.create_task(delete_message(sticker))
         async with state.proxy() as data:
             data['photo'] = photo
+        logger.info('Вывод результата через:{} сек.'.format(time.time() - start_time))
 
 
 @dp.callback_query_handler(state=Place.mesto_1)
@@ -239,7 +261,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
             await state.reset_state()
             logger.info('Очистил state')
     else:
-        await call.answer(cache_time=10)
+        await call.answer(cache_time=5)
         answer: str = call.data
         logger.info('Получил ряд: {}'.format(answer))
         mes2 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
@@ -252,7 +274,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(state=Place.mesto_2)
 async def place_2(call: types.CallbackQuery, state: FSMContext):
-    await call.answer(cache_time=10)
+    await call.answer(cache_time=5)
     answer: str = call.data
     logger.info('Получил секцию: {}'.format(answer))
     mes3 = await call.message.answer('Выберите ячейку:', reply_markup=mesto3)
@@ -265,7 +287,7 @@ async def place_2(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(state=Place.mesto_3)
 async def place_3(call: types.CallbackQuery, state: FSMContext):
-    await call.answer(cache_time=10)
+    await call.answer(cache_time=5)
     answer: str = call.data
     logger.info('Получил ячейку: {}. '.format(answer))
 
