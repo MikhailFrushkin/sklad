@@ -36,7 +36,6 @@ def place(message):
                         'Зарезерви\nровано']) \
                     .replace('.0', '')
                 answer.append(line)
-                print(line)
     return answer
 
 
@@ -55,7 +54,6 @@ def search_articul(art):
                     0 if row['Зарезерви\nровано'] == '' else row[
                         'Зарезерви\nровано']) \
                     .replace('.0', '')
-                print(line)
                 answer.append(line)
     return answer
 

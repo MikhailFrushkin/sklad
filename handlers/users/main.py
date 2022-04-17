@@ -2,32 +2,25 @@ import asyncio
 import json
 import os.path
 import time
-from contextlib import suppress
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.builtin import CommandStart, CommandHelp
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.exceptions import (MessageCantBeDeleted,
-                                      MessageToDeleteNotFound)
 from loguru import logger
 
 import bot
+from handlers.users.delete_message import delete_message
+from handlers.users.search import search
+from handlers.users.show_media import show_media
+from handlers.users.show_place import show_place
 from keyboards.default import menu
-from keyboards.inline.mesto import mesto1, mesto2, mesto3, hide
+from keyboards.inline.mesto import mesto2, mesto3, hide
 from keyboards.inline.quit import exitqr
 from loader import dp, bot
 from requests.requests_mediagroup import get_info
 from state.show_photo import Showphoto, Place, Search
 from utils.new_qr import qr_code
 from utils.open_exsel import place, search_articul
-
-
-async def delete_message(message: types.Message, sleep_time: int = 0):
-    """Удаление сообщений, в данном случае стикера ожидания"""
-    await asyncio.sleep(sleep_time)
-    with suppress(MessageCantBeDeleted, MessageToDeleteNotFound):
-        await message.delete()
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -303,93 +296,3 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
             await Place.mesto_4.set()
         else:
             await call.message.answer('Ячейка пустая')
-
-
-async def show_place(message, state):
-    logger.info('Пользователь {}: {} {} запустил просмотр ячеек'.format(
-        message.from_user.id,
-        message.from_user.first_name,
-        message.from_user.username
-    ))
-
-    mes1 = await bot.send_message(message.from_user.id, 'Данные на 15.04.22\nВыберите ряд:', reply_markup=mesto1)
-    async with state.proxy() as data:
-        data['command'] = message.get_command()
-        data['message_id'] = message.message_id
-        data['message1'] = mes1
-
-    await Place.mesto_1.set()
-
-
-async def show_media(message: types.Message, state: FSMContext):
-    answer = message.text.lower()
-    if os.path.exists('base/{}.json'.format(answer)):
-        logger.info('нашел json и вывел результат')
-        with open('base/{}.json'.format(answer), "r", encoding='utf-8') as read_file:
-            data = json.load(read_file)
-            await bot.send_message(message.from_user.id, data['name'].replace('#', 'Артикул: '))
-            if len(data['url_imgs']) >= 2:
-                media = types.MediaGroup()
-                if len(data['url_imgs']) < 10:
-                    for i_photo in data['url_imgs']:
-                        media.attach_photo(i_photo)
-                    await message.answer_media_group(media)
-                else:
-                    for i_photo in range(10):
-                        media.attach_photo(data['url_imgs'][i_photo])
-                    await message.answer_media_group(media)
-            else:
-                await message.answer_photo(data['url_imgs'])
-            await bot.send_message(message.from_user.id, '\n'.join(data['params']))
-            await bot.send_message(message.from_user.id,
-                                   'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(data['price']))
-            await state.reset_state()
-            logger.info('Очистил state')
-
-    else:
-        try:
-            with open('stikers/seach.tgs', 'rb') as sticker:
-                sticker = await bot.send_sticker(message.chat.id, sticker)
-
-            url_list = get_info(answer)
-            await bot.send_message(message.from_user.id, url_list[1].replace('#', 'Артикул: '))
-            logger.info('Функция вернула список урл - {}\n'.format(url_list))
-            if len(url_list[0]) >= 2:
-                media = types.MediaGroup()
-                if len(url_list[0]) < 10:
-                    for i_photo in url_list[0]:
-                        media.attach_photo(i_photo)
-                    await message.answer_media_group(media)
-                else:
-                    for i_photo in range(10):
-                        media.attach_photo(url_list[0][i_photo])
-                    await message.answer_media_group(media)
-            else:
-                await message.answer_photo(url_list[0][0])
-            await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
-            await bot.send_message(message.from_user.id,
-                                   'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(url_list[3]))
-            asyncio.create_task(delete_message(sticker))
-
-        except Exception as ex:
-            await bot.send_message(message.from_user.id,
-                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
-            asyncio.create_task(delete_message(sticker))
-
-            logger.debug('{}'.format(ex))
-
-
-async def search(message, state):
-    logger.info('\nПользователь {}: {} {} запустил поиск на складе'.format(
-        message.from_user.id,
-        message.from_user.first_name,
-        message.from_user.username
-    ))
-
-    mes1 = await bot.send_message(message.from_user.id, 'Данные на 15.04.22\nВведите артикул:')
-    async with state.proxy() as data:
-        data['command'] = message.get_command()
-        data['message_id'] = message.message_id
-        data['message1'] = mes1
-
-    await Search.art.set()
