@@ -260,6 +260,11 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
 
         async with state.proxy() as data:
             try:
+                if 'photo{}'.format(call.data) in data:
+                    for key in data:
+                        if str(key).startswith('photo'):
+                            asyncio.create_task(delete_message(data['{}'.format(key)]))
+
                 data['photo{}'.format(call.data)] = photo
             except Exception as ex:
                 logger.debug(ex)
