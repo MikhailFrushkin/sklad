@@ -2,6 +2,7 @@ from aiogram import Dispatcher
 from loguru import logger
 
 from data.config import ADMINS
+from keyboards.default.menu import menu_admin
 
 
 async def on_startup_notify(dp: Dispatcher):

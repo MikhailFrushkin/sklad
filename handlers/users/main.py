@@ -11,6 +11,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
 import bot
+from data.config import ADMINS
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
 from handlers.users.helps import bot_help
@@ -18,7 +19,7 @@ from handlers.users.search import search
 from handlers.users.show_media import show_media
 from handlers.users.show_place import show_place
 from keyboards.default import menu
-from keyboards.default.menu import second_menu
+from keyboards.default.menu import second_menu, menu_admin
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from keyboards.inline.quit import exitqr
 from loader import dp, bot
@@ -33,18 +34,22 @@ async def bot_start(message: types.Message):
     """
     Старт бота
     """
-    sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
-    await bot.send_sticker(message.chat.id, sticker)
-    await message.answer('Добро пожаловать, {}!'
-                         '\nДля показа фотографий товара, описания и цены с сайта'
-                         '\nВведите артикул. Пример: 80264335.'
-                         '\n"🤖 Показать Qrcode ячейки" - '
-                         '\nДля показа Qrcode ячейки на складе. '
-                         '\n"📦 Содержимое ячейки" - '
-                         '\nДля показа товара на ячейке.'
-                         '\n"🔍 Поиск на складе" - '
-                         '\nДля поиска ячеек с определенным артикулом.'
-                         .format(message.from_user.first_name), reply_markup=menu)
+    if str(message.from_user.id) in ADMINS:
+        await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
+                             reply_markup=menu_admin)
+    else:
+        sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
+        await bot.send_sticker(message.chat.id, sticker)
+        await message.answer('Добро пожаловать, {}!'
+                             '\nДля показа фотографий товара, описания и цены с сайта'
+                             '\nВведите артикул. Пример: 80264335.'
+                             '\n"🤖 Показать Qrcode ячейки" - '
+                             '\nДля показа Qrcode ячейки на складе. '
+                             '\n"📦 Содержимое ячейки" - '
+                             '\nДля показа товара на ячейке.'
+                             '\n"🔍 Поиск на складе" - '
+                             '\nДля поиска ячеек с определенным артикулом.'
+                             .format(message.from_user.first_name), reply_markup=menu)
     connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
     cursor = connect.cursor()
 
