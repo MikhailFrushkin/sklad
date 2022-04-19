@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import json
 import os.path
 import time
@@ -44,16 +45,16 @@ async def bot_start(message: types.Message):
     connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
     cursor = connect.cursor()
 
-    cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT)""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL)""")
     connect.commit()
 
     people_id = message.chat.id
     cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(people_id))
     data = cursor.fetchone()
     if data is None:
-
-        user_id = [message.chat.id, message.from_user.first_name]
-        cursor.execute('INSERT INTO login_id VALUES(?,?);', user_id)
+        date = datetime.datetime.now()
+        user_id = [message.chat.id, message.from_user.first_name, date]
+        cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
         connect.commit()
 
 
@@ -233,10 +234,12 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
         logger.info('Очистил state')
     elif call.data == 'hide':
         async with state.proxy() as data:
-            asyncio.create_task(delete_message(data['photo']))
+            for key in data:
+                if str(key).startswith('photo'):
+                    asyncio.create_task(delete_message(data['{}'.format(key)]))
     else:
         start_time = time.time()
-        logger.info('Пользователь запросил картинку на арт.{}'.format(call.data))
+        logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.message.from_user.id, call.data))
         if os.path.exists('base/{}.json'.format(call.data)):
             logger.info('нашел json и вывел результат')
             with open('base/{}.json'.format(call.data), "r", encoding='utf-8') as read_file:
@@ -246,12 +249,20 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
         else:
             with open('stikers/seach.tgs', 'rb') as sticker:
                 sticker = await call.message.answer_sticker(sticker)
-            url = get_info(call.data)
-            photo = await call.message.answer_photo(url[0][0],
-                                                    reply_markup=hide)
-            asyncio.create_task(delete_message(sticker))
+            try:
+                url = get_info(call.data)
+                photo = await call.message.answer_photo(url[0][0],
+                                                        reply_markup=hide)
+            except Exception as ex:
+                logger.debug(ex)
+            finally:
+                asyncio.create_task(delete_message(sticker))
+
         async with state.proxy() as data:
-            data['photo'] = photo
+            try:
+                data['photo{}'.format(call.data)] = photo
+            except Exception as ex:
+                logger.debug(ex)
         logger.info('Вывод результата через:{} сек.'.format(time.time() - start_time))
 
 
@@ -268,11 +279,12 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
         await call.answer(cache_time=5)
         answer: str = call.data
         logger.info('Получил ряд: {}'.format(answer))
-        mes2 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
+
         async with state.proxy() as data:
-            data['mesto1'] = answer
-            data['message2'] = mes2
             asyncio.create_task(delete_message(data['message1']))
+            mes1 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
+            data['mesto1'] = answer
+            data['message1'] = mes1
         await Place.mesto_2.set()
 
 
@@ -281,11 +293,13 @@ async def place_2(call: types.CallbackQuery, state: FSMContext):
     await call.answer(cache_time=5)
     answer: str = call.data
     logger.info('Получил секцию: {}'.format(answer))
-    mes3 = await call.message.answer('Выберите ячейку:', reply_markup=mesto3)
+
     async with state.proxy() as data:
+        asyncio.create_task(delete_message(data['message1']))
+        mes1 = await call.message.answer('Выберите ячейку:', reply_markup=mesto3)
         data['mesto2'] = answer
-        data['message3'] = mes3
-        asyncio.create_task(delete_message(data['message2']))
+        data['message1'] = mes1
+
     await Place.mesto_3.set()
 
 
@@ -297,7 +311,7 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
 
     async with state.proxy() as data:
         data['mesto3'] = answer
-        asyncio.create_task(delete_message(data['message3']))
+        asyncio.create_task(delete_message(data['message1']))
         if len(data['mesto1']) == 1:
             data['mesto1'] = '0{}'.format(data['mesto1'])
 

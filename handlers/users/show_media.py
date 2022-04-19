@@ -8,6 +8,7 @@ from loguru import logger
 
 from loader import bot
 from requests.requests_mediagroup import get_info
+from handlers.users.delete_message import delete_message
 
 
 async def show_media(message: types.Message, state: FSMContext):
@@ -58,12 +59,9 @@ async def show_media(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
             await bot.send_message(message.from_user.id,
                                    'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(url_list[3]))
-            from handlers.users.delete_message import delete_message
-            asyncio.create_task(delete_message(sticker))
-
         except Exception as ex:
             await bot.send_message(message.from_user.id,
                                    'Неверно указан артикул или его нет на сайте. Пример: 80422781')
-            asyncio.create_task(delete_message(sticker))
-
             logger.debug('{}'.format(ex))
+        finally:
+            asyncio.create_task(delete_message(sticker))
