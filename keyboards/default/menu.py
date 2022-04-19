@@ -9,3 +9,8 @@ menu = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('🔍 Поиск на складе')],
     [KeyboardButton('ℹ Информация')]
 ], resize_keyboard=True)
+
+
+second_menu = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton('Назад')],
+], resize_keyboard=True)

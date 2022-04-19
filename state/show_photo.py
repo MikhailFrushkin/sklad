@@ -16,3 +16,4 @@ class Place(StatesGroup):
 class Search(StatesGroup):
     art = State()
     show_all = State()
+

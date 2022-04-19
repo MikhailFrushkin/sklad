@@ -11,12 +11,15 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
 import bot
+from handlers.users.back import back
 from handlers.users.delete_message import delete_message
+from handlers.users.helps import bot_help
 from handlers.users.search import search
 from handlers.users.show_media import show_media
 from handlers.users.show_place import show_place
 from keyboards.default import menu
-from keyboards.inline.mesto import mesto2, mesto3, hide
+from keyboards.default.menu import second_menu
+from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from keyboards.inline.quit import exitqr
 from loader import dp, bot
 from requests.requests_mediagroup import get_info
@@ -59,19 +62,11 @@ async def bot_start(message: types.Message):
 
 
 @dp.message_handler(commands=['help'], state='*')
-async def bot_help(message: types.Message):
+async def helps(message: types.Message):
     """
     Справка бота
     """
-    await message.answer('\nДля показа фотографий товара, описания и цены с сайта'
-                         '\nВведите артикул. Пример: 80264335.'
-                         '\n"🤖 Qrcode ячейки" - '
-                         '\nДля показа Qrcode ячейки на складе. '
-                         '\n"📦 Содержимое ячейки" - '
-                         '\nДля показа товара на ячейке.'
-                         '\n"🔍 Поиск на складе" - '
-                         '\nДля поиска ячеек с определенным артикулом.'
-                         '\nПо всем вопросам обращаться к Михаилу, БЮ 825(склад), \nпочта - muxazila@mail.ru')
+    await bot_help(message)
 
 
 @dp.message_handler(commands=['showqr'], state='*')
@@ -87,7 +82,9 @@ async def show_qr(message: types.Message, state: FSMContext):
 
     await bot.send_message(message.from_user.id, 'Для показа Qrcode введите ряд, секцию,'
                                                  '\nячейку без нулей и пробела.'
-                                                 '\nПример: 721 - это 7 ряд 2 секция 1 ячейка')
+                                                 '\nПример: 721 - это 7 ряд 2 секция 1 ячейка',
+                           reply_markup=second_menu)
+
     async with state.proxy() as data:
         data['command'] = message.get_command()
         data['message_id'] = message.message_id
@@ -103,76 +100,73 @@ async def showqr(message: types.Message, state: FSMContext):
     Скидывает стате.
     """
     ans = message.text
-    if ans.isdigit():
-        if len(ans) == 3:
-            if 0 < int(ans[1]) < 9 and int(ans[2]) < 5:
-
-                await bot.send_message(message.from_user.id, '{} ряд {} секция {} ячейка'.
-                                       format(ans[0], ans[1], ans[2]))
-
-                data = ('012_825-0{}-0{}-{}'.format(message.text[0], message.text[1], message.text[2]))
-                qr_code(message, data)
-                qrcod = open('qcodes/{}.jpg'.format(message.text), 'rb')
-                await bot.send_photo(message.from_user.id, qrcod)
-                logger.info(data)
-                await state.reset_state()
-                logger.info('Очистил state')
-            else:
-                await bot.send_message(message.from_user.id,
-                                       'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела',
-                                       reply_markup=exitqr)
-        elif len(ans) == 4 and int(ans[0]) == 1 and 0 < int(ans[1]) < 8:
-            if 0 < int(ans[2]) < 9 and int(ans[3]) < 5:
-
-                await bot.send_message(message.from_user.id, '{}{} ряд {} секция {} ячейка'.
-                                       format(ans[0], ans[1], ans[2], ans[3]))
-
-                data = ('012_825-{}{}-0{}-{}'
-                        .format(message.text[0], message.text[1], message.text[2], message.text[3]))
-
-                qr_code(message, data)
-                qrcod = open('qcodes/{}.jpg'.format(message.text), 'rb')
-                await bot.send_photo(message.from_user.id, qrcod)
-
-                await state.reset_state()
-                logger.info('Очистил state')
-            else:
-                await bot.send_message(message.from_user.id,
-                                       'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела',
-                                       reply_markup=exitqr)
-        else:
-            await bot.send_message(message.from_user.id,
-                                   'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела',
-                                   reply_markup=exitqr)
+    if ans == 'Назад':
+        await back(message, state)
+    elif ans == 'Помощь':
+        await bot_help(message)
     else:
-        await bot.send_message(message.from_user.id, 'Введены буквы или символы',
-                               reply_markup=exitqr)
+        if ans.isdigit():
+            if len(ans) == 3:
+                if 0 < int(ans[1]) < 9 and int(ans[2]) < 5:
+
+                    await bot.send_message(message.from_user.id, '{} ряд {} секция {} ячейка'.
+                                           format(ans[0], ans[1], ans[2]))
+
+                    data = ('012_825-0{}-0{}-{}'.format(message.text[0], message.text[1], message.text[2]))
+                    qr_code(message, data)
+                    qrcod = open('qcodes/{}.jpg'.format(message.text), 'rb')
+                    await bot.send_photo(message.from_user.id, qrcod)
+                    logger.info(data)
+                else:
+                    await bot.send_message(message.from_user.id,
+                                           'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
+            elif len(ans) == 4 and int(ans[0]) == 1 and 0 < int(ans[1]) < 8:
+                if 0 < int(ans[2]) < 9 and int(ans[3]) < 5:
+
+                    await bot.send_message(message.from_user.id, '{}{} ряд {} секция {} ячейка'.
+                                           format(ans[0], ans[1], ans[2], ans[3]))
+
+                    data = ('012_825-{}{}-0{}-{}'
+                            .format(message.text[0], message.text[1], message.text[2], message.text[3]))
+
+                    qr_code(message, data)
+                    qrcod = open('qcodes/{}.jpg'.format(message.text), 'rb')
+                    await bot.send_photo(message.from_user.id, qrcod)
+
+                else:
+                    await bot.send_message(message.from_user.id,
+                                           'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
+            else:
+                await bot.send_message(message.from_user.id,
+                                       'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
+        else:
+            await bot.send_message(message.from_user.id, 'Введены буквы или символы')
 
 
 @dp.message_handler(state=Search.art)
 async def input_art(message: types.Message, state: FSMContext):
     ans = message.text
-    try:
-        cells = search_articul(ans)
-        if len(cells) != 0:
-            logger.info('Вернул список ячеек - {}'.format(cells))
-            for item in cells:
-                await bot.send_message(message.from_user.id, item,
-                                       reply_markup=InlineKeyboardMarkup().add(
-                                           InlineKeyboardButton(text='Показать фото',
-                                                                callback_data='{}'.format(
-                                                                    ans
-                                                                ))))
-                await Search.show_all.set()
-        else:
-            await bot.send_message(message.from_user.id, 'Артикул не найден')
-            await state.reset_state()
-            logger.info('не нашел артикул на складе Очистил state')
-    except Exception as ex:
-        await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе')
-        logger.debug(ex)
-        await state.reset_state()
-        logger.info('Очистил state')
+    if ans == 'Назад':
+        await back(message, state)
+    elif ans == 'Помощь':
+        await bot_help(message)
+    else:
+        try:
+            cells = search_articul(ans)
+            if len(cells) != 0:
+                logger.info('Вернул список ячеек - {}'.format(cells))
+                for item in cells:
+                    await bot.send_message(message.from_user.id, item,
+                                           reply_markup=InlineKeyboardMarkup().add(
+                                               InlineKeyboardButton(text='Показать фото',
+                                                                    callback_data='{}'.format(
+                                                                        ans
+                                                                    ))))
+            else:
+                await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе')
+
+        except Exception as ex:
+            logger.debug(ex)
 
 
 @dp.message_handler(content_types=['text'], state='*')
@@ -200,11 +194,14 @@ async def bot_message(message: types.Message, state: FSMContext):
     elif message.text == '📦 Содержимое ячейки':
         await show_place(message, state)
 
-    elif message.text == 'ℹ Информация':
+    elif message.text == 'ℹ Информация' or message.text == 'Помощь':
         await bot_help(message)
 
     elif message.text == '🔍 Поиск на складе':
         await search(message, state)
+
+    elif message.text == 'Назад':
+        await back(message, state)
 
     else:
         start_time = time.time()
@@ -239,7 +236,7 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
                     asyncio.create_task(delete_message(data['{}'.format(key)]))
     else:
         start_time = time.time()
-        logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.message.from_user.id, call.data))
+        logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
         if os.path.exists('base/{}.json'.format(call.data)):
             logger.info('нашел json и вывел результат')
             with open('base/{}.json'.format(call.data), "r", encoding='utf-8') as read_file:
@@ -278,8 +275,6 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
             await call.message.answer('\n'.join(place('012_825-OX')))
-            await state.reset_state()
-            logger.info('Очистил state')
     else:
         await call.answer(cache_time=5)
         answer: str = call.data
@@ -340,4 +335,10 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
 
             await Place.mesto_4.set()
         else:
-            await call.message.answer('Ячейка пустая')
+            await bot.send_message(call.from_user.id, 'Ячейка пустая')
+            await bot.send_message(call.from_user.id, 'Данные на 15.04.22\nВыберите ряд:', reply_markup=second_menu)
+            mes1 = await bot.send_message(call.from_user.id, 'Выберите ряд:', reply_markup=mesto1)
+            async with state.proxy() as data:
+                data['message1'] = mes1
+
+            await Place.mesto_1.set()

@@ -33,9 +33,6 @@ async def show_media(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, '\n'.join(data['params']))
             await bot.send_message(message.from_user.id,
                                    'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(data['price']))
-            await state.reset_state()
-            logger.info('Очистил state')
-
     else:
         try:
             with open('stikers/seach.tgs', 'rb') as sticker:
