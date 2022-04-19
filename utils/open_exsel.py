@@ -4,7 +4,7 @@ import pandas as pd
 from loguru import logger
 
 
-def dowload(data):
+def dowload():
     try:
         excel_data_df = pd.read_excel('C:/Users/sklad/file.xls', sheet_name='Лист1',
                                       usecols=['Склад',

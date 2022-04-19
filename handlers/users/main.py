@@ -375,7 +375,7 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
 async def dow(call: types.CallbackQuery, state: FSMContext):
     try:
         if call.data == 'dowload':
-            dowload(call.data)
+            dowload()
         await bot.send_message(call.from_user.id, 'База обновлена')
     except Exception as ex:
         logger.debug(ex)
