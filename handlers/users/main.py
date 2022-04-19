@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import io
 import json
 import os.path
 import time
@@ -7,7 +8,7 @@ import sqlite3
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes, Message
 from loguru import logger
 
 import bot
@@ -21,12 +22,11 @@ from handlers.users.show_place import show_place
 from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
-from keyboards.inline.quit import exitqr
 from loader import dp, bot
-from requests.requests_mediagroup import get_info
-from state.show_photo import Showphoto, Place, Search
+from all_requests.requests_mediagroup import get_info
+from state.show_photo import Showphoto, Place, Search, Dowloads
 from utils.new_qr import qr_code
-from utils.open_exsel import place, search_articul
+from utils.open_exsel import place, search_articul, dowload
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -167,11 +167,29 @@ async def input_art(message: types.Message, state: FSMContext):
                                                                     callback_data='{}'.format(
                                                                         ans
                                                                     ))))
+                    await Search.show_all.set()
             else:
                 await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе')
 
         except Exception as ex:
             logger.debug(ex)
+
+
+@dp.message_handler(content_types=ContentTypes.DOCUMENT, state=Dowloads.dowl)
+async def doc_handler(message: types.Message, state):
+    try:
+        if document := message.document:
+            await document.download(
+                destination_file="C:/Users/sklad/file.xls",
+            )
+            logger.info('Загружен документ')
+            await bot.send_message(message.from_user.id, 'Загружен документ', reply_markup=InlineKeyboardMarkup().add(
+                InlineKeyboardButton(text='Загрузить в базу',
+                                     callback_data='dowload'
+                                     )))
+
+    except Exception as ex:
+        logger.debug(ex)
 
 
 @dp.message_handler(content_types=['text'], state='*')
@@ -207,6 +225,11 @@ async def bot_message(message: types.Message, state: FSMContext):
 
     elif message.text == 'Назад':
         await back(message, state)
+
+    elif message.text == 'Загрузка базы':
+        await bot.send_message(message.from_user.id, 'Загрузите файл', reply_markup=second_menu)
+        await Dowloads.dowl.set()
+        await doc_handler(message, state)
 
     else:
         start_time = time.time()
@@ -347,3 +370,16 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
                 data['message1'] = mes1
 
             await Place.mesto_1.set()
+
+
+@dp.callback_query_handler(state=Dowloads.dowl)
+async def dow(call: types.CallbackQuery, state: FSMContext):
+    try:
+        if call.data == 'dowload':
+            dowload(call.data)
+        await bot.send_message(call.from_user.id, 'База обновлена')
+    except Exception as ex:
+        logger.debug(ex)
+    finally:
+        await state.reset_state()
+        logger.info('Очистил state')

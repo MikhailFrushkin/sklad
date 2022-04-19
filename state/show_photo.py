@@ -17,3 +17,7 @@ class Search(StatesGroup):
     art = State()
     show_all = State()
 
+
+class Dowloads(StatesGroup):
+    dowl = State()
+

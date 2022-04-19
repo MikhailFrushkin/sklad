@@ -7,7 +7,7 @@ from aiogram.dispatcher import FSMContext
 from loguru import logger
 
 from loader import bot
-from requests.requests_mediagroup import get_info
+from all_requests.requests_mediagroup import get_info
 from handlers.users.delete_message import delete_message
 
 

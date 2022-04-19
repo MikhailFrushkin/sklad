@@ -1,26 +1,25 @@
 import csv
 import time
-import pandas as pd
 
+import pandas as pd
 from loguru import logger
 
-import io
-import requests
+
+def dowload(data):
+    try:
+        excel_data_df = pd.read_excel('C:/Users/sklad/file.xls', sheet_name='Лист1',
+                                      usecols=['Склад',
+                                               'Местоположение',
+                                               'Код \nноменклатуры',
+                                               'Описание товара',
+                                               'Доступно',
+                                               'Зарезерви\nровано'])
+        excel_data_df.to_csv('C:/Users/sklad/utils/file.csv')
+    except Exception as ex:
+        logger.debug(ex)
 
 
 def place(message):
-    start_time = time.time()
-
-    # excel_data_df = pandas.read_excel('Книга1.xlsx', sheet_name='Лист1',
-    #                                   usecols=['Склад',
-    #                                            'Местоположение',
-    #                                            'Код \nноменклатуры',
-    #                                            'Описание товара',
-    #                                            'Доступно',
-    #                                            'Зарезерви\nровано'])
-    # excel_data_df.to_csv('C:/Users/sklad/utils/file.csv')
-    # logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
-
     with open('C:/Users/sklad/utils/file.csv', newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
