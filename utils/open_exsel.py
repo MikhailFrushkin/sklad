@@ -1,5 +1,4 @@
 import csv
-import time
 
 import pandas as pd
 from loguru import logger

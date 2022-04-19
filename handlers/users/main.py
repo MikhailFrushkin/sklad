@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import io
 import json
 import os.path
 import time
@@ -8,7 +7,7 @@ import sqlite3
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes, Message
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from loguru import logger
 
 import bot
@@ -176,7 +175,7 @@ async def input_art(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(content_types=ContentTypes.DOCUMENT, state=Dowloads.dowl)
-async def doc_handler(message: types.Message, state):
+async def doc_handler(message: types.Message):
     try:
         if document := message.document:
             await document.download(
