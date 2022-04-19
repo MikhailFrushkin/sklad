@@ -21,11 +21,11 @@ async def show_place(message, state):
             message.from_user.username
         ))
 
-        await bot.send_message(message.from_user.id, 'Данные на 15.04.22\nВыберите ряд:', reply_markup=second_menu)
-        mes1 = await bot.send_message(message.from_user.id, 'Выберите ряд:', reply_markup=mesto1)
         async with state.proxy() as data:
             data['command'] = message.get_command()
             data['message_id'] = message.message_id
+            await bot.send_message(message.from_user.id, '📦 \n', reply_markup=second_menu)
+            mes1 = await bot.send_message(message.from_user.id, 'Выберите ряд:', reply_markup=mesto1)
             data['message1'] = mes1
 
         await Place.mesto_1.set()
