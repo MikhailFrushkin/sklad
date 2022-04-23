@@ -150,33 +150,39 @@ async def showqr(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(state=Search.sklad)
 async def input_art(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        data['sklad'] = call.data
+        if call.data == 'exit':
+            await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
+            await state.reset_state()
+            logger.info('Очистил state')
+        else:
+            await bot.send_message(call.from_user.id, 'Введите артикул', reply_markup=second_menu)
+            await Search.art.set()
+            data['sklad'] = call.data
         asyncio.create_task(delete_message(data['message1']))
-    await bot.send_message(call.from_user.id, 'Введите артикул')
-    await Search.art.set()
+        asyncio.create_task(delete_message(data['message2']))
 
 
 @dp.message_handler(content_types=['text'], state=Search.art)
-async def show_qr(message: types.Message, state: FSMContext):
+async def search_sklad(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if data['sklad'] == '012':
             cells = search_articul(message.text, '012')
         elif data['sklad'] == 'a11':
             cells = search_articul(message.text, 'a11')
+        if cells:
+            if len(cells) != 0:
+                logger.info('Вернул список ячеек - {}'.format(cells))
+                for item in cells:
+                    await bot.send_message(message.from_user.id, item,
+                                           reply_markup=InlineKeyboardMarkup().add(
+                                               InlineKeyboardButton(text='Показать фото',
+                                                                    callback_data='{}'.format(
+                                                                        message.text
+                                                                    ))))
 
-        if len(cells) != 0:
-            logger.info('Вернул список ячеек - {}'.format(cells))
-            for item in cells:
-                await bot.send_message(message.from_user.id, item,
-                                       reply_markup=InlineKeyboardMarkup().add(
-                                           InlineKeyboardButton(text='Показать фото',
-                                                                callback_data='{}'.format(
-                                                                    message.text
-                                                                ))))
-
-        else:
-            await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}_825'.
-                                   format(data['sklad']), reply_markup=second_menu)
+            else:
+                await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}_825'.
+                                       format(data['sklad']), reply_markup=second_menu)
         await Search.show_all.set()
 
 
@@ -216,74 +222,10 @@ async def doc_handler_a11(message: types.Message, state: FSMContext):
         logger.debug(ex)
 
 
-@dp.message_handler(content_types=['text'], state='*')
-async def bot_message(message: types.Message, state: FSMContext):
-    """
-    Выводим сохраненные qcode ячеек, стандартные.
-    Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
-    иначе идем циклом по кортежу и выводим инф
-    """
-    if message.text == '🆚 V-Sales_825':
-        await bot.send_message(message.from_user.id, 'V-Sales_825')
-
-        qrc = open('qcodes/V-Sales_825.jpg', 'rb')
-        await bot.send_photo(message.chat.id, qrc)
-
-    elif message.text == '☣ R12_BrakIn_825':
-        await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
-
-        qrc = open('qcodes/R12_BrakIn_825.jpg', 'rb')
-        await bot.send_photo(message.chat.id, qrc)
-
-    elif message.text == '🤖 Qrcode ячейки':
-        await show_qr(message, state)
-
-    elif message.text == '📦 Содержимое ячейки':
-        await show_place(message, state)
-
-    elif message.text == 'ℹ Информация' or message.text == 'Помощь':
-        await bot_help(message)
-
-    elif message.text == '🔍 Поиск на складе':
-        await search(message, state)
-
-    elif message.text == 'Назад':
-        await back(message, state)
-
-    elif message.text == 'Загрузка базы':
-        await bot.send_message(message.from_user.id, 'Загрузите файл', reply_markup=dowload_menu)
-        await Place.dowl.set()
-
-    elif message.text == '012_825':
-        await doc_handler_012(message, state)
-    elif message.text == 'A11_825':
-        await Place.dowload.set()
-        await doc_handler_a11(message, state)
-
-    else:
-        start_time = time.time()
-        answer = message.text.lower()
-        logger.info('Пользователь {} {}: запросил артикул {}'.format(
-            message.from_user.id,
-            message.from_user.first_name,
-            answer
-        ))
-
-        if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
-            await show_media(message, state)
-        else:
-            await bot.send_message(message.from_user.id,
-                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
-        logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
-
-
-@dp.callback_query_handler(state=[Showphoto.show_qr, Place.mesto_4, Search.show_all, Search.art, Search.sklad])
+@dp.callback_query_handler(state=[Showphoto.show_qr, Place.mesto_4, Search.show_all])
 async def answer_exit(call: types.CallbackQuery, state: FSMContext):
     if call.data == 'exit':
-        await call.answer(cache_time=5)
-        answer: str = call.data
-        logger.info('Получил ответ: {}. Сохраняю в state'.format(answer))
-        await call.message.answer('Введите артикул. Пример: 80264335')
+        await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
         await state.reset_state()
         logger.info('Очистил state')
     elif call.data == 'hide':
@@ -414,3 +356,64 @@ async def dow_012(call: types.CallbackQuery, state: FSMContext):
     finally:
         await state.reset_state()
         logger.info('Очистил state')
+
+
+@dp.message_handler(content_types=['text'], state='*')
+async def bot_message(message: types.Message, state: FSMContext):
+    """
+    Выводим сохраненные qcode ячеек, стандартные.
+    Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
+    иначе идем циклом по кортежу и выводим инф
+    """
+    if message.text == '🆚 V-Sales_825':
+        await bot.send_message(message.from_user.id, 'V-Sales_825')
+
+        qrc = open('qcodes/V-Sales_825.jpg', 'rb')
+        await bot.send_photo(message.chat.id, qrc)
+
+    elif message.text == '☣ R12_BrakIn_825':
+        await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
+
+        qrc = open('qcodes/R12_BrakIn_825.jpg', 'rb')
+        await bot.send_photo(message.chat.id, qrc)
+
+    elif message.text == '🤖 Qrcode ячейки':
+        await show_qr(message, state)
+
+    elif message.text == '📦 Содержимое ячейки':
+        await show_place(message, state)
+
+    elif message.text == 'ℹ Информация' or message.text == 'Помощь':
+        await bot_help(message)
+
+    elif message.text == '🔍 Поиск на складе':
+        await search(message, state)
+
+    elif message.text == 'Назад':
+        await back(message, state)
+
+    elif message.text == 'Загрузка базы':
+        await bot.send_message(message.from_user.id, 'Загрузите файл', reply_markup=dowload_menu)
+        await Place.dowl.set()
+
+    elif message.text == '012_825':
+        await doc_handler_012(message, state)
+    elif message.text == 'A11_825':
+        await Place.dowload.set()
+        await doc_handler_a11(message, state)
+
+    else:
+        start_time = time.time()
+        answer = message.text.lower()
+        logger.info('Пользователь {} {}: запросил артикул {}'.format(
+            message.from_user.id,
+            message.from_user.first_name,
+            answer
+        ))
+
+        if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
+            await show_media(message, state)
+        else:
+            await bot.send_message(message.from_user.id,
+                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
+        logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
