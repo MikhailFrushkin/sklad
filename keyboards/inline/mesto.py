@@ -19,3 +19,9 @@ photo.add(InlineKeyboardButton(text='Показать фото', callback_data='
 
 hide = InlineKeyboardMarkup(row_width=1)
 hide.add(InlineKeyboardButton(text='Скрыть фото', callback_data='hide'))
+
+
+search_sklad = InlineKeyboardMarkup(row_width=2)
+search_sklad.insert(InlineKeyboardButton(text='012_825', callback_data='012'))
+search_sklad.insert(InlineKeyboardButton(text='A11_825', callback_data='a11'))
+search_sklad.insert(InlineKeyboardButton(text='Назад', callback_data='exit'))

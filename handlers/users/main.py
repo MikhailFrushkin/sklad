@@ -2,8 +2,8 @@ import asyncio
 import datetime
 import json
 import os.path
-import time
 import sqlite3
+import time
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -11,6 +11,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTyp
 from loguru import logger
 
 import bot
+from all_requests.requests_mediagroup import get_info
 from data.config import ADMINS
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
@@ -19,13 +20,12 @@ from handlers.users.search import search
 from handlers.users.show_media import show_media
 from handlers.users.show_place import show_place
 from keyboards.default import menu
-from keyboards.default.menu import second_menu, menu_admin
+from keyboards.default.menu import second_menu, menu_admin, dowload_menu
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
-from all_requests.requests_mediagroup import get_info
-from state.show_photo import Showphoto, Place, Search, Dowloads
+from state.show_photo import Showphoto, Place, Search
 from utils.new_qr import qr_code
-from utils.open_exsel import place, search_articul, dowload
+from utils.open_exsel import place, search_articul, dowload_012, dowload_a11
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -124,7 +124,7 @@ async def showqr(message: types.Message, state: FSMContext):
                 else:
                     await bot.send_message(message.from_user.id,
                                            'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
-            elif len(ans) == 4 and int(ans[0]) == 1 and 0 < int(ans[1]) < 8:
+            elif len(ans) == 4 and int(ans[0]) == 1 and int(ans[1]) < 8:
                 if 0 < int(ans[2]) < 9 and int(ans[3]) < 5:
 
                     await bot.send_message(message.from_user.id, '{}{} ряд {} секция {} ячейка'.
@@ -147,45 +147,70 @@ async def showqr(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, 'Введены буквы или символы')
 
 
-@dp.message_handler(state=Search.art)
-async def input_art(message: types.Message, state: FSMContext):
-    ans = message.text
-    if ans == 'Назад':
-        await back(message, state)
-    elif ans == 'Помощь':
-        await bot_help(message)
-    else:
-        try:
-            cells = search_articul(ans)
-            if len(cells) != 0:
-                logger.info('Вернул список ячеек - {}'.format(cells))
-                for item in cells:
-                    await bot.send_message(message.from_user.id, item,
-                                           reply_markup=InlineKeyboardMarkup().add(
-                                               InlineKeyboardButton(text='Показать фото',
-                                                                    callback_data='{}'.format(
-                                                                        ans
-                                                                    ))))
-                    await Search.show_all.set()
-            else:
-                await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе')
-
-        except Exception as ex:
-            logger.debug(ex)
+@dp.callback_query_handler(state=Search.sklad)
+async def input_art(call: types.CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        data['sklad'] = call.data
+        asyncio.create_task(delete_message(data['message1']))
+    await bot.send_message(call.from_user.id, 'Введите артикул')
+    await Search.art.set()
 
 
-@dp.message_handler(content_types=ContentTypes.DOCUMENT, state=Dowloads.dowl)
-async def doc_handler(message: types.Message):
+@dp.message_handler(content_types=['text'], state=Search.art)
+async def show_qr(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if data['sklad'] == '012':
+            cells = search_articul(message.text, '012')
+        elif data['sklad'] == 'a11':
+            cells = search_articul(message.text, 'a11')
+
+        if len(cells) != 0:
+            logger.info('Вернул список ячеек - {}'.format(cells))
+            for item in cells:
+                await bot.send_message(message.from_user.id, item,
+                                       reply_markup=InlineKeyboardMarkup().add(
+                                           InlineKeyboardButton(text='Показать фото',
+                                                                callback_data='{}'.format(
+                                                                    message.text
+                                                                ))))
+
+        else:
+            await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}_825'.
+                                   format(data['sklad']), reply_markup=second_menu)
+        await Search.show_all.set()
+
+
+@dp.message_handler(content_types=ContentTypes.DOCUMENT, state=Place.dowl)
+async def doc_handler_012(message: types.Message, state: FSMContext):
     try:
         if document := message.document:
             await document.download(
-                destination_file="C:/Users/sklad/file.xls",
+                destination_file="C:/Users/sklad/file_012.xls",
             )
             logger.info('Загружен документ')
-            await bot.send_message(message.from_user.id, 'Загружен документ', reply_markup=InlineKeyboardMarkup().add(
-                InlineKeyboardButton(text='Загрузить в базу',
-                                     callback_data='dowload'
-                                     )))
+            await bot.send_message(message.from_user.id, 'Загружен документ на 012 склад',
+                                   reply_markup=InlineKeyboardMarkup().add(
+                                       InlineKeyboardButton(text='Загрузить в базу',
+                                                            callback_data='dowload012'
+                                                            )))
+
+    except Exception as ex:
+        logger.debug(ex)
+
+
+@dp.message_handler(content_types=ContentTypes.DOCUMENT, state=Place.dowload)
+async def doc_handler_a11(message: types.Message, state: FSMContext):
+    try:
+        if document := message.document:
+            await document.download(
+                destination_file="C:/Users/sklad/file_a11.xls",
+            )
+            logger.info('Загружен документ')
+            await bot.send_message(message.from_user.id, 'Загружен документ на на румы',
+                                   reply_markup=InlineKeyboardMarkup().add(
+                                       InlineKeyboardButton(text='Загрузить в базу',
+                                                            callback_data='dowload_a11'
+                                                            )))
 
     except Exception as ex:
         logger.debug(ex)
@@ -226,9 +251,14 @@ async def bot_message(message: types.Message, state: FSMContext):
         await back(message, state)
 
     elif message.text == 'Загрузка базы':
-        await bot.send_message(message.from_user.id, 'Загрузите файл', reply_markup=second_menu)
-        await Dowloads.dowl.set()
-        await doc_handler(message, state)
+        await bot.send_message(message.from_user.id, 'Загрузите файл', reply_markup=dowload_menu)
+        await Place.dowl.set()
+
+    elif message.text == '012_825':
+        await doc_handler_012(message, state)
+    elif message.text == 'A11_825':
+        await Place.dowload.set()
+        await doc_handler_a11(message, state)
 
     else:
         start_time = time.time()
@@ -247,7 +277,7 @@ async def bot_message(message: types.Message, state: FSMContext):
         logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
 
 
-@dp.callback_query_handler(state=[Showphoto.show_qr, Place.mesto_4, Search.show_all])
+@dp.callback_query_handler(state=[Showphoto.show_qr, Place.mesto_4, Search.show_all, Search.art, Search.sklad])
 async def answer_exit(call: types.CallbackQuery, state: FSMContext):
     if call.data == 'exit':
         await call.answer(cache_time=5)
@@ -301,7 +331,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
         async with state.proxy() as data:
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
-            await call.message.answer('\n'.join(place('012_825-OX')))
+            await call.message.answer('\n'.join(place('012_825-OX', '012')))
     else:
         await call.answer(cache_time=5)
         answer: str = call.data
@@ -351,8 +381,8 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
         data['result'] = result
         logger.info(data['result'])
 
-        if place(result):
-            for item in place(result):
+        if place(result, '012'):
+            for item in place(result, '012'):
                 await call.message.answer(item,
                                           reply_markup=InlineKeyboardMarkup().add(
                                               InlineKeyboardButton(text='Показать фото',
@@ -371,12 +401,14 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
             await Place.mesto_1.set()
 
 
-@dp.callback_query_handler(state=Dowloads.dowl)
-async def dow(call: types.CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(state=[Place.dowl, Place.dowload])
+async def dow_012(call: types.CallbackQuery, state: FSMContext):
     try:
-        if call.data == 'dowload':
-            dowload(call.data)
-        await bot.send_message(call.from_user.id, 'База обновлена')
+        if call.data == 'dowload012':
+            dowload_012()
+        elif call.data == 'dowload_a11':
+            dowload_a11()
+        await bot.send_message(call.from_user.id, 'База обновлена', reply_markup=menu_admin)
     except Exception as ex:
         logger.debug(ex)
     finally:

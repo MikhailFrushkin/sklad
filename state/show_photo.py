@@ -11,13 +11,11 @@ class Place(StatesGroup):
     mesto_2 = State()
     mesto_3 = State()
     mesto_4 = State()
+    dowl = State()
+    dowload = State()
 
 
 class Search(StatesGroup):
+    sklad = State()
     art = State()
     show_all = State()
-
-
-class Dowloads(StatesGroup):
-    dowl = State()
-

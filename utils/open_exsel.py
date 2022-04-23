@@ -4,22 +4,36 @@ import pandas as pd
 from loguru import logger
 
 
-def dowload():
+def dowload_012():
     try:
-        excel_data_df = pd.read_excel('C:/Users/sklad/file.xls', sheet_name='Лист1',
+        excel_data_df = pd.read_excel('C:/Users/sklad/file_012.xls', sheet_name='Лист1',
                                       usecols=['Склад',
                                                'Местоположение',
                                                'Код \nноменклатуры',
                                                'Описание товара',
                                                'Доступно',
                                                'Зарезерви\nровано'])
-        excel_data_df.to_csv('C:/Users/sklad/utils/file.csv')
+        excel_data_df.to_csv('C:/Users/sklad/utils/file_012.csv')
     except Exception as ex:
         logger.debug(ex)
 
 
-def place(message):
-    with open('C:/Users/sklad/utils/file.csv', newline='', encoding='utf-8') as csvfile:
+def dowload_a11():
+    try:
+        excel_data_df = pd.read_excel('C:/Users/sklad/file_a11.xls', sheet_name='Лист1',
+                                      usecols=['Склад',
+                                               'Местоположение',
+                                               'Код \nноменклатуры',
+                                               'Описание товара',
+                                               'Доступно',
+                                               'Зарезерви\nровано'])
+        excel_data_df.to_csv('C:/Users/sklad/utils/file_a11.csv')
+    except Exception as ex:
+        logger.debug(ex)
+
+
+def place(message, sklad):
+    with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:
@@ -37,8 +51,8 @@ def place(message):
     return answer
 
 
-def search_articul(art):
-    with open('C:/Users/sklad/utils/file.csv', newline='', encoding='utf-8') as csvfile:
+def search_articul(art, sklad):
+    with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:

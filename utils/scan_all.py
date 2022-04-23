@@ -44,7 +44,7 @@ def get_info(art: str):
         logger.info('URL товара - {}'.format(url))
 
         driver.get(url)
-        time.sleep(7)
+        time.sleep(10)
 
         name = driver.find_element(
             by=By.CLASS_NAME,
@@ -58,7 +58,7 @@ def get_info(art: str):
         for i_item in params:
             list_param.append(i_item.text)
         logger.info('{} Список параметров -{}'.format(name_item, list_param))
-        time.sleep(3)
+        time.sleep(5)
         img = driver.find_elements(
             by=By.CLASS_NAME,
             value='preview')
@@ -119,6 +119,6 @@ if __name__ == '__main__':
                 get_info(item2)
                 c += 1
                 logger.info('Отсканирован {}\n{} из {}\nПрошло {}'.format(item2, c, len(art_list), time.time() - time_start))
-                time.sleep(3)
+                time.sleep(10)
         except Exception as ex:
             logger.debug(ex)

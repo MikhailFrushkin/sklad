@@ -17,9 +17,9 @@ def get_info(art: str) -> tuple:
     options = webdriver.ChromeOptions()
     options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    prefs = {"profile.managed_default_content_settings.images": 2}
-    options.add_experimental_option("prefs", prefs)
-    options.add_argument("--headless")
+    # prefs = {"profile.managed_default_content_settings.images": 2}
+    # options.add_experimental_option("prefs", prefs)
+    # options.add_argument("--headless")
     driver = webdriver.Chrome(
         executable_path="C:/Users/sklad/chromedriver.exe",
         options=options
@@ -27,9 +27,12 @@ def get_info(art: str) -> tuple:
     url: str = 'https://hoff.ru/vue/search/?fromSearch=direct&search={}&redirect_search=true'.format(art)
     try:
         driver.get(url)
+        time.sleep(1)
+
         text = driver.page_source
         pattern = r'(?<=\\).+?["]'
         result = re.search(pattern, text)
+        print(result)
         url_page1 = 'https://hoff.ru' + result[0][:-1]
         url = url_page1.replace('\\', '')
 
@@ -80,7 +83,7 @@ def get_info(art: str) -> tuple:
             'params': list_param,
             'price': price
         }
-        with open("base/{}.json".format(art), "w", encoding='utf-8') as write_file:
+        with open("C:/Users/sklad/base/{}.json".format(art), "w", encoding='utf-8') as write_file:
             json.dump(data, write_file, indent=4, ensure_ascii=False)
 
         return url_list, name_item, list_param, price
