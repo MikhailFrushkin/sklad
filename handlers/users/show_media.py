@@ -3,15 +3,14 @@ import json
 import os
 
 from aiogram import types
-from aiogram.dispatcher import FSMContext
 from loguru import logger
 
-from loader import bot
 from all_requests.requests_mediagroup import get_info
 from handlers.users.delete_message import delete_message
+from loader import bot
 
 
-async def show_media(message: types.Message, state: FSMContext):
+async def show_media(message: types.Message):
     answer = message.text.lower()
     if os.path.exists('base/{}.json'.format(answer)):
         logger.info('нашел json и вывел результат')

@@ -88,11 +88,6 @@ async def show_qr(message: types.Message, state: FSMContext):
                                                  '\nячейку без нулей и пробела.'
                                                  '\nПример: 721 - это 7 ряд 2 секция 1 ячейка',
                            reply_markup=second_menu)
-
-    async with state.proxy() as data:
-        data['command'] = message.get_command()
-        data['message_id'] = message.message_id
-
     await Showphoto.show_qr.set()
 
 
@@ -106,8 +101,6 @@ async def showqr(message: types.Message, state: FSMContext):
     ans = message.text
     if ans == 'Назад':
         await back(message, state)
-    elif ans == 'Помощь':
-        await bot_help(message)
     else:
         if ans.isdigit():
             if len(ans) == 3:
@@ -187,7 +180,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(content_types=ContentTypes.DOCUMENT, state=Place.dowl)
-async def doc_handler_012(message: types.Message, state: FSMContext):
+async def doc_handler_012(message: types.Message):
     try:
         if document := message.document:
             await document.download(
@@ -205,7 +198,7 @@ async def doc_handler_012(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(content_types=ContentTypes.DOCUMENT, state=Place.dowload)
-async def doc_handler_a11(message: types.Message, state: FSMContext):
+async def doc_handler_a11(message: types.Message):
     try:
         if document := message.document:
             await document.download(
@@ -337,8 +330,7 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
             await bot.send_message(call.from_user.id, 'Ячейка пустая')
             await bot.send_message(call.from_user.id, 'Данные на 15.04.22\nВыберите ряд:', reply_markup=second_menu)
             mes1 = await bot.send_message(call.from_user.id, 'Выберите ряд:', reply_markup=mesto1)
-            async with state.proxy() as data:
-                data['message1'] = mes1
+            data['message1'] = mes1
 
             await Place.mesto_1.set()
 
@@ -367,13 +359,11 @@ async def bot_message(message: types.Message, state: FSMContext):
     """
     if message.text == '🆚 V-Sales_825':
         await bot.send_message(message.from_user.id, 'V-Sales_825')
-
         qrc = open('qcodes/V-Sales_825.jpg', 'rb')
         await bot.send_photo(message.chat.id, qrc)
 
     elif message.text == '☣ R12_BrakIn_825':
         await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
-
         qrc = open('qcodes/R12_BrakIn_825.jpg', 'rb')
         await bot.send_photo(message.chat.id, qrc)
 
@@ -398,6 +388,7 @@ async def bot_message(message: types.Message, state: FSMContext):
 
     elif message.text == '012_825':
         await doc_handler_012(message, state)
+
     elif message.text == 'A11_825':
         await Place.dowload.set()
         await doc_handler_a11(message, state)
@@ -412,7 +403,7 @@ async def bot_message(message: types.Message, state: FSMContext):
         ))
 
         if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
-            await show_media(message, state)
+            await show_media(message)
         else:
             await bot.send_message(message.from_user.id,
                                    'Неверно указан артикул или его нет на сайте. Пример: 80422781')

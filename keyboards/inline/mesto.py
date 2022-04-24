@@ -4,6 +4,7 @@ mesto1 = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 for i in range(1, 18):
     mesto1.insert(InlineKeyboardButton(text='{}'.format(i), callback_data='{}'.format(i)))
 mesto1.insert(InlineKeyboardButton(text='OX', callback_data='012_825-OX'))
+mesto1.insert(InlineKeyboardButton(text='RDiff', callback_data='rdiff'))
 
 
 mesto2 = InlineKeyboardMarkup(row_width=4)
