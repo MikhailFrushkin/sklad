@@ -25,7 +25,8 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
 
 dowload_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('012_825'),
-     KeyboardButton('A11_825'),
+     KeyboardButton('A11_825')],
+    [KeyboardButton('V_Sales'),
      KeyboardButton('RDiff')],
     [KeyboardButton('Назад')],
 ], resize_keyboard=True)

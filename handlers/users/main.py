@@ -5,7 +5,6 @@ import os.path
 import sqlite3
 import time
 
-import aiogram
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
@@ -159,57 +158,69 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
 @dp.message_handler(content_types=['text'], state=Search.art)
 async def search_sklad(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        if data['sklad'] == '012_825':
-            cells = search_articul(message.text, data['sklad'])
-        elif data['sklad'] == 'A11_825':
-            cells = search_articul(message.text, data['sklad'])
-        if cells:
-            if len(cells) != 0:
-                logger.info('Вернул список ячеек - {}'.format(cells))
-                for item in cells:
-                    await bot.send_message(message.from_user.id, item,
-                                           reply_markup=InlineKeyboardMarkup().add(
-                                               InlineKeyboardButton(text='Показать фото',
-                                                                    callback_data='{}'.format(
-                                                                        message.text
-                                                                    ))))
+        if data['sklad'] == 'all':
+            sklad_list = ['012_825', 'A11_825', 'V_Sales', 'RDiff']
+            for i in sklad_list:
+                cells = search_articul(message.text, i)
+                if cells:
+                    if len(cells) != 0:
+                        logger.info('Вернул список ячеек - {}'.format(cells))
+                        for item in cells:
+                            await bot.send_message(message.from_user.id, item,
+                                                   reply_markup=InlineKeyboardMarkup().add(
+                                                       InlineKeyboardButton(text='Показать фото',
+                                                                            callback_data='{}'.format(
+                                                                                message.text
+                                                                            ))))
+
+                else:
+                    await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
+                                           format(i), reply_markup=second_menu)
+                await Search.show_all.set()
 
         else:
-            await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
+
+            cells = search_articul(message.text, data['sklad'])
+            if cells:
+                if len(cells) != 0:
+                    logger.info('Вернул список ячеек - {}'.format(cells))
+                    for item in cells:
+                        await bot.send_message(message.from_user.id, item,
+                                               reply_markup=InlineKeyboardMarkup().add(
+                                                   InlineKeyboardButton(text='Показать фото',
+                                                                        callback_data='{}'.format(
+                                                                            message.text
+                                                                        ))))
+
+            else:
+                await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                        format(data['sklad']), reply_markup=second_menu)
-        await Search.show_all.set()
+            await Search.show_all.set()
 
 
-@dp.message_handler(content_types=['text'], state=Place.dowl)
+@dp.message_handler(content_types=['text'], state=Place.dowload)
 async def search_sklad(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        if message.text == '012_825':
+        sklad_list = ['012_825', 'A11_825', 'RDiff', 'V_Sales']
+        if message.text in sklad_list:
             data['sklad'] = message.text
             await doc_handler(message, state)
 
-        elif message.text == 'A11_825':
-            data['sklad'] = message.text
-            await Place.dowload.set()
-            await doc_handler(message, state)
-
-        elif message.text == 'RDiff':
-            data['sklad'] = message.text
-            await Place.dowload_r.set()
-            await doc_handler(message, state)
         elif message.text == 'Назад':
             await back(message, state)
         else:
             await bot.send_message(message.from_user.id, 'Неверно выбран склад')
 
 
-@dp.message_handler(content_types=ContentTypes.DOCUMENT, state=[Place.dowl, Place.dowload, Place.dowload_r])
+@dp.message_handler(content_types=ContentTypes.DOCUMENT,
+                    state=[Place.dowload])
 async def doc_handler(message: types.Message, state: FSMContext):
     try:
         await bot.send_message(message.from_user.id, 'Загрузите файл')
         async with state.proxy() as data:
             if document := message.document:
                 await document.download(
-                    destination_file="C:/Users/sklad/file_{}.xls".format(data['sklad']),
+                    destination_file="C:/Users/sklad/utils/file_{}.xls".format(data['sklad']),
                 )
                 logger.info('Загружен документ')
                 await bot.send_message(message.from_user.id, 'Загружен документ на {} склад'.format(data['sklad']),
@@ -274,7 +285,8 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
             await call.message.answer('\n'.join(place('012_825-OX', '012_825')))
-    if call.data == 'rdiff':
+            await back(call.message, state)
+    elif call.data == 'rdiff':
         async with state.proxy() as data:
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
@@ -349,15 +361,15 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
 
             await Place.mesto_4.set()
         else:
-            await bot.send_message(call.from_user.id, 'Ячейка пустая')
-            await bot.send_message(call.from_user.id, 'Данные на 15.04.22\nВыберите ряд:', reply_markup=second_menu)
+            await bot.send_message(call.from_user.id, 'Ячейка пустая', reply_markup=second_menu)
+
             mes1 = await bot.send_message(call.from_user.id, 'Выберите ряд:', reply_markup=mesto1)
             data['message1'] = mes1
 
             await Place.mesto_1.set()
 
 
-@dp.callback_query_handler(state=[Place.dowl, Place.dowload, Place.dowload_r])
+@dp.callback_query_handler(state=Place.dowload)
 async def dow_012(call: types.CallbackQuery, state: FSMContext):
     try:
         dowload(call.data)
@@ -403,7 +415,7 @@ async def bot_message(message: types.Message, state: FSMContext):
 
     elif message.text == 'Загрузка базы':
         await bot.send_message(message.from_user.id, 'Выберите склад', reply_markup=dowload_menu)
-        await Place.dowl.set()
+        await Place.dowload.set()
 
     else:
         start_time = time.time()

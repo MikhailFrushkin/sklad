@@ -6,7 +6,7 @@ from loguru import logger
 
 def dowload(sklad):
     try:
-        excel_data_df = pd.read_excel('C:/Users/sklad/file_{}.xls'.format(sklad), sheet_name='Лист1',
+        excel_data_df = pd.read_excel('C:/Users/sklad/utils/file_{}.xls'.format(sklad), sheet_name='Лист1',
                                       usecols=['Склад',
                                                'Местоположение',
                                                'Код \nноменклатуры',
@@ -20,7 +20,6 @@ def dowload(sklad):
 
 def place(message, sklad):
     try:
-        print(message, sklad)
         with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             answer = []
