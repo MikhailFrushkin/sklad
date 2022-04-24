@@ -13,6 +13,7 @@ class Place(StatesGroup):
     mesto_4 = State()
     dowl = State()
     dowload = State()
+    dowload_r = State()
 
 
 class Search(StatesGroup):

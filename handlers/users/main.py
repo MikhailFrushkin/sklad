@@ -5,6 +5,7 @@ import os.path
 import sqlite3
 import time
 
+import aiogram
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
@@ -25,7 +26,7 @@ from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
 from state.show_photo import Showphoto, Place, Search
 from utils.new_qr import qr_code
-from utils.open_exsel import place, search_articul, dowload_012, dowload_a11
+from utils.open_exsel import place, search_articul, dowload
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -158,10 +159,10 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
 @dp.message_handler(content_types=['text'], state=Search.art)
 async def search_sklad(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        if data['sklad'] == '012':
-            cells = search_articul(message.text, '012')
-        elif data['sklad'] == 'a11':
-            cells = search_articul(message.text, 'a11')
+        if data['sklad'] == '012_825':
+            cells = search_articul(message.text, data['sklad'])
+        elif data['sklad'] == 'A11_825':
+            cells = search_articul(message.text, data['sklad'])
         if cells:
             if len(cells) != 0:
                 logger.info('Вернул список ячеек - {}'.format(cells))
@@ -173,43 +174,49 @@ async def search_sklad(message: types.Message, state: FSMContext):
                                                                         message.text
                                                                     ))))
 
-            else:
-                await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}_825'.
+        else:
+            await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                        format(data['sklad']), reply_markup=second_menu)
         await Search.show_all.set()
 
 
-@dp.message_handler(content_types=ContentTypes.DOCUMENT, state=Place.dowl)
-async def doc_handler_012(message: types.Message):
+@dp.message_handler(content_types=['text'], state=Place.dowl)
+async def search_sklad(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text == '012_825':
+            data['sklad'] = message.text
+            await doc_handler(message, state)
+
+        elif message.text == 'A11_825':
+            data['sklad'] = message.text
+            await Place.dowload.set()
+            await doc_handler(message, state)
+
+        elif message.text == 'RDiff':
+            data['sklad'] = message.text
+            await Place.dowload_r.set()
+            await doc_handler(message, state)
+        elif message.text == 'Назад':
+            await back(message, state)
+        else:
+            await bot.send_message(message.from_user.id, 'Неверно выбран склад')
+
+
+@dp.message_handler(content_types=ContentTypes.DOCUMENT, state=[Place.dowl, Place.dowload, Place.dowload_r])
+async def doc_handler(message: types.Message, state: FSMContext):
     try:
-        if document := message.document:
-            await document.download(
-                destination_file="C:/Users/sklad/file_012.xls",
-            )
-            logger.info('Загружен документ')
-            await bot.send_message(message.from_user.id, 'Загружен документ на 012 склад',
-                                   reply_markup=InlineKeyboardMarkup().add(
-                                       InlineKeyboardButton(text='Загрузить в базу',
-                                                            callback_data='dowload012'
-                                                            )))
-
-    except Exception as ex:
-        logger.debug(ex)
-
-
-@dp.message_handler(content_types=ContentTypes.DOCUMENT, state=Place.dowload)
-async def doc_handler_a11(message: types.Message):
-    try:
-        if document := message.document:
-            await document.download(
-                destination_file="C:/Users/sklad/file_a11.xls",
-            )
-            logger.info('Загружен документ')
-            await bot.send_message(message.from_user.id, 'Загружен документ на на румы',
-                                   reply_markup=InlineKeyboardMarkup().add(
-                                       InlineKeyboardButton(text='Загрузить в базу',
-                                                            callback_data='dowload_a11'
-                                                            )))
+        await bot.send_message(message.from_user.id, 'Загрузите файл')
+        async with state.proxy() as data:
+            if document := message.document:
+                await document.download(
+                    destination_file="C:/Users/sklad/file_{}.xls".format(data['sklad']),
+                )
+                logger.info('Загружен документ')
+                await bot.send_message(message.from_user.id, 'Загружен документ на {} склад'.format(data['sklad']),
+                                       reply_markup=InlineKeyboardMarkup().add(
+                                           InlineKeyboardButton(text='Загрузить в базу',
+                                                                callback_data='{}'.format(data['sklad'])
+                                                                )))
 
     except Exception as ex:
         logger.debug(ex)
@@ -266,7 +273,22 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
         async with state.proxy() as data:
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
-            await call.message.answer('\n'.join(place('012_825-OX', '012')))
+            await call.message.answer('\n'.join(place('012_825-OX', '012_825')))
+    if call.data == 'rdiff':
+        async with state.proxy() as data:
+            data['mesto1'] = call.data
+            asyncio.create_task(delete_message(data['message1']))
+            rdiff_list = place('RDiff_825-1', 'RDiff')
+            count = 0
+            list_1 = []
+            for item in range(len(rdiff_list)):
+                list_1.append(rdiff_list[item])
+                count += 1
+                if count == 20:
+                    await call.message.answer('\n'.join(list_1))
+                    list_1 = []
+                    count = 0
+            await call.message.answer('\n'.join(list_1))
     else:
         await call.answer(cache_time=5)
         answer: str = call.data
@@ -316,8 +338,8 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
         data['result'] = result
         logger.info(data['result'])
 
-        if place(result, '012'):
-            for item in place(result, '012'):
+        if place(result, '012_825'):
+            for item in place(result, '012_825'):
                 await call.message.answer(item,
                                           reply_markup=InlineKeyboardMarkup().add(
                                               InlineKeyboardButton(text='Показать фото',
@@ -335,13 +357,10 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
             await Place.mesto_1.set()
 
 
-@dp.callback_query_handler(state=[Place.dowl, Place.dowload])
+@dp.callback_query_handler(state=[Place.dowl, Place.dowload, Place.dowload_r])
 async def dow_012(call: types.CallbackQuery, state: FSMContext):
     try:
-        if call.data == 'dowload012':
-            dowload_012()
-        elif call.data == 'dowload_a11':
-            dowload_a11()
+        dowload(call.data)
         await bot.send_message(call.from_user.id, 'База обновлена', reply_markup=menu_admin)
     except Exception as ex:
         logger.debug(ex)
@@ -383,15 +402,8 @@ async def bot_message(message: types.Message, state: FSMContext):
         await back(message, state)
 
     elif message.text == 'Загрузка базы':
-        await bot.send_message(message.from_user.id, 'Загрузите файл', reply_markup=dowload_menu)
+        await bot.send_message(message.from_user.id, 'Выберите склад', reply_markup=dowload_menu)
         await Place.dowl.set()
-
-    elif message.text == '012_825':
-        await doc_handler_012(message, state)
-
-    elif message.text == 'A11_825':
-        await Place.dowload.set()
-        await doc_handler_a11(message, state)
 
     else:
         start_time = time.time()
