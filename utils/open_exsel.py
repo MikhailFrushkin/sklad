@@ -61,5 +61,32 @@ def search_articul(art, sklad):
     return answer
 
 
+def search_all_sklad(art, sklad):
+    with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        answer = []
+        for row in reader:
+            if row['Код \nноменклатуры'] == art:
+                line = '{} - Доступно: {} Резерв: {}'.format(
+                    row['Местоположение'],
+                    0 if row['Доступно'] == '' else row['Доступно'],
+                    0 if row['Зарезерви\nровано'] == '' else row[
+                        'Зарезерви\nровано']) \
+                    .replace('.0', '')
+                answer.append(line)
+    return answer
+
+
+def search_art_name(art):
+    sklad_list = ['012_825', 'A11_825', 'V_Sales', 'RDiff']
+    for i in sklad_list:
+        with open('C:/Users/sklad/utils/file_{}.csv'.format(i), newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                if row['Код \nноменклатуры'] == art:
+                    line = '{}'.format(row['Описание товара'])
+    return line
+
+
 if __name__ == '__main__':
     print(search_articul('80419935'))

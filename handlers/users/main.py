@@ -25,7 +25,7 @@ from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
 from state.show_photo import Showphoto, Place, Search
 from utils.new_qr import qr_code
-from utils.open_exsel import place, search_articul, dowload
+from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -159,24 +159,18 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
 async def search_sklad(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if data['sklad'] == 'all':
+            await bot.send_message(message.from_user.id, '{}'.format(search_art_name(message.text)))
             sklad_list = ['012_825', 'A11_825', 'V_Sales', 'RDiff']
             for i in sklad_list:
-                cells = search_articul(message.text, i)
+                cells = search_all_sklad(message.text, i)
                 if cells:
-                    if len(cells) != 0:
-                        logger.info('Вернул список ячеек - {}'.format(cells))
-                        for item in cells:
-                            await bot.send_message(message.from_user.id, item,
-                                                   reply_markup=InlineKeyboardMarkup().add(
-                                                       InlineKeyboardButton(text='Показать фото',
-                                                                            callback_data='{}'.format(
-                                                                                message.text
-                                                                            ))))
+                    logger.info('Вернул список ячеек - {}'.format(cells))
+                    for item in cells:
+                        await bot.send_message(message.from_user.id, item)
 
                 else:
                     await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                            format(i), reply_markup=second_menu)
-                await Search.show_all.set()
 
         else:
 
@@ -195,7 +189,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
             else:
                 await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                        format(data['sklad']), reply_markup=second_menu)
-            await Search.show_all.set()
+        await Search.show_all.set()
 
 
 @dp.message_handler(content_types=['text'], state=Place.dowload)
@@ -204,25 +198,25 @@ async def search_sklad(message: types.Message, state: FSMContext):
         sklad_list = ['012_825', 'A11_825', 'RDiff', 'V_Sales']
         if message.text in sklad_list:
             data['sklad'] = message.text
-            await doc_handler(message, state)
-
+            await bot.send_message(message.from_user.id, 'Загрузите файл')
         elif message.text == 'Назад':
             await back(message, state)
         else:
             await bot.send_message(message.from_user.id, 'Неверно выбран склад')
+            await back(message, state)
 
 
 @dp.message_handler(content_types=ContentTypes.DOCUMENT,
                     state=[Place.dowload])
 async def doc_handler(message: types.Message, state: FSMContext):
     try:
-        await bot.send_message(message.from_user.id, 'Загрузите файл')
+
         async with state.proxy() as data:
             if document := message.document:
                 await document.download(
                     destination_file="C:/Users/sklad/utils/file_{}.xls".format(data['sklad']),
                 )
-                logger.info('Загружен документ')
+                logger.info('{} - Загружен документ'.format(message.from_user.id))
                 await bot.send_message(message.from_user.id, 'Загружен документ на {} склад'.format(data['sklad']),
                                        reply_markup=InlineKeyboardMarkup().add(
                                            InlineKeyboardButton(text='Загрузить в базу',
