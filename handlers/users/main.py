@@ -172,6 +172,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                            format(i), reply_markup=second_menu)
 
+            await search(message, state)
         else:
 
             cells = search_articul(message.text, data['sklad'])
@@ -189,7 +190,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
             else:
                 await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                        format(data['sklad']), reply_markup=second_menu)
-        await Search.show_all.set()
+            await Search.show_all.set()
 
 
 @dp.message_handler(content_types=['text'], state=Place.dowload)
@@ -225,51 +226,6 @@ async def doc_handler(message: types.Message, state: FSMContext):
 
     except Exception as ex:
         logger.debug(ex)
-
-
-@dp.callback_query_handler(state=[Showphoto.show_qr, Place.mesto_4, Search.show_all])
-async def answer_exit(call: types.CallbackQuery, state: FSMContext):
-    if call.data == 'exit':
-        await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
-        await state.reset_state()
-        logger.info('Очистил state')
-    elif call.data == 'hide':
-        async with state.proxy() as data:
-            for key in data:
-                if str(key).startswith('photo'):
-                    asyncio.create_task(delete_message(data['{}'.format(key)]))
-    else:
-        start_time = time.time()
-        logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
-        if os.path.exists('base/{}.json'.format(call.data)):
-            logger.info('нашел json и вывел результат')
-            with open('base/{}.json'.format(call.data), "r", encoding='utf-8') as read_file:
-                data = json.load(read_file)
-                photo = await call.message.answer_photo(data["url_imgs"][0],
-                                                        reply_markup=hide)
-        else:
-            with open('stikers/seach.tgs', 'rb') as sticker:
-                sticker = await call.message.answer_sticker(sticker)
-            try:
-                url = get_info(call.data)
-                photo = await call.message.answer_photo(url[0][0],
-                                                        reply_markup=hide)
-            except Exception as ex:
-                logger.debug(ex)
-            finally:
-                asyncio.create_task(delete_message(sticker))
-
-        async with state.proxy() as data:
-            try:
-                if 'photo{}'.format(call.data) in data:
-                    for key in data:
-                        if str(key).startswith('photo'):
-                            asyncio.create_task(delete_message(data['{}'.format(key)]))
-
-                data['photo{}'.format(call.data)] = photo
-            except Exception as ex:
-                logger.debug(ex)
-        logger.info('Вывод результата через:{} сек.'.format(time.time() - start_time))
 
 
 @dp.callback_query_handler(state=Place.mesto_1)
@@ -373,6 +329,51 @@ async def dow_012(call: types.CallbackQuery, state: FSMContext):
     finally:
         await state.reset_state()
         logger.info('Очистил state')
+
+
+@dp.callback_query_handler(state=[Place.mesto_4, Search.show_all])
+async def answer_exit(call: types.CallbackQuery, state: FSMContext):
+    if call.data == 'exit':
+        await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
+        await state.reset_state()
+        logger.info('Очистил state')
+    elif call.data == 'hide':
+        async with state.proxy() as data:
+            for key in data:
+                if str(key).startswith('photo'):
+                    asyncio.create_task(delete_message(data['{}'.format(key)]))
+    else:
+        start_time = time.time()
+        logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
+        if os.path.exists('base/{}.json'.format(call.data)):
+            logger.info('нашел json и вывел результат')
+            with open('base/{}.json'.format(call.data), "r", encoding='utf-8') as read_file:
+                data = json.load(read_file)
+                photo = await call.message.answer_photo(data["url_imgs"][0],
+                                                        reply_markup=hide)
+        else:
+            with open('stikers/seach.tgs', 'rb') as sticker:
+                sticker = await call.message.answer_sticker(sticker)
+            try:
+                url = get_info(call.data)
+                photo = await call.message.answer_photo(url[0][0],
+                                                        reply_markup=hide)
+            except Exception as ex:
+                logger.debug(ex)
+            finally:
+                asyncio.create_task(delete_message(sticker))
+
+        async with state.proxy() as data:
+            try:
+                if 'photo{}'.format(call.data) in data:
+                    for key in data:
+                        if str(key).startswith('photo'):
+                            asyncio.create_task(delete_message(data['{}'.format(key)]))
+
+                data['photo{}'.format(call.data)] = photo
+            except Exception as ex:
+                logger.debug(ex)
+        logger.info('Вывод результата через:{} сек.'.format(time.time() - start_time))
 
 
 @dp.message_handler(content_types=['text'], state='*')
