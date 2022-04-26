@@ -3,7 +3,7 @@ from loguru import logger
 from keyboards.default.menu import second_menu
 from keyboards.inline.mesto import search_sklad
 from loader import bot
-from state.show_photo import Search
+from state.states import Search
 
 
 async def search(message, state):

@@ -5,7 +5,7 @@ from handlers.users.helps import bot_help
 from keyboards.default.menu import second_menu
 from keyboards.inline.mesto import mesto1
 from loader import bot
-from state.show_photo import Place
+from state.states import Place
 
 
 async def show_place(message, state):

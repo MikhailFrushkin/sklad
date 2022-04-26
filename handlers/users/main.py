@@ -23,7 +23,7 @@ from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
-from state.show_photo import Showphoto, Place, Search
+from state.states import Showphoto, Place, Search
 from utils.new_qr import qr_code
 from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name
 
@@ -33,22 +33,6 @@ async def bot_start(message: types.Message):
     """
     Старт бота
     """
-    if str(message.from_user.id) in ADMINS:
-        await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
-                             reply_markup=menu_admin)
-    else:
-        sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
-        await bot.send_sticker(message.chat.id, sticker)
-        await message.answer('Добро пожаловать, {}!'
-                             '\nДля показа фотографий товара, описания и цены с сайта'
-                             '\nВведите артикул. Пример: 80264335.'
-                             '\n"🤖 Показать Qrcode ячейки" - '
-                             '\nДля показа Qrcode ячейки на складе. '
-                             '\n"📦 Содержимое ячейки" - '
-                             '\nДля показа товара на ячейке.'
-                             '\n"🔍 Поиск на складе" - '
-                             '\nДля поиска ячеек с определенным артикулом.'
-                             .format(message.from_user.first_name), reply_markup=menu)
     connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
     cursor = connect.cursor()
 
@@ -59,10 +43,28 @@ async def bot_start(message: types.Message):
     cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(people_id))
     data = cursor.fetchone()
     if data is None:
-        date = datetime.datetime.now()
-        user_id = [message.chat.id, message.from_user.first_name, date]
-        cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
-        connect.commit()
+        # date = datetime.datetime.now()
+        # user_id = [message.chat.id, message.from_user.first_name, date]
+        # cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
+        # connect.commit()
+        await bot.send_message(message.from_user.id, text="Нет доступа", reply_markup=None)
+    else:
+        if str(message.from_user.id) in ADMINS:
+            await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
+                                 reply_markup=menu_admin)
+        else:
+            sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
+            await bot.send_sticker(message.chat.id, sticker)
+            await message.answer('Добро пожаловать, {}!'
+                                 '\nДля показа фотографий товара, описания и цены с сайта'
+                                 '\nВведите артикул. Пример: 80264335.'
+                                 '\n"🤖 Показать Qrcode ячейки" - '
+                                 '\nДля показа Qrcode ячейки на складе. '
+                                 '\n"📦 Содержимое ячейки" - '
+                                 '\nДля показа товара на ячейке.'
+                                 '\n"🔍 Поиск на складе" - '
+                                 '\nДля поиска ячеек с определенным артикулом.'
+                                 .format(message.from_user.first_name), reply_markup=menu)
 
 
 @dp.message_handler(commands=['help'], state='*')
@@ -159,20 +161,22 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
 async def search_sklad(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if data['sklad'] == 'all':
-            await bot.send_message(message.from_user.id, '{}'.format(search_art_name(message.text)))
-            sklad_list = ['012_825', 'A11_825', 'V_Sales', 'RDiff']
-            for i in sklad_list:
-                cells = search_all_sklad(message.text, i)
-                if cells:
-                    logger.info('Вернул список ячеек - {}'.format(cells))
-                    for item in cells:
-                        await bot.send_message(message.from_user.id, item)
+            if message.text == 'Назад':
+                await back(message, state)
+            else:
+                await bot.send_message(message.from_user.id, '{}'.format(search_art_name(message.text)))
+                sklad_list = ['012_825', 'A11_825', 'V_Sales', 'RDiff']
+                for i in sklad_list:
+                    cells = search_all_sklad(message.text, i)
+                    if cells:
+                        logger.info('Вернул список ячеек - {}'.format(cells))
+                        for item in cells:
+                            await bot.send_message(message.from_user.id, item)
 
-                else:
-                    await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
-                                           format(i), reply_markup=second_menu)
+                    else:
+                        await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
+                                               format(i), reply_markup=second_menu)
 
-            await search(message, state)
         else:
 
             cells = search_articul(message.text, data['sklad'])
@@ -180,17 +184,12 @@ async def search_sklad(message: types.Message, state: FSMContext):
                 if len(cells) != 0:
                     logger.info('Вернул список ячеек - {}'.format(cells))
                     for item in cells:
-                        await bot.send_message(message.from_user.id, item,
-                                               reply_markup=InlineKeyboardMarkup().add(
-                                                   InlineKeyboardButton(text='Показать фото',
-                                                                        callback_data='{}'.format(
-                                                                            message.text
-                                                                        ))))
+                        await bot.send_message(message.from_user.id, item)
 
             else:
                 await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                        format(data['sklad']), reply_markup=second_menu)
-            await Search.show_all.set()
+        await search(message, state)
 
 
 @dp.message_handler(content_types=['text'], state=Place.dowload)
