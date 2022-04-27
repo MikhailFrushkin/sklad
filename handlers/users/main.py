@@ -24,6 +24,7 @@ from keyboards.default.menu import second_menu, menu_admin, dowload_menu
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
 from state.states import Showphoto, Place, Search
+from utils.check_bd import check
 from utils.new_qr import qr_code
 from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name
 
@@ -33,21 +34,9 @@ async def bot_start(message: types.Message):
     """
     Старт бота
     """
-    connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
-    cursor = connect.cursor()
-
-    cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL)""")
-    connect.commit()
-
-    people_id = message.chat.id
-    cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(people_id))
-    data = cursor.fetchone()
-    if data is None:
-        # date = datetime.datetime.now()
-        # user_id = [message.chat.id, message.from_user.first_name, date]
-        # cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
-        # connect.commit()
+    if not check(message.from_user.id):
         await bot.send_message(message.from_user.id, text="Нет доступа", reply_markup=None)
+        await helps(message)
     else:
         if str(message.from_user.id) in ADMINS:
             await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
@@ -63,7 +52,7 @@ async def bot_start(message: types.Message):
                                  '\n"📦 Содержимое ячейки" - '
                                  '\nДля показа товара на ячейке.'
                                  '\n"🔍 Поиск на складе" - '
-                                 '\nДля поиска ячеек с определенным артикулом.'
+                                 '\nДля поиска ячеек, румов и тд. с определенным артикулом.'
                                  .format(message.from_user.first_name), reply_markup=menu)
 
 
@@ -382,47 +371,51 @@ async def bot_message(message: types.Message, state: FSMContext):
     Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
     иначе идем циклом по кортежу и выводим инф
     """
-    if message.text == '🆚 V-Sales_825':
-        await bot.send_message(message.from_user.id, 'V-Sales_825')
-        qrc = open('qcodes/V-Sales_825.jpg', 'rb')
-        await bot.send_photo(message.chat.id, qrc)
+    if check(message.from_user.id):
+        if message.text == '🆚 V-Sales_825':
+            await bot.send_message(message.from_user.id, 'V-Sales_825')
+            qrc = open('qcodes/V-Sales_825.jpg', 'rb')
+            await bot.send_photo(message.chat.id, qrc)
 
-    elif message.text == '☣ R12_BrakIn_825':
-        await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
-        qrc = open('qcodes/R12_BrakIn_825.jpg', 'rb')
-        await bot.send_photo(message.chat.id, qrc)
+        elif message.text == '☣ R12_BrakIn_825':
+            await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
+            qrc = open('qcodes/R12_BrakIn_825.jpg', 'rb')
+            await bot.send_photo(message.chat.id, qrc)
 
-    elif message.text == '🤖 Qrcode ячейки':
-        await show_qr(message, state)
+        elif message.text == '🤖 Qrcode ячейки':
+            await show_qr(message, state)
 
-    elif message.text == '📦 Содержимое ячейки':
-        await show_place(message, state)
+        elif message.text == '📦 Содержимое ячейки':
+            await show_place(message, state)
 
-    elif message.text == 'ℹ Информация' or message.text == 'Помощь':
-        await bot_help(message)
+        elif message.text == 'ℹ Информация' or message.text == 'Помощь':
+            await bot_help(message)
 
-    elif message.text == '🔍 Поиск на складе':
-        await search(message, state)
+        elif message.text == '🔍 Поиск на складе':
+            await search(message, state)
 
-    elif message.text == 'Назад':
-        await back(message, state)
+        elif message.text == 'Назад':
+            await back(message, state)
 
-    elif message.text == 'Загрузка базы':
-        await bot.send_message(message.from_user.id, 'Выберите склад', reply_markup=dowload_menu)
-        await Place.dowload.set()
+        elif message.text == 'Загрузка базы':
+            await bot.send_message(message.from_user.id, 'Выберите склад', reply_markup=dowload_menu)
+            await Place.dowload.set()
 
-    else:
-        start_time = time.time()
-        answer = message.text.lower()
-        logger.info('Пользователь {} {}: запросил артикул {}'.format(
-            message.from_user.id,
-            message.from_user.first_name,
-            answer
-        ))
-
-        if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
-            await show_media(message)
         else:
-            await bot.send_message(message.from_user.id,
-                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
-        logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
+            start_time = time.time()
+            answer = message.text.lower()
+            logger.info('Пользователь {} {}: запросил артикул {}'.format(
+                message.from_user.id,
+                message.from_user.first_name,
+                answer
+            ))
+
+            if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
+                await show_media(message)
+            else:
+                await bot.send_message(message.from_user.id,
+                                       'Неверно указан артикул или его нет на сайте. Пример: 80422781')
+            logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
+    else:
+        await bot.send_message(message.from_user.id, text="Нет доступа", reply_markup=None)
+        await helps(message)
