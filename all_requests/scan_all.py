@@ -9,10 +9,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-def get_info(art: str):
+def get_info(art: str) -> tuple:
     """
-    Получение от пользователя артикула, парсим первый сайт для получения урла товара.
-    После парсим урл товара, берем нужную инфу, возвращаем ее кортежем.
+    Скрапим всю нужную инфу с вайта по артикулам которые в наличии на складе 012
     :param art: srt
     :return: tuple
     """
@@ -107,6 +106,10 @@ def get_info(art: str):
 
 
 def all_art():
+    """
+    Список артикулов из файла
+    :return:
+    """
     with open('C:/Users/sklad/utils/file_012_825.csv', newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []

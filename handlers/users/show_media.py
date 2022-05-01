@@ -31,7 +31,7 @@ async def show_media(message: types.Message):
                 await message.answer_photo(data['url_imgs'])
             await bot.send_message(message.from_user.id, '\n'.join(data['params']))
             await bot.send_message(message.from_user.id,
-                                   'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(data['price']))
+                                   'Цена с сайта: {}(Уточняйте в Вашем магазине).'.format(data['price']))
     else:
         try:
             with open('stikers/seach.tgs', 'rb') as sticker:
@@ -54,7 +54,7 @@ async def show_media(message: types.Message):
                 await message.answer_photo(url_list[0][0])
             await bot.send_message(message.from_user.id, '\n'.join(url_list[2]))
             await bot.send_message(message.from_user.id,
-                                   'Цена с сайта: {}(Уточняйте в Вашем магазине)'.format(url_list[3]))
+                                   'Цена с сайта: {}(Уточняйте в Вашем магазине).'.format(url_list[3]))
         except Exception as ex:
             await bot.send_message(message.from_user.id,
                                    'Неверно указан артикул или его нет на сайте. Пример: 80422781')

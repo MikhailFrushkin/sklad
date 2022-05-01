@@ -20,13 +20,13 @@ from handlers.users.search import search
 from handlers.users.show_media import show_media
 from handlers.users.show_place import show_place
 from keyboards.default import menu
-from keyboards.default.menu import second_menu, menu_admin, dowload_menu
+from keyboards.default.menu import second_menu, menu_admin, dowload_menu, qr_menu
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
 from state.states import Showphoto, Place, Search
 from utils.check_bd import check
 from utils.new_qr import qr_code
-from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name
+from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -34,26 +34,35 @@ async def bot_start(message: types.Message):
     """
     Старт бота
     """
-    if not check(message.from_user.id):
-        await bot.send_message(message.from_user.id, text="Нет доступа", reply_markup=None)
-        await helps(message)
+    connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
+    cursor = connect.cursor()
+
+    cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL)""")
+    connect.commit()
+
+    cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(message.from_user.id))
+    data = cursor.fetchone()
+    if data is None:
+        date = datetime.datetime.now()
+        user_id = [message.chat.id, message.from_user.first_name, date]
+        cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
+        connect.commit()
+    if str(message.from_user.id) in ADMINS:
+        await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
+                             reply_markup=menu_admin)
     else:
-        if str(message.from_user.id) in ADMINS:
-            await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
-                                 reply_markup=menu_admin)
-        else:
-            sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
-            await bot.send_sticker(message.chat.id, sticker)
-            await message.answer('Добро пожаловать, {}!'
-                                 '\nДля показа фотографий товара, описания и цены с сайта'
-                                 '\nВведите артикул. Пример: 80264335.'
-                                 '\n"🤖 Показать Qrcode ячейки" - '
-                                 '\nДля показа Qrcode ячейки на складе. '
-                                 '\n"📦 Содержимое ячейки" - '
-                                 '\nДля показа товара на ячейке.'
-                                 '\n"🔍 Поиск на складе" - '
-                                 '\nДля поиска ячеек, румов и тд. с определенным артикулом.'
-                                 .format(message.from_user.first_name), reply_markup=menu)
+        sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
+        await bot.send_sticker(message.chat.id, sticker)
+        await message.answer('Добро пожаловать, {}!'
+                             '\nДля показа фотографий товара, описания и цены с сайта'
+                             '\nВведите артикул. Пример: 80264335.'
+                             '\n"🤖 Показать Qrcode ячейки" - '
+                             '\nДля показа Qrcode ячейки на складе. '
+                             '\n"📦 Содержимое ячейки" - '
+                             '\nДля показа товара на ячейке.'
+                             '\n"🔍 Поиск на складе" - '
+                             '\nДля поиска ячеек, румов и тд. с определенным артикулом.'
+                             .format(message.from_user.first_name), reply_markup=menu)
 
 
 @dp.message_handler(commands=['help'], state='*')
@@ -78,7 +87,7 @@ async def show_qr(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, 'Для показа Qrcode введите ряд, секцию,'
                                                  '\nячейку без нулей и пробела.'
                                                  '\nПример: 721 - это 7 ряд 2 секция 1 ячейка',
-                           reply_markup=second_menu)
+                           reply_markup=qr_menu)
     await Showphoto.show_qr.set()
 
 
@@ -89,9 +98,14 @@ async def showqr(message: types.Message, state: FSMContext):
     Ели сообщение удовлетворяет условию, генерирует код и отправляет.
     Скидывает стате.
     """
+    ans_list = ['011_825-exit_sklad', '011_825-exit_zal', '011_825-exit_Dost', 'V_Sales_825', 'R12_BrakIn_825']
     ans = message.text
     if ans == 'Назад':
         await back(message, state)
+    elif ans in ans_list:
+        await bot.send_message(message.from_user.id, '{}'.format(ans))
+        qrc = open('C:/Users/sklad/qcodes/{}.jpg'.format(ans), 'rb')
+        await bot.send_photo(message.chat.id, qrc)
     else:
         if ans.isdigit():
             if len(ans) == 3:
@@ -154,7 +168,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
                 await back(message, state)
             else:
                 await bot.send_message(message.from_user.id, '{}'.format(search_art_name(message.text)))
-                sklad_list = ['012_825', 'A11_825', 'V_Sales', 'RDiff']
+                sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
                 for i in sklad_list:
                     cells = search_all_sklad(message.text, i)
                     if cells:
@@ -165,26 +179,28 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     else:
                         await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                                format(i), reply_markup=second_menu)
-
+                await search(message, state)
         else:
-
-            cells = search_articul(message.text, data['sklad'])
-            if cells:
-                if len(cells) != 0:
-                    logger.info('Вернул список ячеек - {}'.format(cells))
-                    for item in cells:
-                        await bot.send_message(message.from_user.id, item)
-
+            if message.text == 'Назад':
+                await back(message, state)
             else:
-                await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
-                                       format(data['sklad']), reply_markup=second_menu)
-        await search(message, state)
+                cells = search_articul(message.text, data['sklad'])
+                if cells:
+                    if len(cells) != 0:
+                        logger.info('Вернул список ячеек - {}'.format(cells))
+                        for item in cells:
+                            await bot.send_message(message.from_user.id, item)
+
+                else:
+                    await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
+                                           format(data['sklad']), reply_markup=second_menu)
+                await search(message, state)
 
 
 @dp.message_handler(content_types=['text'], state=Place.dowload)
 async def search_sklad(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        sklad_list = ['012_825', 'A11_825', 'RDiff', 'V_Sales']
+        sklad_list = ['011_825', '012_825', 'A11_825', 'RDiff', 'V_Sales']
         if message.text in sklad_list:
             data['sklad'] = message.text
             await bot.send_message(message.from_user.id, 'Загрузите файл')
@@ -218,14 +234,31 @@ async def doc_handler(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(state=Place.mesto_1)
 async def place_1(call: types.CallbackQuery, state: FSMContext):
-    if call.data == '012_825-OX':
-        async with state.proxy() as data:
+    async with state.proxy() as data:
+        if call.data == '012_825-OX':
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
             await call.message.answer('\n'.join(place('012_825-OX', '012_825')))
-            await back(call.message, state)
-    elif call.data == 'rdiff':
-        async with state.proxy() as data:
+        elif call.data == 'dost':
+            data['mesto1'] = call.data
+            asyncio.create_task(delete_message(data['message1']))
+            dost_list = place_dost('012_825-Dost', '012_825')
+            logger.info(dost_list)
+            count = 0
+            list_1 = []
+            if dost_list:
+                if dost_list != 'В ячейках нет отказанного товара':
+                    for item in range(len(dost_list)):
+                        list_1.append(dost_list[item])
+                        count += 1
+                        if count == 20:
+                            await call.message.answer('\n'.join(list_1))
+                            list_1 = []
+                            count = 0
+                    await call.message.answer('\n'.join(list_1))
+                else:
+                    await bot.send_message(call.from_user.id, 'В ячейках нет отказаного товара')
+        elif call.data == 'rdiff':
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
             rdiff_list = place('RDiff_825-1', 'RDiff')
@@ -239,17 +272,15 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
                     list_1 = []
                     count = 0
             await call.message.answer('\n'.join(list_1))
-    else:
-        await call.answer(cache_time=5)
-        answer: str = call.data
-        logger.info('Получил ряд: {}'.format(answer))
-
-        async with state.proxy() as data:
+        else:
+            await call.answer(cache_time=5)
+            answer: str = call.data
+            logger.info('Получил ряд: {}'.format(answer))
             asyncio.create_task(delete_message(data['message1']))
             mes1 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
             data['mesto1'] = answer
             data['message1'] = mes1
-        await Place.mesto_2.set()
+            await Place.mesto_2.set()
 
 
 @dp.callback_query_handler(state=Place.mesto_2)
@@ -371,51 +402,47 @@ async def bot_message(message: types.Message, state: FSMContext):
     Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
     иначе идем циклом по кортежу и выводим инф
     """
-    if check(message.from_user.id):
-        if message.text == '🆚 V-Sales_825':
-            await bot.send_message(message.from_user.id, 'V-Sales_825')
-            qrc = open('qcodes/V-Sales_825.jpg', 'rb')
-            await bot.send_photo(message.chat.id, qrc)
+    if message.text == '🆚 V-Sales_825':
+        await bot.send_message(message.from_user.id, 'V-Sales_825')
+        qrc = open('qcodes/V_Sales_825.jpg', 'rb')
+        await bot.send_photo(message.chat.id, qrc)
 
-        elif message.text == '☣ R12_BrakIn_825':
-            await bot.send_message(message.from_user.id, 'R12_BrakIn_825')
-            qrc = open('qcodes/R12_BrakIn_825.jpg', 'rb')
-            await bot.send_photo(message.chat.id, qrc)
+    elif message.text == '🗃 011_825-exit_sklad':
+        await bot.send_message(message.from_user.id, '011_825-exit_sklad')
+        qrc = open('qcodes/011_825-exit_sklad.jpg', 'rb')
+        await bot.send_photo(message.chat.id, qrc)
 
-        elif message.text == '🤖 Qrcode ячейки':
-            await show_qr(message, state)
+    elif message.text == '🤖 Qrcode ячейки':
+        await show_qr(message, state)
 
-        elif message.text == '📦 Содержимое ячейки':
-            await show_place(message, state)
+    elif message.text == '📦 Содержимое ячейки':
+        await show_place(message, state)
 
-        elif message.text == 'ℹ Информация' or message.text == 'Помощь':
-            await bot_help(message)
+    elif message.text == 'ℹ Информация' or message.text == 'Помощь':
+        await bot_help(message)
 
-        elif message.text == '🔍 Поиск на складе':
-            await search(message, state)
+    elif message.text == '🔍 Поиск на складе':
+        await search(message, state)
 
-        elif message.text == 'Назад':
-            await back(message, state)
+    elif message.text == 'Назад':
+        await back(message, state)
 
-        elif message.text == 'Загрузка базы':
-            await bot.send_message(message.from_user.id, 'Выберите склад', reply_markup=dowload_menu)
-            await Place.dowload.set()
+    elif message.text == 'Загрузка базы':
+        await bot.send_message(message.from_user.id, 'Выберите склад', reply_markup=dowload_menu)
+        await Place.dowload.set()
 
-        else:
-            start_time = time.time()
-            answer = message.text.lower()
-            logger.info('Пользователь {} {}: запросил артикул {}'.format(
-                message.from_user.id,
-                message.from_user.first_name,
-                answer
-            ))
-
-            if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
-                await show_media(message)
-            else:
-                await bot.send_message(message.from_user.id,
-                                       'Неверно указан артикул или его нет на сайте. Пример: 80422781')
-            logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
     else:
-        await bot.send_message(message.from_user.id, text="Нет доступа", reply_markup=None)
-        await helps(message)
+        start_time = time.time()
+        answer = message.text.lower()
+        logger.info('Пользователь {} {}: запросил артикул {}'.format(
+            message.from_user.id,
+            message.from_user.first_name,
+            answer
+        ))
+
+        if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
+            await show_media(message)
+        else:
+            await bot.send_message(message.from_user.id,
+                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
+        logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))

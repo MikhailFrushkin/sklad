@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 
 def get_info(art: str) -> tuple:
     """
-    Получение от пользователя артикула, парсим первый сайт для получения урла товара.
+    Получение от пользователя артикула, отправляем гет запрос с поиска для получения урла товара.
     После парсим урл товара, берем нужную инфу, возвращаем ее кортежем.
     :param art: srt
     :return: tuple
@@ -90,7 +90,7 @@ def get_info(art: str) -> tuple:
         price = price.text
     except Exception as ex:
         logger.debug('Нет цены', ex)
-        price = 'Упс. Нет цены на сайте'
+        price = 'Нет цены на сайте, либо товар закончился'
 
     data = {
         'url_imgs': url_list,

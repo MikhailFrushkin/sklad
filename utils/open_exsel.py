@@ -42,6 +42,30 @@ def place(message, sklad):
         logger.debug(ex)
 
 
+def place_dost(message, sklad):
+    try:
+        with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            answer = []
+            for row in reader:
+                if row['Местоположение'].startswith(message) and row['Доступно'] != '':
+                    line = 'Необходимо убрать с ячейки {}' \
+                           '\n{} - {}' \
+                           '\nДоступно: {}' \
+                        .format(
+                        row['Местоположение'],
+                        row['Код \nноменклатуры'],
+                        row['Описание товара'],
+                        row['Доступно']) \
+                        .replace('.0', '')
+                    answer.append(line)
+        if len(answer) == 0:
+            return 'В ячейках нет отказанного товара'
+        return answer
+    except Exception as ex:
+        logger.debug(ex)
+
+
 def search_articul(art, sklad):
     with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -78,7 +102,8 @@ def search_all_sklad(art, sklad):
 
 
 def search_art_name(art):
-    sklad_list = ['012_825', 'A11_825', 'V_Sales', 'RDiff']
+    line = 'Нет товара в наличии'
+    sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
     for i in sklad_list:
         with open('C:/Users/sklad/utils/file_{}.csv'.format(i), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
