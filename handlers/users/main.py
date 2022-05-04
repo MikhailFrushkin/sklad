@@ -14,7 +14,7 @@ from loguru import logger
 
 import bot
 from all_requests.requests_mediagroup import get_info
-from data.config import ADMINS
+from data.config import ADMINS, PASSWORD
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
 from handlers.users.helps import bot_help
@@ -25,7 +25,7 @@ from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu, qr_menu
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
-from state.states import Showphoto, Place, Search
+from state.states import Showphoto, Place, Search, Logging, Messages
 from utils.check_bd import check
 from utils.new_qr import qr_code
 from utils.oleg import mic
@@ -35,7 +35,7 @@ from utils.open_exsel import place, search_articul, dowload, search_all_sklad, s
 @dp.message_handler(commands=['start'], state='*')
 async def bot_start(message: types.Message):
     """
-    Старт бота
+    Старт бота, проверка на присутствие в базе данных, если нет, запрашивает пароль
     """
     # connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
     # cursor = connect.cursor()
@@ -64,12 +64,53 @@ async def bot_start(message: types.Message):
                                  '\nДля показа Qrcode ячейки на складе. '
                                  '\n"📦 Содержимое ячейки" - '
                                  '\nДля показа товара на ячейке.'
-                                 '\n"🔍 Поиск на складе" - '
+                                 '\n"🔍 Поиск на складах" - '
                                  '\nДля поиска ячеек, румов и тд. с определенным артикулом.'
                                  .format(message.from_user.first_name), reply_markup=menu)
     else:
-        await bot.send_message(message.from_user.id, 'Нет доступа')
         await helps(message)
+        await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')
+        await Logging.log.set()
+
+
+@dp.message_handler(content_types=['text'], state=Logging.log)
+async def bot_message(message: types.Message, state: FSMContext):
+    """
+    Если пароль верен, вносит в базу пользователя, перезапускает функуию старт"""
+    if message.text == PASSWORD:
+        connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
+        cursor = connect.cursor()
+
+        cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL)""")
+        connect.commit()
+
+        cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(message.from_user.id))
+        data = cursor.fetchone()
+        if data is None:
+            date = datetime.datetime.now()
+            user_id = [message.chat.id, message.from_user.first_name, date]
+            cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
+            connect.commit()
+        await state.reset_state()
+        logger.info('Очистил state')
+        await bot_start(message)
+
+
+@dp.message_handler(content_types=['text'], state=Messages.mes)
+async def bot_message(message: types.Message):
+    """
+    Рассылка сообщения пользователям бота,
+    нажатие админ кнопки на "отправить"
+    """
+    text_mes = message.text
+    logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
+
+    connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
+    cursor = connect.cursor()
+    cursor.execute("SELECT * FROM login_id;")
+    one_result = cursor.fetchall()
+    for i in one_result:
+        print(i[0])
 
 
 @dp.message_handler(commands=['help'], state='*')
@@ -83,7 +124,7 @@ async def helps(message: types.Message):
 @dp.message_handler(commands=['showqr'], state='*')
 async def show_qr(message: types.Message, state: FSMContext):
     """
-    Тригер на команду showqr и отправляет с кнопки.
+    Отправляет пользователя в меню qr кодов(кнопок), и генерирует их с ввода.
     """
     logger.info('Пользователь {}: {} {} запросил команду /showqr'.format(
         message.from_user.id,
@@ -103,7 +144,6 @@ async def showqr(message: types.Message, state: FSMContext):
     """
     Функция отправки qcodes.
     Ели сообщение удовлетворяет условию, генерирует код и отправляет.
-    Скидывает стате.
     """
     ans_list = ['011_825-Exit_sklad', '011_825-Exit_zal', '011_825-Exit_Dost', 'V-Sales_825', 'R12_BrakIn_825']
     ans = message.text
@@ -154,6 +194,9 @@ async def showqr(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(state=Search.sklad)
 async def input_art(call: types.CallbackQuery, state: FSMContext):
+    """
+    Поиск по складам введенного артикула
+    """
     async with state.proxy() as data:
         if call.data == 'exit':
             await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
@@ -169,6 +212,9 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(content_types=['text'], state=Search.art)
 async def search_sklad(message: types.Message, state: FSMContext):
+    """
+    Выбор склада
+    """
     async with state.proxy() as data:
         if data['sklad'] == 'all':
             if message.text == 'Назад':
@@ -206,6 +252,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
 
 @dp.message_handler(content_types=['text'], state=Place.dowload)
 async def search_sklad(message: types.Message, state: FSMContext):
+    """Загрузка базы с админки"""
     async with state.proxy() as data:
         sklad_list = ['011_825', '012_825', 'A11_825', 'RDiff', 'V_Sales']
         if message.text in sklad_list:
@@ -221,8 +268,8 @@ async def search_sklad(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=ContentTypes.DOCUMENT,
                     state=[Place.dowload])
 async def doc_handler(message: types.Message, state: FSMContext):
+    """Ловит документ(EXSEL) и загружает"""
     try:
-
         async with state.proxy() as data:
             if document := message.document:
                 await document.download(
@@ -241,6 +288,7 @@ async def doc_handler(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(state=Place.mesto_1)
 async def place_1(call: types.CallbackQuery, state: FSMContext):
+    """Поиск по рядам"""
     async with state.proxy() as data:
         if call.data == '012_825-OX':
             data['mesto1'] = call.data
@@ -292,6 +340,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(state=Place.mesto_2)
 async def place_2(call: types.CallbackQuery, state: FSMContext):
+    """Ввод секций для поиска"""
     await call.answer(cache_time=5)
     answer: str = call.data
     logger.info('Получил секцию: {}'.format(answer))
@@ -307,6 +356,7 @@ async def place_2(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(state=Place.mesto_3)
 async def place_3(call: types.CallbackQuery, state: FSMContext):
+    """Ввод ячейки поиска"""
     await call.answer(cache_time=5)
     answer: str = call.data
     logger.info('Получил ячейку: {}. '.format(answer))
@@ -346,7 +396,8 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
 
 
 @dp.callback_query_handler(state=Place.dowload)
-async def dow_012(call: types.CallbackQuery, state: FSMContext):
+async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
+    """Функция загрузки базы"""
     try:
         dowload(call.data)
         await bot.send_message(call.from_user.id, 'База обновлена', reply_markup=menu_admin)
@@ -359,6 +410,7 @@ async def dow_012(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(state=[Place.mesto_4, Search.show_all])
 async def answer_exit(call: types.CallbackQuery, state: FSMContext):
+    """Кол беки с инлайн кнопок и показ  1 картинки в ячейках"""
     if call.data == 'exit':
         await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
         await state.reset_state()
@@ -404,6 +456,7 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(content_types=[ContentType.VOICE])
 async def voice_message_handler(message: Message):
+    """Управление голосовыми, пока в разработке"""
     await bot.send_message(message.from_user.id, 'Иди работай')
     voice = message.voice
     await bot.download_file_by_id(voice)
@@ -436,11 +489,15 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == 'ℹ Информация' or message.text == 'Помощь':
             await bot_help(message)
 
-        elif message.text == '🔍 Поиск на складе':
+        elif message.text == '🔍 Поиск на складах':
             await search(message, state)
 
         elif message.text == 'Назад':
             await back(message, state)
+
+        elif message.text == 'Отправить':
+            await bot.send_message(message.from_user.id, 'Введите сообщения для общей рассылки:')
+            await Messages.mes.set()
 
         elif message.text == 'mic':
             await bot.send_message(message.from_user.id, mic())
@@ -465,5 +522,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                                        'Неверно указан артикул или его нет на сайте. Пример: 80422781')
             logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
     else:
-        await bot.send_message(message.from_user.id, 'Нет доступа')
         await helps(message)
+        await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')
+        await Logging.log.set()
+

@@ -5,7 +5,7 @@ menu = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('🗃 011_825-Exit_sklad')],
     [KeyboardButton('🤖 Qrcode ячейки')],
     [KeyboardButton('📦 Содержимое ячейки'),
-     KeyboardButton('🔍 Поиск на складе')],
+     KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('ℹ Информация')]
 ], resize_keyboard=True)
 
@@ -18,10 +18,11 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('🗃 011_825-Exit_sklad')],
     [KeyboardButton('🤖 Qrcode ячейки')],
     [KeyboardButton('📦 Содержимое ячейки'),
-     KeyboardButton('🔍 Поиск на складе')],
+     KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('ℹ Информация')],
     [KeyboardButton('Загрузка базы'),
-     KeyboardButton('mic')]
+     KeyboardButton('mic'),
+     KeyboardButton('Отправить')]
 ], resize_keyboard=True)
 
 dowload_menu = ReplyKeyboardMarkup(keyboard=[

@@ -6,6 +6,14 @@ class Showphoto(StatesGroup):
     show_all = State()
 
 
+class Logging(StatesGroup):
+    log = State()
+
+
+class Messages(StatesGroup):
+    mes = State()
+
+
 class Place(StatesGroup):
     mesto_1 = State()
     mesto_2 = State()
