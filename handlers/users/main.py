@@ -1,12 +1,14 @@
 import asyncio
 import datetime
 import json
+import os
 import os.path
 import sqlite3
 import time
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
+from aiogram.types import ContentType, Message
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from loguru import logger
 
@@ -26,6 +28,7 @@ from loader import dp, bot
 from state.states import Showphoto, Place, Search
 from utils.check_bd import check
 from utils.new_qr import qr_code
+from utils.oleg import mic
 from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost
 
 
@@ -34,35 +37,39 @@ async def bot_start(message: types.Message):
     """
     Старт бота
     """
-    connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
-    cursor = connect.cursor()
-
-    cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL)""")
-    connect.commit()
-
-    cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(message.from_user.id))
-    data = cursor.fetchone()
-    if data is None:
-        date = datetime.datetime.now()
-        user_id = [message.chat.id, message.from_user.first_name, date]
-        cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
-        connect.commit()
-    if str(message.from_user.id) in ADMINS:
-        await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
-                             reply_markup=menu_admin)
+    # connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
+    # cursor = connect.cursor()
+    #
+    # cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL)""")
+    # connect.commit()
+    #
+    # cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(message.from_user.id))
+    # data = cursor.fetchone()
+    # if data is None:
+    #     date = datetime.datetime.now()
+    #     user_id = [message.chat.id, message.from_user.first_name, date]
+    #     cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
+    #     connect.commit()
+    if check(message.from_user.id):
+        if str(message.from_user.id) in ADMINS:
+            await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
+                                 reply_markup=menu_admin)
+        else:
+            sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
+            await bot.send_sticker(message.chat.id, sticker)
+            await message.answer('Добро пожаловать, {}!'
+                                 '\nДля показа фотографий товара, описания и цены с сайта'
+                                 '\nВведите артикул. Пример: 80264335.'
+                                 '\n"🤖 Показать Qrcode ячейки" - '
+                                 '\nДля показа Qrcode ячейки на складе. '
+                                 '\n"📦 Содержимое ячейки" - '
+                                 '\nДля показа товара на ячейке.'
+                                 '\n"🔍 Поиск на складе" - '
+                                 '\nДля поиска ячеек, румов и тд. с определенным артикулом.'
+                                 .format(message.from_user.first_name), reply_markup=menu)
     else:
-        sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
-        await bot.send_sticker(message.chat.id, sticker)
-        await message.answer('Добро пожаловать, {}!'
-                             '\nДля показа фотографий товара, описания и цены с сайта'
-                             '\nВведите артикул. Пример: 80264335.'
-                             '\n"🤖 Показать Qrcode ячейки" - '
-                             '\nДля показа Qrcode ячейки на складе. '
-                             '\n"📦 Содержимое ячейки" - '
-                             '\nДля показа товара на ячейке.'
-                             '\n"🔍 Поиск на складе" - '
-                             '\nДля поиска ячеек, румов и тд. с определенным артикулом.'
-                             .format(message.from_user.first_name), reply_markup=menu)
+        await bot.send_message(message.from_user.id, 'Нет доступа')
+        await helps(message)
 
 
 @dp.message_handler(commands=['help'], state='*')
@@ -98,7 +105,7 @@ async def showqr(message: types.Message, state: FSMContext):
     Ели сообщение удовлетворяет условию, генерирует код и отправляет.
     Скидывает стате.
     """
-    ans_list = ['011_825-exit_sklad', '011_825-exit_zal', '011_825-exit_Dost', 'V_Sales_825', 'R12_BrakIn_825']
+    ans_list = ['011_825-Exit_sklad', '011_825-Exit_zal', '011_825-Exit_Dost', 'V-Sales_825', 'R12_BrakIn_825']
     ans = message.text
     if ans == 'Назад':
         await back(message, state)
@@ -395,6 +402,13 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
         logger.info('Вывод результата через:{} сек.'.format(time.time() - start_time))
 
 
+@dp.message_handler(content_types=[ContentType.VOICE])
+async def voice_message_handler(message: Message):
+    await bot.send_message(message.from_user.id, 'Иди работай')
+    voice = message.voice
+    await bot.download_file_by_id(voice)
+
+
 @dp.message_handler(content_types=['text'], state='*')
 async def bot_message(message: types.Message, state: FSMContext):
     """
@@ -402,47 +416,54 @@ async def bot_message(message: types.Message, state: FSMContext):
     Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
     иначе идем циклом по кортежу и выводим инф
     """
-    if message.text == '🆚 V-Sales_825':
-        await bot.send_message(message.from_user.id, 'V-Sales_825')
-        qrc = open('qcodes/V_Sales_825.jpg', 'rb')
-        await bot.send_photo(message.chat.id, qrc)
+    if check(message.from_user.id):
+        if message.text == '🆚 V-Sales_825':
+            await bot.send_message(message.from_user.id, 'V-Sales_825')
+            qrc = open('qcodes/V-Sales_825.jpg', 'rb')
+            await bot.send_photo(message.chat.id, qrc)
 
-    elif message.text == '🗃 011_825-exit_sklad':
-        await bot.send_message(message.from_user.id, '011_825-exit_sklad')
-        qrc = open('qcodes/011_825-exit_sklad.jpg', 'rb')
-        await bot.send_photo(message.chat.id, qrc)
+        elif message.text == '🗃 011_825-Exit_sklad':
+            await bot.send_message(message.from_user.id, '011_825-Exit_sklad')
+            qrc = open('qcodes/011_825-Exit_sklad.jpg', 'rb')
+            await bot.send_photo(message.chat.id, qrc)
 
-    elif message.text == '🤖 Qrcode ячейки':
-        await show_qr(message, state)
+        elif message.text == '🤖 Qrcode ячейки':
+            await show_qr(message, state)
 
-    elif message.text == '📦 Содержимое ячейки':
-        await show_place(message, state)
+        elif message.text == '📦 Содержимое ячейки':
+            await show_place(message, state)
 
-    elif message.text == 'ℹ Информация' or message.text == 'Помощь':
-        await bot_help(message)
+        elif message.text == 'ℹ Информация' or message.text == 'Помощь':
+            await bot_help(message)
 
-    elif message.text == '🔍 Поиск на складе':
-        await search(message, state)
+        elif message.text == '🔍 Поиск на складе':
+            await search(message, state)
 
-    elif message.text == 'Назад':
-        await back(message, state)
+        elif message.text == 'Назад':
+            await back(message, state)
 
-    elif message.text == 'Загрузка базы':
-        await bot.send_message(message.from_user.id, 'Выберите склад', reply_markup=dowload_menu)
-        await Place.dowload.set()
+        elif message.text == 'mic':
+            await bot.send_message(message.from_user.id, mic())
 
-    else:
-        start_time = time.time()
-        answer = message.text.lower()
-        logger.info('Пользователь {} {}: запросил артикул {}'.format(
-            message.from_user.id,
-            message.from_user.first_name,
-            answer
-        ))
+        elif message.text == 'Загрузка базы':
+            await bot.send_message(message.from_user.id, 'Выберите склад', reply_markup=dowload_menu)
+            await Place.dowload.set()
 
-        if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
-            await show_media(message)
         else:
-            await bot.send_message(message.from_user.id,
-                                   'Неверно указан артикул или его нет на сайте. Пример: 80422781')
-        logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
+            start_time = time.time()
+            answer = message.text.lower()
+            logger.info('Пользователь {} {}: запросил артикул {}'.format(
+                message.from_user.id,
+                message.from_user.first_name,
+                answer
+            ))
+
+            if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
+                await show_media(message)
+            else:
+                await bot.send_message(message.from_user.id,
+                                       'Неверно указан артикул или его нет на сайте. Пример: 80422781')
+            logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
+    else:
+        await bot.send_message(message.from_user.id, 'Нет доступа')
+        await helps(message)

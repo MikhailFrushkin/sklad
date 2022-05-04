@@ -2,7 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('🆚 V-Sales_825'),
-     KeyboardButton('🗃 011_825-exit_sklad')],
+     KeyboardButton('🗃 011_825-Exit_sklad')],
     [KeyboardButton('🤖 Qrcode ячейки')],
     [KeyboardButton('📦 Содержимое ячейки'),
      KeyboardButton('🔍 Поиск на складе')],
@@ -15,12 +15,13 @@ second_menu = ReplyKeyboardMarkup(keyboard=[
 
 menu_admin = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('🆚 V-Sales_825'),
-     KeyboardButton('🗃 011_825-exit_sklad')],
+     KeyboardButton('🗃 011_825-Exit_sklad')],
     [KeyboardButton('🤖 Qrcode ячейки')],
     [KeyboardButton('📦 Содержимое ячейки'),
      KeyboardButton('🔍 Поиск на складе')],
     [KeyboardButton('ℹ Информация')],
-    [KeyboardButton('Загрузка базы')]
+    [KeyboardButton('Загрузка базы'),
+     KeyboardButton('mic')]
 ], resize_keyboard=True)
 
 dowload_menu = ReplyKeyboardMarkup(keyboard=[
@@ -33,10 +34,10 @@ dowload_menu = ReplyKeyboardMarkup(keyboard=[
 ], resize_keyboard=True)
 
 qr_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton('011_825-exit_sklad'),
-     KeyboardButton('011_825-exit_zal'),
-     KeyboardButton('011_825-exit_Dost')],
-    [KeyboardButton('V_Sales_825'),
+    [KeyboardButton('011_825-Exit_sklad'),
+     KeyboardButton('011_825-Exit_zal'),
+     KeyboardButton('011_825-Exit_Dost')],
+    [KeyboardButton('V-Sales_825'),
      KeyboardButton('R12_BrakIn_825')],
     [KeyboardButton('Назад')],
 ], resize_keyboard=True)
