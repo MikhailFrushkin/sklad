@@ -9,6 +9,7 @@ from state.states import Place
 
 
 async def show_place(message, state):
+    """Просмотр содержимого ячейки"""
     ans = message.text
     if ans == 'Назад':
         await back(message, state)

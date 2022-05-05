@@ -20,9 +20,9 @@ def get_info(art: str) -> tuple:
     user_agent = ua.random
     options.add_argument(f'user-agent={user_agent}')
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument('--blink-settings=imagesEnabled=false')
-    options.add_argument("--disable-notifications")
-    options.add_argument("--headless")
+    # options.add_argument('--blink-settings=imagesEnabled=false')
+    # options.add_argument("--disable-notifications")
+    # options.add_argument("--headless")
     driver = webdriver.Chrome(
         executable_path="C:/Users/sklad/chromedriver.exe",
         options=options

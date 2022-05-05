@@ -6,11 +6,15 @@ import os.path
 import sqlite3
 import time
 
+import qrcode
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.types import ContentType, Message
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from loguru import logger
+from qrcode.image.styledpil import StyledPilImage
+from qrcode.image.styles.colormasks import RadialGradiantColorMask
+from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
 
 import bot
 from all_requests.requests_mediagroup import get_info
@@ -25,7 +29,7 @@ from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu, qr_menu
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
-from state.states import Showphoto, Place, Search, Logging, Messages
+from state.states import Showphoto, Place, Search, Logging, Messages, QR
 from utils.check_bd import check
 from utils.new_qr import qr_code
 from utils.oleg import mic
@@ -50,12 +54,20 @@ async def bot_start(message: types.Message):
     #     user_id = [message.chat.id, message.from_user.first_name, date]
     #     cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
     #     connect.commit()
+    logger.info('Пользователь {}: {} {} нажал на кнопку {}'.format(
+        message.from_user.id,
+        message.from_user.first_name,
+        message.from_user.username,
+        message.text
+    ))
     if check(message.from_user.id):
         if str(message.from_user.id) in ADMINS:
+            sticker = open('stikers/Dicaprio.tgs', 'rb')
+            await bot.send_sticker(message.chat.id, sticker)
             await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
                                  reply_markup=menu_admin)
         else:
-            sticker = open('stikers/AnimatedSticker2.tgs', 'rb')
+            sticker = open('stikers/Dicaprio.tgs', 'rb')
             await bot.send_sticker(message.chat.id, sticker)
             await message.answer('Добро пожаловать, {}!'
                                  '\nДля показа фотографий товара, описания и цены с сайта'
@@ -71,6 +83,14 @@ async def bot_start(message: types.Message):
         await helps(message)
         await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')
         await Logging.log.set()
+
+
+@dp.message_handler(commands=['help'], state='*')
+async def helps(message: types.Message):
+    """
+    Справка бота
+    """
+    await bot_help(message)
 
 
 @dp.message_handler(content_types=['text'], state=Logging.log)
@@ -113,25 +133,11 @@ async def bot_message(message: types.Message):
         print(i[0])
 
 
-@dp.message_handler(commands=['help'], state='*')
-async def helps(message: types.Message):
-    """
-    Справка бота
-    """
-    await bot_help(message)
-
-
 @dp.message_handler(commands=['showqr'], state='*')
-async def show_qr(message: types.Message, state: FSMContext):
+async def show_qr(message: types.Message):
     """
     Отправляет пользователя в меню qr кодов(кнопок), и генерирует их с ввода.
     """
-    logger.info('Пользователь {}: {} {} запросил команду /showqr'.format(
-        message.from_user.id,
-        message.from_user.first_name,
-        message.from_user.username
-    ))
-
     await bot.send_message(message.from_user.id, 'Для показа Qrcode введите ряд, секцию,'
                                                  '\nячейку без нулей и пробела.'
                                                  '\nПример: 721 - это 7 ряд 2 секция 1 ячейка',
@@ -163,9 +169,8 @@ async def showqr(message: types.Message, state: FSMContext):
 
                     data = ('012_825-0{}-0{}-{}'.format(message.text[0], message.text[1], message.text[2]))
                     qr_code(message, data)
-                    qrcod = open('qcodes/{}.jpg'.format(message.text), 'rb')
-                    await bot.send_photo(message.from_user.id, qrcod)
-                    logger.info(data)
+                    with open('C:/Users/sklad/qcodes/{}.jpg'.format(message.text), 'rb') as qrcod:
+                        await bot.send_photo(message.from_user.id, qrcod)
                 else:
                     await bot.send_message(message.from_user.id,
                                            'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
@@ -179,7 +184,7 @@ async def showqr(message: types.Message, state: FSMContext):
                             .format(message.text[0], message.text[1], message.text[2], message.text[3]))
 
                     qr_code(message, data)
-                    qrcod = open('qcodes/{}.jpg'.format(message.text), 'rb')
+                    qrcod = open('C:/Users/sklad/qcodes/{}.jpg'.format(message.text), 'rb')
                     await bot.send_photo(message.from_user.id, qrcod)
 
                 else:
@@ -188,6 +193,10 @@ async def showqr(message: types.Message, state: FSMContext):
             else:
                 await bot.send_message(message.from_user.id,
                                        'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
+
+            logger.info('Пользователь {} запросил qr на ячейку: {}'.format(message.from_user.id, ans))
+            time.sleep(1)
+            os.remove('C:/Users/sklad/qcodes/{}.jpg'.format(ans))
         else:
             await bot.send_message(message.from_user.id, 'Введены буквы или символы')
 
@@ -263,6 +272,35 @@ async def search_sklad(message: types.Message, state: FSMContext):
         else:
             await bot.send_message(message.from_user.id, 'Неверно выбран склад')
             await back(message, state)
+
+
+@dp.message_handler(content_types=['text'], state=QR.qr)
+async def gen_qr(message: types.Message, state):
+    """Генерация Qrcodre по тексту пользователя"""
+    logger.info('Пользователь {} запросил qr на текст: {}'.format(message.from_user.id, message.text))
+    data = message.text
+    if len(data) > 500:
+        await bot.send_message(message.from_user.id, 'Слишком длинный текст.')
+        await bot.send_message(message.from_user.id, 'Введите текст.')
+        await QR.qr.set()
+
+    else:
+        try:
+            qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L)
+            qr.add_data(data)
+            img = qr.make_image(image_factory=StyledPilImage,
+                                module_drawer=RoundedModuleDrawer(),
+                                color_mask=RadialGradiantColorMask(
+                                    back_color=(255, 255, 255),
+                                    center_color=(255, 128, 0),
+                                    edge_color=(0, 0, 255)))
+            img.save('C:/Users/sklad/qcodes/temp.jpg', 'JPEG')
+            with open('C:/Users/sklad/qcodes/temp.jpg', 'rb') as qrc:
+                await bot.send_photo(message.chat.id, qrc)
+                await back(message, state)
+            os.remove('C:/Users/sklad/qcodes/temp.jpg')
+        except Exception as ex:
+            logger.debug(ex)
 
 
 @dp.message_handler(content_types=ContentTypes.DOCUMENT,
@@ -471,17 +509,29 @@ async def bot_message(message: types.Message, state: FSMContext):
     """
     if check(message.from_user.id):
         if message.text == '🆚 V-Sales_825':
+            logger.info('Пользователь {}: {} {} нажал на кнопку {}'.format(
+                message.from_user.id,
+                message.from_user.first_name,
+                message.from_user.username,
+                message.text
+            ))
             await bot.send_message(message.from_user.id, 'V-Sales_825')
             qrc = open('qcodes/V-Sales_825.jpg', 'rb')
             await bot.send_photo(message.chat.id, qrc)
 
         elif message.text == '🗃 011_825-Exit_sklad':
+            logger.info('Пользователь {}: {} {} нажал на кнопку {}'.format(
+                message.from_user.id,
+                message.from_user.first_name,
+                message.from_user.username,
+                message.text
+            ))
             await bot.send_message(message.from_user.id, '011_825-Exit_sklad')
             qrc = open('qcodes/011_825-Exit_sklad.jpg', 'rb')
             await bot.send_photo(message.chat.id, qrc)
 
         elif message.text == '🤖 Qrcode ячейки':
-            await show_qr(message, state)
+            await show_qr(message)
 
         elif message.text == '📦 Содержимое ячейки':
             await show_place(message, state)
@@ -495,8 +545,13 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == 'Назад':
             await back(message, state)
 
+        elif message.text == '📖 Любой текст в Qr':
+            await bot.send_message(message.from_user.id, 'Введите текст.')
+            await QR.qr.set()
+
         elif message.text == 'Отправить':
-            await bot.send_message(message.from_user.id, 'Введите сообщения для общей рассылки:')
+            await bot.send_message(message.from_user.id, 'Введите сообщения для общей рассылки:',
+                                   reply_markup=second_menu)
             await Messages.mes.set()
 
         elif message.text == 'mic':
@@ -525,4 +580,3 @@ async def bot_message(message: types.Message, state: FSMContext):
         await helps(message)
         await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')
         await Logging.log.set()
-

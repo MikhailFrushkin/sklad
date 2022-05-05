@@ -11,6 +11,10 @@ from loader import bot
 
 
 async def show_media(message: types.Message):
+    """
+    Вывод 3х картинок со ввода артикула в главном меню
+    Если есть json выодит инфу, иначе парсит сайт
+    """
     answer = message.text.lower()
     if os.path.exists('base/{}.json'.format(answer)):
         logger.info('нашел json и вывел результат')

@@ -10,6 +10,10 @@ class Logging(StatesGroup):
     log = State()
 
 
+class QR(StatesGroup):
+    qr = State()
+
+
 class Messages(StatesGroup):
     mes = State()
 

@@ -6,7 +6,7 @@ from aiogram.utils.exceptions import MessageCantBeDeleted, MessageToDeleteNotFou
 
 
 async def delete_message(message: types.Message, sleep_time: int = 0):
-    """Удаление сообщений, в данном случае стикера ожидания"""
+    """Удаление сообщений"""
     await asyncio.sleep(sleep_time)
     with suppress(MessageCantBeDeleted, MessageToDeleteNotFound):
         await message.delete()

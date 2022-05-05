@@ -3,7 +3,8 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('🆚 V-Sales_825'),
      KeyboardButton('🗃 011_825-Exit_sklad')],
-    [KeyboardButton('🤖 Qrcode ячейки')],
+    [KeyboardButton('🤖 Qrcode ячейки'),
+     KeyboardButton('📖 Любой текст в Qr')],
     [KeyboardButton('📦 Содержимое ячейки'),
      KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('ℹ Информация')]
@@ -16,7 +17,8 @@ second_menu = ReplyKeyboardMarkup(keyboard=[
 menu_admin = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('🆚 V-Sales_825'),
      KeyboardButton('🗃 011_825-Exit_sklad')],
-    [KeyboardButton('🤖 Qrcode ячейки')],
+    [KeyboardButton('🤖 Qrcode ячейки'),
+     KeyboardButton('📖 Любой текст в Qr')],
     [KeyboardButton('📦 Содержимое ячейки'),
      KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('ℹ Информация')],

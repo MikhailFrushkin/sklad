@@ -7,6 +7,7 @@ from state.states import Search
 
 
 async def search(message, state):
+    """Выбор склада для поиска артикула"""
     logger.info('\nПользователь {}: {} {} запустил поиск на складе'.format(
         message.from_user.id,
         message.from_user.first_name,
