@@ -7,7 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-def get_info(art: str) -> dict:
+async def get_info(art: str) -> dict:
     """
     Получение от пользователя артикула, отправляем гет запрос с поиска для получения урла товара.
     После парсим урл товара, берем нужную инфу, возвращаем ее кортежем.
@@ -42,8 +42,11 @@ def get_info(art: str) -> dict:
     time.sleep(4)
     try:
         name = driver.find_element(
-            by=By.CLASS_NAME,
-            value='page-title')
+            by=By.CSS_SELECTOR,
+            value='#hoff-app > section > section > div:nth-child(2) > '
+                  'div > div.catalog-page > div:nth-child(1) > div > '
+                  'div.product-title-wrapper > div.products-title-left-part > '
+                  'div.product-title > h1')
         name_item = name.text
 
     except Exception as ex:

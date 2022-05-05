@@ -167,7 +167,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
                 for i in sklad_list:
                     cells = search_all_sklad(message.text, i)
                     if cells:
-                        logger.info('Вернул список ячеек - {}'.format(cells))
+                        logger.info('Вернул список ячеек - {}: {}'.format(message.text, cells))
                         for item in cells:
                             await bot.send_message(message.from_user.id, item)
 
@@ -271,11 +271,11 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
             await call.message.answer('\n'.join(list_1))
         else:
             await call.answer(cache_time=5)
-            answer: str = call.data
-            logger.info('Получил ряд: {}'.format(answer))
+            answer_p: str = call.data
+            logger.info('Получил ряд: {}'.format(answer_p))
             asyncio.create_task(delete_message(data['message1']))
             mes1 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
-            data['mesto1'] = answer
+            data['mesto1'] = answer_p
             data['message1'] = mes1
             await Place.mesto_2.set()
 
@@ -351,7 +351,7 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
 
 
 @dp.callback_query_handler(state=[Place.mesto_4, Search.show_all])
-async def answer_exit(call: types.CallbackQuery, state: FSMContext):
+async def answer_call(call: types.CallbackQuery, state: FSMContext):
     """Кол беки с инлайн кнопок и показ  1 картинки в ячейках"""
     if call.data == 'exit':
         await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
@@ -368,15 +368,15 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
         if os.path.exists(r"C:\Users\sklad\base\json\{}.json".format(call.data)):
             logger.info('нашел json и вывел результат')
             with open(r"C:\Users\sklad\base\json\{}.json".format(call.data), "r", encoding='utf-8') as read_file:
-                data = json.load(read_file)
-                photo = await call.message.answer_photo(data["url_imgs"][0],
+                data_url = json.load(read_file)
+                photo = await call.message.answer_photo(data_url["url_imgs"][0],
                                                         reply_markup=hide)
         else:
             with open('stikers/seach.tgs', 'rb') as sticker:
                 sticker = await call.message.answer_sticker(sticker)
             try:
-                url = get_info(call.data)
-                photo = await call.message.answer_photo(url['url_imgs'][0],
+                data_url = await get_info(call.data)
+                photo = await call.message.answer_photo(data_url['url_imgs'][0],
                                                         reply_markup=hide)
             except Exception as ex:
                 logger.debug(ex)
@@ -479,7 +479,7 @@ async def bot_message(message: types.Message, state: FSMContext):
             else:
                 await bot.send_message(message.from_user.id,
                                        'Неверно указан артикул или его нет на сайте. Пример: 80422781')
-            logger.info("--- время выполнения функции - {}s seconds ---".format(time.time() - start_time))
+            logger.info("--- время выполнения поиска по сайту - {}s seconds ---".format(time.time() - start_time))
     else:
         await helps(message)
         await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')
