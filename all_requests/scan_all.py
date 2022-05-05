@@ -101,7 +101,7 @@ def get_info(art: str) -> tuple:
         'price': price
     }
 
-    with open(r"C:\Users\sklad\base\{}.json".format(art), "w", encoding='utf-8') as write_file:
+    with open(r"C:\Users\sklad\base\json\{}.json".format(art), "w", encoding='utf-8') as write_file:
         json.dump(data, write_file, indent=4, ensure_ascii=False)
 
 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     c = 0
     for item2 in art_list:
         try:
-            if os.path.exists(r"C:\Users\sklad\base\{}.json".format(item2)):
+            if os.path.exists(r"C:\Users\sklad\base\json\{}.json".format(item2)):
                 logger.info('нашел json ')
                 c += 1
             else:

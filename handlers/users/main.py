@@ -6,15 +6,11 @@ import os.path
 import sqlite3
 import time
 
-import qrcode
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.types import ContentType, Message
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from loguru import logger
-from qrcode.image.styledpil import StyledPilImage
-from qrcode.image.styles.colormasks import RadialGradiantColorMask
-from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
 
 import bot
 from all_requests.requests_mediagroup import get_info
@@ -25,13 +21,13 @@ from handlers.users.helps import bot_help
 from handlers.users.search import search
 from handlers.users.show_media import show_media
 from handlers.users.show_place import show_place
+from handlers.users.show_qrs import show_qr
 from keyboards.default import menu
-from keyboards.default.menu import second_menu, menu_admin, dowload_menu, qr_menu
-from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1, photo
+from keyboards.default.menu import second_menu, menu_admin, dowload_menu
+from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
-from state.states import Showphoto, Place, Search, Logging, Messages, QR
+from state.states import Place, Search, Logging, Messages, QR
 from utils.check_bd import check
-from utils.new_qr import qr_code
 from utils.oleg import mic
 from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost
 
@@ -101,15 +97,16 @@ async def bot_message(message: types.Message, state: FSMContext):
         connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
         cursor = connect.cursor()
 
-        cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL)""")
+        cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL, БЮ INTEGER)""")
         connect.commit()
 
         cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(message.from_user.id))
         data = cursor.fetchone()
         if data is None:
             date = datetime.datetime.now()
-            user_id = [message.chat.id, message.from_user.first_name, date]
-            cursor.execute('INSERT INTO login_id VALUES(?,?,?);', user_id)
+            shop = 0
+            user_id = [message.chat.id, message.from_user.first_name, date, shop]
+            cursor.execute('INSERT INTO login_id VALUES(?,?,?,?);', user_id)
             connect.commit()
         await state.reset_state()
         logger.info('Очистил state')
@@ -135,74 +132,6 @@ async def bot_message(message: types.Message, state: FSMContext):
         for i in one_result:
             print(i[0])
             await bot.send_message(i[0], text_mes)
-
-
-@dp.message_handler(commands=['showqr'], state='*')
-async def show_qr(message: types.Message):
-    """
-    Отправляет пользователя в меню qr кодов(кнопок), и генерирует их с ввода.
-    """
-    await bot.send_message(message.from_user.id, 'Для показа Qrcode введите ряд, секцию,'
-                                                 '\nячейку без нулей и пробела.'
-                                                 '\nПример: 721 - это 7 ряд 2 секция 1 ячейка',
-                           reply_markup=qr_menu)
-    await Showphoto.show_qr.set()
-
-
-@dp.message_handler(state=Showphoto.show_qr)
-async def showqr(message: types.Message, state: FSMContext):
-    """
-    Функция отправки qcodes.
-    Ели сообщение удовлетворяет условию, генерирует код и отправляет.
-    """
-    ans_list = ['011_825-Exit_sklad', '011_825-Exit_zal', '011_825-Exit_Dost', 'V-Sales_825', 'R12_BrakIn_825']
-    ans = message.text
-    if ans == 'Назад':
-        await back(message, state)
-    elif ans in ans_list:
-        await bot.send_message(message.from_user.id, '{}'.format(ans))
-        qrc = open('C:/Users/sklad/qcodes/{}.jpg'.format(ans), 'rb')
-        await bot.send_photo(message.chat.id, qrc)
-    else:
-        if ans.isdigit():
-            if len(ans) == 3:
-                if 0 < int(ans[1]) < 9 and int(ans[2]) < 5:
-
-                    await bot.send_message(message.from_user.id, '{} ряд {} секция {} ячейка'.
-                                           format(ans[0], ans[1], ans[2]))
-
-                    data = ('012_825-0{}-0{}-{}'.format(message.text[0], message.text[1], message.text[2]))
-                    qr_code(message, data)
-                    with open('C:/Users/sklad/qcodes/{}.jpg'.format(message.text), 'rb') as qrcod:
-                        await bot.send_photo(message.from_user.id, qrcod)
-                else:
-                    await bot.send_message(message.from_user.id,
-                                           'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
-            elif len(ans) == 4 and int(ans[0]) == 1 and int(ans[1]) < 8:
-                if 0 < int(ans[2]) < 9 and int(ans[3]) < 5:
-
-                    await bot.send_message(message.from_user.id, '{}{} ряд {} секция {} ячейка'.
-                                           format(ans[0], ans[1], ans[2], ans[3]))
-
-                    data = ('012_825-{}{}-0{}-{}'
-                            .format(message.text[0], message.text[1], message.text[2], message.text[3]))
-
-                    qr_code(message, data)
-                    qrcod = open('C:/Users/sklad/qcodes/{}.jpg'.format(message.text), 'rb')
-                    await bot.send_photo(message.from_user.id, qrcod)
-
-                else:
-                    await bot.send_message(message.from_user.id,
-                                           'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
-            else:
-                await bot.send_message(message.from_user.id,
-                                       'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
-
-            logger.info('Пользователь {} запросил qr на ячейку: {}'.format(message.from_user.id, ans))
-            time.sleep(1)
-            os.remove('C:/Users/sklad/qcodes/{}.jpg'.format(ans))
-        else:
-            await bot.send_message(message.from_user.id, 'Введены буквы или символы')
 
 
 @dp.callback_query_handler(state=Search.sklad)
@@ -276,38 +205,6 @@ async def search_sklad(message: types.Message, state: FSMContext):
         else:
             await bot.send_message(message.from_user.id, 'Неверно выбран склад')
             await back(message, state)
-
-
-@dp.message_handler(content_types=['text'], state=QR.qr)
-async def gen_qr(message: types.Message, state):
-    """Генерация Qrcodre по тексту пользователя"""
-    logger.info('Пользователь {} запросил qr на текст: {}'.format(message.from_user.id, message.text))
-    data = message.text
-    if data == 'Назад':
-        await back(message, state)
-    else:
-        if len(data) > 500:
-            await bot.send_message(message.from_user.id, 'Слишком длинный текст.')
-            await bot.send_message(message.from_user.id, 'Введите текст.')
-            await QR.qr.set()
-
-        else:
-            try:
-                qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L)
-                qr.add_data(data)
-                img = qr.make_image(image_factory=StyledPilImage,
-                                    module_drawer=RoundedModuleDrawer(),
-                                    color_mask=RadialGradiantColorMask(
-                                        back_color=(255, 255, 255),
-                                        center_color=(255, 128, 0),
-                                        edge_color=(0, 0, 255)))
-                img.save('C:/Users/sklad/qcodes/temp.jpg', 'JPEG')
-                with open('C:/Users/sklad/qcodes/temp.jpg', 'rb') as qrc:
-                    await bot.send_photo(message.chat.id, qrc)
-                    await back(message, state)
-                os.remove('C:/Users/sklad/qcodes/temp.jpg')
-            except Exception as ex:
-                logger.debug(ex)
 
 
 @dp.message_handler(content_types=ContentTypes.DOCUMENT,
@@ -468,9 +365,9 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
     else:
         start_time = time.time()
         logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
-        if os.path.exists('base/{}.json'.format(call.data)):
+        if os.path.exists(r"C:\Users\sklad\base\json\{}.json".format(call.data)):
             logger.info('нашел json и вывел результат')
-            with open('base/{}.json'.format(call.data), "r", encoding='utf-8') as read_file:
+            with open(r"C:\Users\sklad\base\json\{}.json".format(call.data), "r", encoding='utf-8') as read_file:
                 data = json.load(read_file)
                 photo = await call.message.answer_photo(data["url_imgs"][0],
                                                         reply_markup=hide)
@@ -479,7 +376,7 @@ async def answer_exit(call: types.CallbackQuery, state: FSMContext):
                 sticker = await call.message.answer_sticker(sticker)
             try:
                 url = get_info(call.data)
-                photo = await call.message.answer_photo(url[0][0],
+                photo = await call.message.answer_photo(url['url_imgs'][0],
                                                         reply_markup=hide)
             except Exception as ex:
                 logger.debug(ex)

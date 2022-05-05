@@ -5,7 +5,7 @@ def qr_code(message, data):
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
+        box_size=20,
         border=4,
     )
     qr.add_data(data)

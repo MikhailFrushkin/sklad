@@ -7,7 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-def get_info(art: str) -> tuple:
+def get_info(art: str) -> dict:
     """
     Получение от пользователя артикула, отправляем гет запрос с поиска для получения урла товара.
     После парсим урл товара, берем нужную инфу, возвращаем ее кортежем.
@@ -20,9 +20,9 @@ def get_info(art: str) -> tuple:
     user_agent = ua.random
     options.add_argument(f'user-agent={user_agent}')
     options.add_argument("--disable-blink-features=AutomationControlled")
-    # options.add_argument('--blink-settings=imagesEnabled=false')
-    # options.add_argument("--disable-notifications")
-    # options.add_argument("--headless")
+    options.add_argument('--blink-settings=imagesEnabled=false')
+    options.add_argument("--disable-notifications")
+    options.add_argument("--headless")
     driver = webdriver.Chrome(
         executable_path="C:/Users/sklad/chromedriver.exe",
         options=options
@@ -99,11 +99,11 @@ def get_info(art: str) -> tuple:
         'price': price
     }
 
-    with open(r"C:\Users\sklad\base\{}.json".format(art), "w", encoding='utf-8') as write_file:
+    with open(r"C:\Users\sklad\base\json\{}.json".format(art), "w", encoding='utf-8') as write_file:
         json.dump(data, write_file, indent=4, ensure_ascii=False)
 
     driver.quit()
-    return url_list, name_item, list_param, price
+    return data
 
 
 if __name__ == '__main__':
