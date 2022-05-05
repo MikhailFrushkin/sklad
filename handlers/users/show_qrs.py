@@ -1,8 +1,10 @@
+import asyncio
 import os
 import os.path
 import time
 
 import qrcode
+import qrcode.image.svg
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from loguru import logger
@@ -12,6 +14,7 @@ from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
 
 import bot
 from handlers.users.back import back
+from handlers.users.delete_message import delete_message
 from keyboards.default.menu import qr_menu
 from loader import dp, bot
 from state.states import Showphoto, QR
@@ -88,7 +91,6 @@ async def showqr(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=['text'], state=QR.qr)
 async def gen_qr(message: types.Message, state):
     """Генерация Qrcodre по тексту пользователя"""
-    logger.info('Пользователь {} запросил qr на текст: {}'.format(message.from_user.id, message.text))
     data = message.text
     if data == 'Назад':
         await back(message, state)
@@ -100,17 +102,42 @@ async def gen_qr(message: types.Message, state):
 
         else:
             try:
-                qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=15)
+                with open('stikers/seach.tgs', 'rb') as sticker:
+                    sticker = await bot.send_sticker(message.chat.id, sticker)
+                logger.info('Пользователь {} запросил qr на текст: {}'.format(message.from_user.id, message.text))
+                qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L
+                                   , version=2
+                                   , border=4
+                                   , box_size=15,
+                                   )
                 qr.add_data(data)
-                img = qr.make_image(image_factory=StyledPilImage,
-                                    module_drawer=RoundedModuleDrawer(),
-                                    color_mask=RadialGradiantColorMask(
-                                        back_color=(255, 255, 255),
-                                        center_color=(255, 128, 0),
-                                        edge_color=(0, 0, 255)))
-                img.save('C:/Users/sklad/qcodes/temp.jpg', 'JPEG')
-                with open('C:/Users/sklad/qcodes/temp.jpg', 'rb') as qrc:
-                    await bot.send_photo(message.chat.id, qrc)
-                os.remove('C:/Users/sklad/qcodes/temp.jpg')
+
+                qr_img = qr.make_image(image_factory=StyledPilImage,
+                                       module_drawer=RoundedModuleDrawer(),
+                                       color_mask=RadialGradiantColorMask(
+                                           back_color=(255, 255, 255),
+                                           center_color=(255, 128, 0),
+                                           edge_color=(0, 0, 255)))
+                qr_img.save('C:/Users/sklad/qcodes/temp.png')
+                asyncio.create_task(delete_message(sticker))
+                with open('C:/Users/sklad/qcodes/temp.png', 'rb') as png:
+                    await bot.send_photo(message.from_user.id, png)
+
             except Exception as ex:
                 logger.debug(ex)
+
+
+def gen_qr2(data):
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L
+                       , version=2
+                       , border=4
+                       , box_size=15,
+                       )
+    qr.add_data(data)
+
+    img = qrcode.make('Some data here', image_factory=qrcode.image.svg.SvgPathImage)
+    img.save('qrcode.png')
+
+
+if __name__ == '__main__':
+    gen_qr2('привет')
