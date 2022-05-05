@@ -27,7 +27,7 @@ from handlers.users.show_media import show_media
 from handlers.users.show_place import show_place
 from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu, qr_menu
-from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
+from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1, photo
 from loader import dp, bot
 from state.states import Showphoto, Place, Search, Logging, Messages, QR
 from utils.check_bd import check
@@ -117,20 +117,24 @@ async def bot_message(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(content_types=['text'], state=Messages.mes)
-async def bot_message(message: types.Message):
+async def bot_message(message: types.Message, state: FSMContext):
     """
     Рассылка сообщения пользователям бота,
     нажатие админ кнопки на "отправить"
     """
     text_mes = message.text
-    logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
+    if text_mes == 'Назад':
+        await back(message, state)
+    else:
+        logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
 
-    connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
-    cursor = connect.cursor()
-    cursor.execute("SELECT * FROM login_id;")
-    one_result = cursor.fetchall()
-    for i in one_result:
-        print(i[0])
+        connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
+        cursor = connect.cursor()
+        cursor.execute("SELECT * FROM login_id;")
+        one_result = cursor.fetchall()
+        for i in one_result:
+            print(i[0])
+            await bot.send_message(i[0], text_mes)
 
 
 @dp.message_handler(commands=['showqr'], state='*')
@@ -279,28 +283,31 @@ async def gen_qr(message: types.Message, state):
     """Генерация Qrcodre по тексту пользователя"""
     logger.info('Пользователь {} запросил qr на текст: {}'.format(message.from_user.id, message.text))
     data = message.text
-    if len(data) > 500:
-        await bot.send_message(message.from_user.id, 'Слишком длинный текст.')
-        await bot.send_message(message.from_user.id, 'Введите текст.')
-        await QR.qr.set()
-
+    if data == 'Назад':
+        await back(message, state)
     else:
-        try:
-            qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L)
-            qr.add_data(data)
-            img = qr.make_image(image_factory=StyledPilImage,
-                                module_drawer=RoundedModuleDrawer(),
-                                color_mask=RadialGradiantColorMask(
-                                    back_color=(255, 255, 255),
-                                    center_color=(255, 128, 0),
-                                    edge_color=(0, 0, 255)))
-            img.save('C:/Users/sklad/qcodes/temp.jpg', 'JPEG')
-            with open('C:/Users/sklad/qcodes/temp.jpg', 'rb') as qrc:
-                await bot.send_photo(message.chat.id, qrc)
-                await back(message, state)
-            os.remove('C:/Users/sklad/qcodes/temp.jpg')
-        except Exception as ex:
-            logger.debug(ex)
+        if len(data) > 500:
+            await bot.send_message(message.from_user.id, 'Слишком длинный текст.')
+            await bot.send_message(message.from_user.id, 'Введите текст.')
+            await QR.qr.set()
+
+        else:
+            try:
+                qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L)
+                qr.add_data(data)
+                img = qr.make_image(image_factory=StyledPilImage,
+                                    module_drawer=RoundedModuleDrawer(),
+                                    color_mask=RadialGradiantColorMask(
+                                        back_color=(255, 255, 255),
+                                        center_color=(255, 128, 0),
+                                        edge_color=(0, 0, 255)))
+                img.save('C:/Users/sklad/qcodes/temp.jpg', 'JPEG')
+                with open('C:/Users/sklad/qcodes/temp.jpg', 'rb') as qrc:
+                    await bot.send_photo(message.chat.id, qrc)
+                    await back(message, state)
+                os.remove('C:/Users/sklad/qcodes/temp.jpg')
+            except Exception as ex:
+                logger.debug(ex)
 
 
 @dp.message_handler(content_types=ContentTypes.DOCUMENT,
@@ -546,7 +553,7 @@ async def bot_message(message: types.Message, state: FSMContext):
             await back(message, state)
 
         elif message.text == '📖 Любой текст в Qr':
-            await bot.send_message(message.from_user.id, 'Введите текст.')
+            await bot.send_message(message.from_user.id, 'Введите текст.', reply_markup=second_menu)
             await QR.qr.set()
 
         elif message.text == 'Отправить':

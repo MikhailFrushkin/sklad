@@ -5,10 +5,12 @@ from qrcode.image.styles.colormasks import RadialGradiantColorMask
 
 
 def main():
+    """Генерирует qr из списка qr_list
+    box-size - качество qr 40 макс(долго регенит)"""
     qr_list = ['011_825-Exit_sklad', '011_825-Exit_Dost', '011_825-Exit_zal',
                '011_825-otkaz_sklad', 'R12_BrakIn_825', 'V-Sales_825']
     for data in qr_list:
-        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L)
+        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=25)
 
         qr.add_data(data)
         img = qr.make_image(image_factory=StyledPilImage,
