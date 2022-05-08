@@ -172,7 +172,10 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     if cells:
                         logger.info('Вернул список ячеек - {}: {}'.format(message.text, cells))
                         for item in cells:
-                            await bot.send_message(message.from_user.id, item, reply_markup=order)
+                            if i == '012_825':
+                                await bot.send_message(message.from_user.id, item, reply_markup=order)
+                            else:
+                                await bot.send_message(message.from_user.id, item)
 
                     else:
                         await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
@@ -187,7 +190,11 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     if len(cells) != 0:
                         logger.info('Вернул список ячеек - {}'.format(cells))
                         for item in cells:
-                            await bot.send_message(message.from_user.id, item)
+                            if data['sklad'] == '012_825':
+                                await bot.send_message(message.from_user.id, item, reply_markup=order)
+                            else:
+                                await bot.send_message(message.from_user.id, item)
+
 
                 else:
                     await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
