@@ -8,8 +8,9 @@ import time
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, Message
+from aiogram.types import ContentType, Message, ParseMode
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
+from aiogram.utils.markdown import text, code
 from loguru import logger
 
 import bot
@@ -23,13 +24,15 @@ from handlers.users.show_media import show_media
 from handlers.users.show_place import show_place
 from handlers.users.show_qrs import show_qr
 from keyboards.default import menu
-from keyboards.default.menu import second_menu, menu_admin, dowload_menu
-from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1, order
+from keyboards.default.menu import second_menu, menu_admin, dowload_menu, orders
+from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from loader import dp, bot
-from state.states import Place, Search, Logging, Messages, QR
+from state.states import Place, Search, Logging, Messages, QR, Orders
 from utils.check_bd import check
 from utils.oleg import mic
-from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost
+from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost, \
+    search_articul_order
+from utils.read_bd import set_order, get_bd_info, del_orders, mail
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -121,27 +124,6 @@ async def bot_message(message: types.Message, state: FSMContext):
             await bot.send_message(i[0], text_mes)
 
 
-@dp.callback_query_handler(state=Search.sklad)
-async def input_art(call: types.CallbackQuery, state: FSMContext):
-    """
-    Поиск по складам введенного артикула
-    """
-    async with state.proxy() as data:
-        if call.data == 'exit':
-            await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
-            await state.reset_state()
-            logger.info('Очистил state')
-        elif call.data == 'order':
-            await bot.send_message(call.from_user.id, 'Ввeдите количество: "В разработке"', reply_markup=second_menu)
-            await Search.order.set()
-        else:
-            await bot.send_message(call.from_user.id, 'Введите артикул', reply_markup=second_menu)
-            await Search.art.set()
-            data['sklad'] = call.data
-        asyncio.create_task(delete_message(data['message1']))
-        asyncio.create_task(delete_message(data['message2']))
-
-
 @dp.message_handler(content_types=['text'], state=Search.art)
 async def search_sklad(message: types.Message, state: FSMContext):
     """
@@ -160,7 +142,11 @@ async def search_sklad(message: types.Message, state: FSMContext):
                         logger.info('Вернул список ячеек - {}: {}'.format(message.text, cells))
                         for item in cells:
                             if i == '012_825':
-                                await bot.send_message(message.from_user.id, item, reply_markup=order)
+                                await bot.send_message(message.from_user.id, item,
+                                                       reply_markup=InlineKeyboardMarkup(row_width=1).
+                                                       add(InlineKeyboardButton(text='Заказать',
+                                                                                callback_data='or{}'.format(
+                                                                                    message.text))))
                             else:
                                 await bot.send_message(message.from_user.id, item)
 
@@ -178,7 +164,11 @@ async def search_sklad(message: types.Message, state: FSMContext):
                         logger.info('Вернул список ячеек - {}'.format(cells))
                         for item in cells:
                             if data['sklad'] == '012_825':
-                                await bot.send_message(message.from_user.id, item, reply_markup=order)
+                                await bot.send_message(message.from_user.id, item,
+                                                       reply_markup=InlineKeyboardMarkup(row_width=1).
+                                                       add(InlineKeyboardButton(text='Заказать',
+                                                                                callback_data='or{}'.
+                                                                                format(message.text))))
                             else:
                                 await bot.send_message(message.from_user.id, item)
 
@@ -191,18 +181,38 @@ async def search_sklad(message: types.Message, state: FSMContext):
 
 @dp.message_handler(content_types=['text'], state=Search.order)
 async def order_num(message: types.Message, state: FSMContext):
-    order_text = message.text
+    num = message.text
     async with state.proxy() as data:
-        if order_text == 'Назад':
+        if num == 'Назад':
             await back(message, state)
         else:
-            if not order_text.isdigit():
+            if not num.isdigit():
                 await bot.send_message(message.from_user.id, 'Неверное количество')
             else:
-                data['order'] = order_text
+                data['order_num'] = num
         logger.info(data['order'])
+        logger.info(data['order_num'])
+        set_order(message.from_user.id, data['order'], data['order_num'])
     await Search.art.set()
     await search(message, state)
+
+
+@dp.message_handler(content_types=['text'], state=Orders.order)
+async def order_num(message: types.Message, state: FSMContext):
+    if message.text == 'Назад':
+        await back(message, state)
+    elif message.text == 'Мой заказ':
+        await bot.send_message(message.from_user.id, 'Ваш заказ!')
+        await bot.send_message(message.from_user.id, mail(message))
+    elif message.text == 'Отправить Мишке':
+        await bot.send_message(880277049, 'Пользователь: {} {} Отправил Вам\n{}'.format(message.from_user.id,
+                                                                                        message.from_user.first_name,
+                                                                                        mail(message)))
+    elif message.text == 'Удалить заказ':
+        del_orders(message.from_user.id)
+        await bot.send_message(message.from_user.id, 'Заказ очищен!')
+    else:
+        await bot.send_message(message.from_user.id, 'Неверная команда!')
 
 
 @dp.message_handler(content_types=['text'], state=Place.dowload)
@@ -409,6 +419,28 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
         logger.info('Вывод результата через:{} сек.'.format(time.time() - start_time))
 
 
+@dp.callback_query_handler(state=Search.sklad)
+async def input_art(call: types.CallbackQuery, state: FSMContext):
+    """
+    Поиск по складам введенного артикула
+    """
+    async with state.proxy() as data:
+        if call.data == 'exit':
+            await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
+            await state.reset_state()
+            logger.info('Очистил state')
+        elif call.data.startswith('or'):
+            await bot.send_message(call.from_user.id, 'Ввeдите количество:', reply_markup=second_menu)
+            data['order'] = call.data[2:]
+            await Search.order.set()
+        else:
+            await bot.send_message(call.from_user.id, 'Введите артикул', reply_markup=second_menu)
+            await Search.art.set()
+            data['sklad'] = call.data
+        asyncio.create_task(delete_message(data['message1']))
+        asyncio.create_task(delete_message(data['message2']))
+
+
 @dp.message_handler(content_types=[ContentType.VOICE])
 async def voice_message_handler(message: Message):
     """Управление голосовыми, пока в разработке"""
@@ -455,6 +487,10 @@ async def bot_message(message: types.Message, state: FSMContext):
 
         elif message.text == 'ℹ Информация' or message.text == 'Помощь':
             await bot_help(message)
+
+        elif message.text == '📟 Мой заказ':
+            await bot.send_message(message.from_user.id, 'Выберите действие:', reply_markup=orders)
+            await Orders.order.set()
 
         elif message.text == '🔍 Поиск на складах':
             await search(message, state)

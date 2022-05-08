@@ -85,6 +85,22 @@ def search_articul(art, sklad):
     return answer
 
 
+def search_articul_order(art, sklad):
+    with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        answer = []
+        art_dict = dict()
+        for row in reader:
+            if row['Код \nноменклатуры'] == art:
+                art_dict['name'] = row['Описание товара']
+                line = '{} - Доступно: {}'.format(
+                    row['Местоположение'],
+                    row['Доступно']).replace('.0', '')
+                answer.append(line)
+        art_dict['answer'] = answer
+    return art_dict
+
+
 def search_all_sklad(art, sklad):
     with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)

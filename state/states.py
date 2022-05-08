@@ -31,3 +31,7 @@ class Search(StatesGroup):
     art = State()
     order = State()
     show_all = State()
+
+
+class Orders(StatesGroup):
+    order = State()
