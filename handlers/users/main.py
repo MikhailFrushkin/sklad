@@ -24,7 +24,7 @@ from handlers.users.show_place import show_place
 from handlers.users.show_qrs import show_qr
 from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu
-from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
+from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1, order
 from loader import dp, bot
 from state.states import Place, Search, Logging, Messages, QR
 from utils.check_bd import check
@@ -119,10 +119,11 @@ async def bot_message(message: types.Message, state: FSMContext):
     Рассылка сообщения пользователям бота,
     нажатие админ кнопки на "отправить"
     """
-    text_mes = message.text
-    if text_mes == 'Назад':
+
+    if message.text == 'Назад':
         await back(message, state)
     else:
+        text_mes = '❗❗❗{}❗❗❗\nХорошего дня 😊'.format(message.text)
         logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
 
         connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
@@ -130,7 +131,6 @@ async def bot_message(message: types.Message, state: FSMContext):
         cursor.execute("SELECT * FROM login_id;")
         one_result = cursor.fetchall()
         for i in one_result:
-            print(i[0])
             await bot.send_message(i[0], text_mes)
 
 
@@ -144,6 +144,9 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
             await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
             await state.reset_state()
             logger.info('Очистил state')
+        elif call.data == 'order':
+            await bot.send_message(call.from_user.id, 'Ввeдите количество: "В разработке"', reply_markup=second_menu)
+            await Search.order.set()
         else:
             await bot.send_message(call.from_user.id, 'Введите артикул', reply_markup=second_menu)
             await Search.art.set()
@@ -169,11 +172,11 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     if cells:
                         logger.info('Вернул список ячеек - {}: {}'.format(message.text, cells))
                         for item in cells:
-                            await bot.send_message(message.from_user.id, item)
+                            await bot.send_message(message.from_user.id, item, reply_markup=order)
 
                     else:
                         await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
-                                               format(i), reply_markup=second_menu)
+                                               format(i))
                 await search(message, state)
         else:
             if message.text == 'Назад':
@@ -190,6 +193,22 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                            format(data['sklad']), reply_markup=second_menu)
                 await search(message, state)
+
+
+@dp.message_handler(content_types=['text'], state=Search.order)
+async def order_num(message: types.Message, state: FSMContext):
+    order_text = message.text
+    async with state.proxy() as data:
+        if order_text == 'Назад':
+            await back(message, state)
+        else:
+            if not order_text.isdigit():
+                await bot.send_message(message.from_user.id, 'Неверное количество')
+            else:
+                data['order'] = order_text
+        logger.info(data['order'])
+    await Search.art.set()
+    await search(message, state)
 
 
 @dp.message_handler(content_types=['text'], state=Place.dowload)

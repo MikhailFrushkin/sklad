@@ -29,4 +29,5 @@ class Place(StatesGroup):
 class Search(StatesGroup):
     sklad = State()
     art = State()
+    order = State()
     show_all = State()
