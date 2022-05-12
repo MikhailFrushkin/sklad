@@ -80,7 +80,6 @@ def get_info(art: str) -> tuple:
                 url_list.append(url_img[0])
             else:
                 break
-        logger.info(url_list)
     except Exception as ex:
         logger.debug(ex)
 

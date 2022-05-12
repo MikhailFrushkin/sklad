@@ -8,9 +8,8 @@ import time
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, Message, ParseMode
+from aiogram.types import ContentType, Message
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
-from aiogram.utils.markdown import text, code
 from loguru import logger
 
 import bot
@@ -30,9 +29,8 @@ from loader import dp, bot
 from state.states import Place, Search, Logging, Messages, QR, Orders
 from utils.check_bd import check
 from utils.oleg import mic
-from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost, \
-    search_articul_order
-from utils.read_bd import set_order, get_bd_info, del_orders, mail
+from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost
+from utils.read_bd import set_order, del_orders, mail
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -113,7 +111,7 @@ async def bot_message(message: types.Message, state: FSMContext):
     if message.text == 'Назад':
         await back(message, state)
     else:
-        text_mes = '❗❗❗{}❗❗❗\nХорошего дня 😊'.format(message.text)
+        text_mes = '❗❗❗{}❗❗❗\n'.format(message.text)
         logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
 
         connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
@@ -172,7 +170,6 @@ async def search_sklad(message: types.Message, state: FSMContext):
                             else:
                                 await bot.send_message(message.from_user.id, item)
 
-
                 else:
                     await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
                                            format(data['sklad']), reply_markup=second_menu)
@@ -202,12 +199,20 @@ async def order_num(message: types.Message, state: FSMContext):
     if message.text == 'Назад':
         await back(message, state)
     elif message.text == 'Мой заказ':
-        await bot.send_message(message.from_user.id, 'Ваш заказ!')
-        await bot.send_message(message.from_user.id, mail(message))
+        try:
+            await bot.send_message(message.from_user.id, 'Ваш заказ!')
+            await bot.send_message(message.from_user.id, mail(message))
+        except Exception as ex:
+            logger.debug('Заказ пустой({}). Пользователь: {}'.format(ex, message.from_user.id))
+            await bot.send_message(message.from_user.id, 'Ваш заказ пуст.')
     elif message.text == 'Отправить Мишке':
-        await bot.send_message(880277049, 'Пользователь: {} {} Отправил Вам\n{}'.format(message.from_user.id,
-                                                                                        message.from_user.first_name,
-                                                                                        mail(message)))
+        answer = mail(message)
+        print(answer.count('\n'))
+        if answer != 0:
+            await bot.send_message(880277049, 'Пользователь: {} {} отправил Вам:\n{}'.
+                                   format(message.from_user.id, message.from_user.first_name, answer))
+        else:
+            await bot.send_message(message.from_user.id, 'Заказ пустой -_-')
     elif message.text == 'Удалить заказ':
         del_orders(message.from_user.id)
         await bot.send_message(message.from_user.id, 'Заказ очищен!')
@@ -222,11 +227,11 @@ async def search_sklad(message: types.Message, state: FSMContext):
         sklad_list = ['011_825', '012_825', 'A11_825', 'RDiff', 'V_Sales']
         if message.text in sklad_list:
             data['sklad'] = message.text
-            await bot.send_message(message.from_user.id, 'Загрузите файл')
+            await bot.send_message(message.from_user.id, 'Загрузите файл.')
         elif message.text == 'Назад':
             await back(message, state)
         else:
-            await bot.send_message(message.from_user.id, 'Неверно выбран склад')
+            await bot.send_message(message.from_user.id, 'Неверно выбран склад.')
             await back(message, state)
 
 
@@ -241,7 +246,7 @@ async def doc_handler(message: types.Message, state: FSMContext):
                     destination_file="C:/Users/sklad/utils/file_{}.xls".format(data['sklad']),
                 )
                 logger.info('{} - Загружен документ'.format(message.from_user.id))
-                await bot.send_message(message.from_user.id, 'Загружен документ на {} склад'.format(data['sklad']),
+                await bot.send_message(message.from_user.id, 'Загружен документ на {} склад.'.format(data['sklad']),
                                        reply_markup=InlineKeyboardMarkup().add(
                                            InlineKeyboardButton(text='Загрузить в базу',
                                                                 callback_data='{}'.format(data['sklad'])
@@ -277,7 +282,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
                             count = 0
                     await call.message.answer('\n'.join(list_1))
                 else:
-                    await bot.send_message(call.from_user.id, 'В ячейках нет отказаного товара')
+                    await bot.send_message(call.from_user.id, 'В ячейках нет отказаного товара.')
         elif call.data == 'rdiff':
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
@@ -295,7 +300,6 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
         else:
             await call.answer(cache_time=5)
             answer_p: str = call.data
-            logger.info('Получил ряд: {}'.format(answer_p))
             asyncio.create_task(delete_message(data['message1']))
             mes1 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
             data['mesto1'] = answer_p
@@ -308,7 +312,6 @@ async def place_2(call: types.CallbackQuery, state: FSMContext):
     """Ввод секций для поиска"""
     await call.answer(cache_time=5)
     answer: str = call.data
-    logger.info('Получил секцию: {}'.format(answer))
 
     async with state.proxy() as data:
         asyncio.create_task(delete_message(data['message1']))
@@ -324,8 +327,6 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
     """Ввод ячейки поиска"""
     await call.answer(cache_time=5)
     answer: str = call.data
-    logger.info('Получил ячейку: {}. '.format(answer))
-
     async with state.proxy() as data:
         data['mesto3'] = answer
         asyncio.create_task(delete_message(data['message1']))
@@ -458,23 +459,11 @@ async def bot_message(message: types.Message, state: FSMContext):
     """
     if check(message.from_user.id):
         if message.text == '🆚 V-Sales_825':
-            logger.info('Пользователь {}: {} {} нажал на кнопку {}'.format(
-                message.from_user.id,
-                message.from_user.first_name,
-                message.from_user.username,
-                message.text
-            ))
             await bot.send_message(message.from_user.id, 'V-Sales_825')
             qrc = open('qcodes/V-Sales_825.jpg', 'rb')
             await bot.send_photo(message.chat.id, qrc)
 
         elif message.text == '🗃 011_825-Exit_sklad':
-            logger.info('Пользователь {}: {} {} нажал на кнопку {}'.format(
-                message.from_user.id,
-                message.from_user.first_name,
-                message.from_user.username,
-                message.text
-            ))
             await bot.send_message(message.from_user.id, '011_825-Exit_sklad')
             qrc = open('qcodes/011_825-Exit_sklad.jpg', 'rb')
             await bot.send_photo(message.chat.id, qrc)
