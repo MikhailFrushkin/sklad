@@ -16,7 +16,7 @@ async def show_media(message: types.Message):
     Если есть json выодит инфу, иначе парсит сайт
     """
     answer = message.text.lower()
-    if not os.path.exists(r"C:\Users\sklad\base\json\{}.json".format(answer)):
+    if not os.path.exists(r"Users\sklad\base\json\{}.json".format(answer)):
         try:
             with open('stikers/seach.tgs', 'rb') as sticker:
                 sticker = await bot.send_sticker(message.chat.id, sticker)
@@ -31,7 +31,7 @@ async def show_media(message: types.Message):
 
     logger.info('нашел json и вывел результат')
     try:
-        with open(r"C:\Users\sklad\base\json\{}.json".format(answer), "r", encoding='utf-8') as read_file:
+        with open(r"Users\sklad\base\json\{}.json".format(answer), "r", encoding='utf-8') as read_file:
             data = json.load(read_file)
             await bot.send_message(message.from_user.id, data['name'].replace('#', 'Артикул: '))
             if len(data['url_imgs']) > 2:
@@ -45,5 +45,5 @@ async def show_media(message: types.Message):
             await bot.send_message(message.from_user.id,
                                    'Цена с сайта: {}(Уточняйте в Вашем магазине).'.format(data['price']))
     except Exception as ex:
-        os.remove(r"C:\Users\sklad\base\json\{}.json".format(answer))
+        os.remove(r"Users\sklad\base\json\{}.json".format(answer))
         logger.debug(ex)

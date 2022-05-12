@@ -24,7 +24,7 @@ async def get_info(art: str) -> dict:
     options.add_argument("--disable-notifications")
     options.add_argument("--headless")
     driver = webdriver.Chrome(
-        executable_path="C:/Users/sklad/chromedriver.exe",
+        executable_path="/Users/sklad/chromedriver.exe",
         options=options
     )
     url: str = 'https://hoff.ru/vue/search/?fromSearch=direct&search={}&redirect_search=true'.format(art)
@@ -102,7 +102,7 @@ async def get_info(art: str) -> dict:
         'price': price
     }
 
-    with open(r"C:\Users\sklad\base\json\{}.json".format(art), "w", encoding='utf-8') as write_file:
+    with open(r"Users\sklad\base\json\{}.json".format(art), "w", encoding='utf-8') as write_file:
         json.dump(data, write_file, indent=4, ensure_ascii=False)
 
     driver.quit()

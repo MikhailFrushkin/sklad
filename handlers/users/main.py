@@ -241,6 +241,7 @@ async def doc_handler(message: types.Message, state: FSMContext):
     """Ловит документ(EXSEL) и загружает"""
     try:
         async with state.proxy() as data:
+            print(type(message))
             if document := message.document:
                 await document.download(
                     destination_file="C:/Users/sklad/utils/file_{}.xls".format(data['sklad']),
@@ -389,9 +390,9 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
     else:
         start_time = time.time()
         logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
-        if os.path.exists(r"C:\Users\sklad\base\json\{}.json".format(call.data)):
+        if os.path.exists(r"Users\sklad\base\json\{}.json".format(call.data)):
             logger.info('нашел json и вывел результат')
-            with open(r"C:\Users\sklad\base\json\{}.json".format(call.data), "r", encoding='utf-8') as read_file:
+            with open(r"Users\sklad\base\json\{}.json".format(call.data), "r", encoding='utf-8') as read_file:
                 data_url = json.load(read_file)
                 photo = await call.message.answer_photo(data_url["url_imgs"][0],
                                                         reply_markup=hide)
