@@ -82,7 +82,7 @@ async def bot_message(message: types.Message, state: FSMContext):
     """
     Если пароль верен, вносит в базу пользователя, перезапускает функуию старт"""
     if message.text == PASSWORD:
-        connect = sqlite3.connect('C:/Users/sklad/base/BD/users.bd')
+        connect = sqlite3.connect('/Users/sklad/base/BD/users.bd')
         cursor = connect.cursor()
 
         cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL, БЮ INTEGER)""")
