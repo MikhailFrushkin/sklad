@@ -34,7 +34,7 @@ async def get_info(art: str) -> dict:
     url: str = 'https://hoff.ru/vue/search/?fromSearch=direct&search={}&redirect_search=true'.format(art)
 
     driver.get(url)
-    time.sleep(1)
+    time.sleep(2)
     text = driver.page_source
     pattern = r'(?<=\\).+?["]'
     result = re.search(pattern, text)
