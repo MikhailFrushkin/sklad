@@ -9,7 +9,7 @@ from utils.open_exsel import search_articul_order
 def get_bd_info(id):
     """чтение бд"""
     try:
-        con = sqlite3.connect(r'Users\sklad\base\BD\users.bd')
+        con = sqlite3.connect(r'/Users\sklad\base\BD\users.bd')
         with con:
             cursor = con.cursor()
 
@@ -31,7 +31,7 @@ def get_bd_info(id):
 def set_order(id: int, art: int, num: int):
     """Создание строк с айди, артикул и количество для заказа"""
     try:
-        con = sqlite3.connect(r'Users\sklad\base\BD\users.bd')
+        con = sqlite3.connect(r'/Users\sklad\base\BD\users.bd')
         with con:
             cursor = con.cursor()
             con.execute("""CREATE TABLE IF NOT EXISTS orders (id INTEGER, articul INTEGER, num INTEGER)""")
@@ -49,7 +49,7 @@ def set_order(id: int, art: int, num: int):
 def del_orders(id: int):
     """Удаление заказа по айди пользователя"""
     try:
-        con = sqlite3.connect(r'Users\sklad\base\BD\users.bd')
+        con = sqlite3.connect(r'/Users/sklad/base/BD/users.bd')
         with con:
             cursor = con.cursor()
 

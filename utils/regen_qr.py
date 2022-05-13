@@ -19,7 +19,7 @@ def main():
                                 back_color=(255, 255, 255),
                                 center_color=(255, 128, 0),
                                 edge_color=(0, 0, 255)))
-        img.save('C:/Users/sklad/qcodes/{}.jpg'.format(data), 'JPEG')
+        img.save('/Users/sklad/qcodes/{}.jpg'.format(data), 'JPEG')
 
 
 if __name__ == '__main__':

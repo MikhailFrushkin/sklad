@@ -44,7 +44,7 @@ async def showqr(message: types.Message, state: FSMContext):
         await back(message, state)
     elif ans in ans_list:
         await bot.send_message(message.from_user.id, '{}'.format(ans))
-        qrc = open('C:/Users/sklad/qcodes/{}.jpg'.format(ans), 'rb')
+        qrc = open('/Users/sklad/qcodes/{}.jpg'.format(ans), 'rb')
         await bot.send_photo(message.chat.id, qrc)
     else:
         if ans.isdigit():
@@ -56,7 +56,7 @@ async def showqr(message: types.Message, state: FSMContext):
 
                     data = ('012_825-0{}-0{}-{}'.format(message.text[0], message.text[1], message.text[2]))
                     qr_code(message, data)
-                    with open('C:/Users/sklad/qcodes/{}.jpg'.format(message.text), 'rb') as qrcod:
+                    with open('/Users/sklad/qcodes/{}.jpg'.format(message.text), 'rb') as qrcod:
                         await bot.send_photo(message.from_user.id, qrcod)
                 else:
                     await bot.send_message(message.from_user.id,
@@ -71,7 +71,7 @@ async def showqr(message: types.Message, state: FSMContext):
                             .format(message.text[0], message.text[1], message.text[2], message.text[3]))
 
                     qr_code(message, data)
-                    qrcod = open('C:/Users/sklad/qcodes/{}.jpg'.format(message.text), 'rb')
+                    qrcod = open('/Users/sklad/qcodes/{}.jpg'.format(message.text), 'rb')
                     await bot.send_photo(message.from_user.id, qrcod)
 
                 else:
@@ -83,7 +83,7 @@ async def showqr(message: types.Message, state: FSMContext):
 
             logger.info('Пользователь {} запросил qr на ячейку: {}'.format(message.from_user.id, ans))
             time.sleep(1)
-            os.remove('C:/Users/sklad/qcodes/{}.jpg'.format(ans))
+            os.remove('/Users/sklad/qcodes/{}.jpg'.format(ans))
         else:
             await bot.send_message(message.from_user.id, 'Введены буквы или символы')
 
@@ -102,7 +102,7 @@ async def gen_qr(message: types.Message, state):
 
         else:
             try:
-                with open('stikers/seach.tgs', 'rb') as sticker:
+                with open('/Users/sklad/stikers/seach.tgs', 'rb') as sticker:
                     sticker = await bot.send_sticker(message.chat.id, sticker)
                 logger.info('Пользователь {} запросил qr на текст: {}'.format(message.from_user.id, message.text))
                 qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L
@@ -118,9 +118,9 @@ async def gen_qr(message: types.Message, state):
                                            back_color=(255, 255, 255),
                                            center_color=(255, 128, 0),
                                            edge_color=(0, 0, 255)))
-                qr_img.save('C:/Users/sklad/qcodes/temp.png')
+                qr_img.save('/Users/sklad/qcodes/temp.png')
                 asyncio.create_task(delete_message(sticker))
-                with open('C:/Users/sklad/qcodes/temp.png', 'rb') as png:
+                with open('/Users/sklad/qcodes/temp.png', 'rb') as png:
                     await bot.send_photo(message.from_user.id, png)
 
             except Exception as ex:

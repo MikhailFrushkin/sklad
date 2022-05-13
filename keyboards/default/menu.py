@@ -25,7 +25,6 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('ℹ Информация'),
      KeyboardButton('📟 Мой заказ')],
     [KeyboardButton('Загрузка базы'),
-     KeyboardButton('mic'),
      KeyboardButton('Отправить')]
 ], resize_keyboard=True)
 
