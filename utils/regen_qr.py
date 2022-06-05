@@ -3,6 +3,8 @@ from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
 from qrcode.image.styles.colormasks import RadialGradiantColorMask
 
+from data.config import path
+
 
 def main():
     """Генерирует qr из списка qr_list
@@ -19,7 +21,7 @@ def main():
                                 back_color=(255, 255, 255),
                                 center_color=(255, 128, 0),
                                 edge_color=(0, 0, 255)))
-        img.save('/Users/sklad/qcodes/{}.jpg'.format(data), 'JPEG')
+        img.save('{}/qcodes/{}.jpg'.format(path, data), 'JPEG')
 
 
 if __name__ == '__main__':

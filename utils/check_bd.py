@@ -2,10 +2,12 @@ import sqlite3
 
 from loguru import logger
 
+from data.config import path
+
 
 def check(id):
     try:
-        connect = sqlite3.connect('/Users/sklad/base/BD/users.bd')
+        connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
         cursor = connect.cursor()
 
         # cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL)""")

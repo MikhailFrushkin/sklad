@@ -1,5 +1,7 @@
 import qrcode
 
+from data.config import path
+
 
 def qr_code(message, data):
     qr = qrcode.QRCode(
@@ -11,5 +13,5 @@ def qr_code(message, data):
     qr.add_data(data)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
-    img.save('/Users/sklad/qcodes/{}.jpg'.format(message.text), 'JPEG')
+    img.save('{}/qcodes/{}.jpg'.format(path, message.text), 'JPEG')
 

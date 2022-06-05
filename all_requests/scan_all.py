@@ -8,6 +8,8 @@ from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+from data.config import path
+
 
 def get_info(art: str) -> tuple:
     """
@@ -100,7 +102,7 @@ def get_info(art: str) -> tuple:
         'price': price
     }
 
-    with open(r"Users\sklad\base\json\{}.json".format(art), "w", encoding='utf-8') as write_file:
+    with open(r"{}\base\json\{}.json".format(path, art), "w", encoding='utf-8') as write_file:
         json.dump(data, write_file, indent=4, ensure_ascii=False)
 
 
@@ -109,7 +111,7 @@ def all_art():
     Список артикулов из файла
     :return:
     """
-    with open('C:/Users/sklad/utils/file_012_825.csv', newline='', encoding='utf-8') as csvfile:
+    with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:
@@ -124,7 +126,7 @@ if __name__ == '__main__':
     c = 0
     for item2 in art_list:
         try:
-            if os.path.exists(r"Users\sklad\base\json\{}.json".format(item2)):
+            if os.path.exists(r"{}}\base\json\{}.json".format(path, item2)):
                 logger.info('нашел json ')
                 c += 1
             else:

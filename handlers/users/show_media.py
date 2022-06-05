@@ -6,6 +6,7 @@ from aiogram import types
 from loguru import logger
 
 from all_requests.requests_mediagroup import get_info
+from data.config import path
 from handlers.users.delete_message import delete_message
 from loader import bot
 
@@ -16,9 +17,9 @@ async def show_media(message: types.Message):
     Если есть json выодит инфу, иначе парсит сайт
     """
     answer = message.text.lower()
-    if not os.path.exists(r"/Users/sklad/base/json/{}.json".format(answer)):
+    if not os.path.exists(r"{}/base/json/{}.json".format(path, answer)):
         try:
-            with open('/Users/sklad/stikers/seach.tgs', 'rb') as sticker:
+            with open('{}/stikers/seach.tgs'.format(path), 'rb') as sticker:
                 sticker = await bot.send_sticker(message.chat.id, sticker)
 
             await get_info(answer)
@@ -30,7 +31,7 @@ async def show_media(message: types.Message):
             asyncio.create_task(delete_message(sticker))
 
     try:
-        with open(r"/Users/sklad/base/json/{}.json".format(answer), "r", encoding='utf-8') as read_file:
+        with open(r"{}/base/json/{}.json".format(path, answer), "r", encoding='utf-8') as read_file:
             data = json.load(read_file)
             logger.info('нашел json и вывел результат')
             await bot.send_message(message.from_user.id, data['name'].replace('#', 'Артикул: '))

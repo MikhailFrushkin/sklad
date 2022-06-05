@@ -14,7 +14,7 @@ from loguru import logger
 
 import bot
 from all_requests.requests_mediagroup import get_info
-from data.config import ADMINS, PASSWORD
+from data.config import ADMINS, PASSWORD, path
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
 from handlers.users.helps import bot_help
@@ -44,14 +44,12 @@ async def bot_start(message: types.Message):
         message.text
     ))
     if check(message.from_user.id):
+        sticker = open('{}/stikers/Dicaprio.tgs'.format(path), 'rb')
+        await bot.send_sticker(message.chat.id, sticker)
         if str(message.from_user.id) in ADMINS:
-            sticker = open('/Users/sklad/stikers/Dicaprio.tgs', 'rb')
-            await bot.send_sticker(message.chat.id, sticker)
             await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
                                  reply_markup=menu_admin)
         else:
-            sticker = open('/Users/sklad/stikers/Dicaprio.tgs', 'rb')
-            await bot.send_sticker(message.chat.id, sticker)
             await message.answer('Добро пожаловать, {}!'
                                  '\nДля показа фотографий товара, описания и цены с сайта'
                                  '\nВведите артикул. Пример: 80264335.'
@@ -81,7 +79,7 @@ async def bot_message(message: types.Message, state: FSMContext):
     """
     Если пароль верен, вносит в базу пользователя, перезапускает функуию старт"""
     if message.text == PASSWORD:
-        connect = sqlite3.connect('/Users/sklad/base/BD/users.bd')
+        connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
         cursor = connect.cursor()
 
         cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL, БЮ INTEGER)""")
@@ -113,7 +111,7 @@ async def bot_message(message: types.Message, state: FSMContext):
         text_mes = '❗❗❗{}❗❗❗\n'.format(message.text)
         logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
 
-        connect = sqlite3.connect('/Users/sklad/base/BD/users.bd')
+        connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
         cursor = connect.cursor()
         cursor.execute("SELECT * FROM login_id;")
         one_result = cursor.fetchall()
@@ -243,7 +241,7 @@ async def doc_handler(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             if document := message.document:
                 await document.download(
-                    destination_file="/Users/sklad/utils/file_{}.xls".format(data['sklad']),
+                    destination_file="{}/utils/file_{}.xls".format(path, data['sklad']),
                 )
                 logger.info('{} - Загружен документ'.format(message.from_user.id))
                 await bot.send_message(message.from_user.id, 'Загружен документ на {} склад.'.format(data['sklad']),
@@ -389,14 +387,14 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
     else:
         start_time = time.time()
         logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
-        if os.path.exists(r"/Users/sklad/base/json/{}.json".format(call.data)):
+        if os.path.exists(r"{}/base/json/{}.json".format(path, call.data)):
             logger.info('нашел json и вывел результат')
-            with open(r"/Users/sklad/base/json/{}.json".format(call.data), "r", encoding='utf-8') as read_file:
+            with open(r"{}/base/json/{}.json".format(path, call.data), "r", encoding='utf-8') as read_file:
                 data_url = json.load(read_file)
                 photo = await call.message.answer_photo(data_url["url_imgs"][0],
                                                         reply_markup=hide)
         else:
-            with open('/Users/sklad/stikers/seach.tgs', 'rb') as sticker:
+            with open('{}/stikers/seach.tgs'.format(path), 'rb') as sticker:
                 sticker = await call.message.answer_sticker(sticker)
             try:
                 data_url = await get_info(call.data)
@@ -460,12 +458,12 @@ async def bot_message(message: types.Message, state: FSMContext):
     if check(message.from_user.id):
         if message.text == '🆚 V-Sales_825':
             await bot.send_message(message.from_user.id, 'V-Sales_825')
-            qrc = open('/Users/sklad/qcodes/V-Sales_825.jpg', 'rb')
+            qrc = open('{}/qcodes/V-Sales_825.jpg'.format(path), 'rb')
             await bot.send_photo(message.chat.id, qrc)
 
         elif message.text == '🗃 011_825-Exit_sklad':
             await bot.send_message(message.from_user.id, '011_825-Exit_sklad')
-            qrc = open('/Users/sklad/qcodes/011_825-Exit_sklad.jpg', 'rb')
+            qrc = open('{}/qcodes/011_825-Exit_sklad.jpg'.format(path), 'rb')
             await bot.send_photo(message.chat.id, qrc)
 
         elif message.text == '🤖 Qrcode ячейки':

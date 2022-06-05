@@ -6,6 +6,8 @@ from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+from data.config import path
+
 
 async def get_info(art: str) -> dict:
     """
@@ -94,7 +96,7 @@ async def get_info(art: str) -> dict:
             'price': price
         }
 
-        with open("/Users/sklad/base/json/{}.json".format(art), "w", encoding='utf-8') as write_file:
+        with open("{}/base/json/{}.json".format(path, art), "w", encoding='utf-8') as write_file:
             json.dump(data, write_file, indent=4, ensure_ascii=False)
 
         driver.quit()
