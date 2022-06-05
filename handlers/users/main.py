@@ -26,6 +26,7 @@ from handlers.users.stocks_check import start_check_stocks
 from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu, orders
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
+from keyboards.inline.quit import exitqr
 from loader import dp, bot
 from state.states import Place, Search, Logging, Messages, QR, Orders
 from utils.check_bd import check
@@ -147,9 +148,11 @@ async def search_sklad(message: types.Message, state: FSMContext):
                                 await bot.send_message(message.from_user.id, item)
 
                     else:
-                        await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
+                        await bot.send_message(message.from_user.id, '❌Отсутствует на складе {}'.
                                                format(i))
-                await search(message, state)
+                await bot.send_message(message.from_user.id, '❔Введите артикул для поиска на всех складах',
+                                       reply_markup=exitqr)
+                await Search.art.set()
         else:
             if message.text == 'Назад':
                 await back(message, state)
@@ -169,9 +172,12 @@ async def search_sklad(message: types.Message, state: FSMContext):
                                 await bot.send_message(message.from_user.id, item)
 
                 else:
-                    await bot.send_message(message.from_user.id, 'Данный артикул отсутствует на складе {}'.
+                    await bot.send_message(message.from_user.id, '❌Отсутствует на складе {}'.
                                            format(data['sklad']), reply_markup=second_menu)
-                await search(message, state)
+                await bot.send_message(message.from_user.id,
+                                       '❔Введите артикул для поиска на {} складе'.format(data['sklad']),
+                                       reply_markup=exitqr)
+                await Search.art.set()
 
 
 @dp.message_handler(content_types=['text'], state=Search.order)
@@ -185,11 +191,14 @@ async def order_num(message: types.Message, state: FSMContext):
                 await bot.send_message(message.from_user.id, 'Неверное количество', reply_markup=second_menu)
             else:
                 data['order_num'] = num
+
         logger.info(data['order'])
         logger.info(data['order_num'])
         set_order(message.from_user.id, data['order'], data['order_num'])
     await Search.art.set()
-    await search(message, state)
+    await bot.send_message(message.from_user.id,
+                           '❔Введите артикул для поиска на {} складе'.format(data['sklad']),
+                           reply_markup=exitqr)
 
 
 @dp.message_handler(content_types=['text'], state=Orders.order)
@@ -419,7 +428,7 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
         logger.info('Вывод результата через:{} сек.'.format(time.time() - start_time))
 
 
-@dp.callback_query_handler(state=Search.sklad)
+@dp.callback_query_handler(state=[Search.sklad, Search.art, Search.sklad])
 async def input_art(call: types.CallbackQuery, state: FSMContext):
     """
     Поиск по складам введенного артикула

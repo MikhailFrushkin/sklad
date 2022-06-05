@@ -52,7 +52,7 @@ def place_dost(message, sklad):
             answer = []
             for row in reader:
                 if row['Местоположение'].startswith(message) and row['Доступно'] != '':
-                    line = 'Необходимо убрать с ячейки {}' \
+                    line = '🔄Необходимо убрать с ячейки {}' \
                            '\n{} - {}' \
                            '\nДоступно: {}\n' \
                         .format(
@@ -63,7 +63,7 @@ def place_dost(message, sklad):
                         .replace('.0', '')
                     answer.append(line)
         if len(answer) == 0:
-            return 'В ячейках нет отказанного товара'
+            return ['❌В ячейках нет отказанного товара']
         return answer
     except Exception as ex:
         logger.debug(ex)
@@ -75,7 +75,7 @@ def search_articul(art, sklad):
         answer = []
         for row in reader:
             if row['Код \nноменклатуры'] == art:
-                line = '{} - {}\n' \
+                line = '✅{} - {}\n' \
                        '---------------------------------' \
                        '\nДоступно: {} Резерв: {}'.format(
                     row['Местоположение'],
@@ -117,7 +117,7 @@ def search_articul_order(art, sklad):
         else:
             raise Exception
     except Exception as ex:
-        logger.debug('Артикул не найден на складе {}'.format(ex))
+        logger.debug('❌Артикул не найден на складе {}'.format(ex))
 
 
 def search_all_sklad(art, sklad):
@@ -126,7 +126,7 @@ def search_all_sklad(art, sklad):
         answer = []
         for row in reader:
             if row['Код \nноменклатуры'] == art:
-                line = '{} - Доступно: {} Резерв: {}'.format(
+                line = '✅{} - Доступно: {} Резерв: {}'.format(
                     row['Местоположение'],
                     0 if row['Доступно'] == '' else row['Доступно'],
                     0 if row['Зарезерви\nровано'] == '' else row[
