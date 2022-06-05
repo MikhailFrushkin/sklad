@@ -7,9 +7,9 @@ menu = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('📖 Любой текст в Qr')],
     [KeyboardButton('📦 Содержимое ячейки'),
      KeyboardButton('🔍 Поиск на складах')],
-    [KeyboardButton('ℹ Информация'),
+    [KeyboardButton('📝Проверка товара'),
      KeyboardButton('📟 Мой заказ')],
-    [KeyboardButton('Проверка товара')]
+    [KeyboardButton('ℹ Информация')],
 ], resize_keyboard=True)
 
 second_menu = ReplyKeyboardMarkup(keyboard=[
@@ -23,9 +23,9 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('📖 Любой текст в Qr')],
     [KeyboardButton('📦 Содержимое ячейки'),
      KeyboardButton('🔍 Поиск на складах')],
-    [KeyboardButton('ℹ Информация'),
+    [KeyboardButton('📝Проверка товара'),
      KeyboardButton('📟 Мой заказ')],
-    [KeyboardButton('Проверка товара')],
+    [KeyboardButton('ℹ Информация')],
     [KeyboardButton('Загрузка базы'),
      KeyboardButton('mic'),
      KeyboardButton('Отправить')]

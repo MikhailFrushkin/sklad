@@ -489,7 +489,7 @@ async def bot_message(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, 'Выберите действие:', reply_markup=orders)
             await Orders.order.set()
 
-        elif message.text == 'Проверка товара':
+        elif message.text == '📝Проверка товара':
             await start_check_stocks(message, state)
 
         elif message.text == '🔍 Поиск на складах':
