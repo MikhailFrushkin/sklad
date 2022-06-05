@@ -35,3 +35,9 @@ class Search(StatesGroup):
 
 class Orders(StatesGroup):
     order = State()
+
+
+class Stock(StatesGroup):
+    group = State()
+    nums = State()
+    show_stock = State()

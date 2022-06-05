@@ -6,3 +6,4 @@ from . import search
 from . import show_media
 from . import show_place
 from . import show_qrs
+

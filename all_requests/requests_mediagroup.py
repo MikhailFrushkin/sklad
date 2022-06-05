@@ -6,7 +6,7 @@ from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
-from data.config import path
+from data.config import path, path_chrom_driver
 
 
 async def get_info(art: str) -> dict:
@@ -30,7 +30,7 @@ async def get_info(art: str) -> dict:
     options.add_argument('--headless')
 
     driver = webdriver.Chrome(
-        executable_path="/usr/local/bin/chromedriver",
+        executable_path=f'{path_chrom_driver}',
         options=options
     )
     url: str = 'https://hoff.ru/vue/search/?fromSearch=direct&search={}&redirect_search=true'.format(art)

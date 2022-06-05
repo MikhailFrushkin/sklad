@@ -8,7 +8,8 @@ menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('📦 Содержимое ячейки'),
      KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('ℹ Информация'),
-     KeyboardButton('📟 Мой заказ')]
+     KeyboardButton('📟 Мой заказ')],
+    [KeyboardButton('Проверка товара')]
 ], resize_keyboard=True)
 
 second_menu = ReplyKeyboardMarkup(keyboard=[
@@ -24,6 +25,7 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('ℹ Информация'),
      KeyboardButton('📟 Мой заказ')],
+    [KeyboardButton('Проверка товара')],
     [KeyboardButton('Загрузка базы'),
      KeyboardButton('mic'),
      KeyboardButton('Отправить')]
@@ -50,5 +52,5 @@ qr_menu = ReplyKeyboardMarkup(keyboard=[
 orders = ReplyKeyboardMarkup(keyboard=[[KeyboardButton('Мой заказ'),
                                         KeyboardButton('Удалить заказ')],
                                        [KeyboardButton('Отправить Мишке'),
-                                       KeyboardButton('Назад')],
+                                        KeyboardButton('Назад')],
                                        ], resize_keyboard=True)

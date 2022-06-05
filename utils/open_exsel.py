@@ -14,7 +14,8 @@ def dowload(sklad):
                                                'Код \nноменклатуры',
                                                'Описание товара',
                                                'Доступно',
-                                               'Зарезерви\nровано'])
+                                               'Зарезерви\nровано',
+                                               'ТГ'])
         excel_data_df.to_csv('{}/utils/file_{}.csv'.format(path, sklad))
     except Exception as ex:
         logger.debug(ex)

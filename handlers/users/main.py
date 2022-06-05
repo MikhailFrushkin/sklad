@@ -22,6 +22,7 @@ from handlers.users.search import search
 from handlers.users.show_media import show_media
 from handlers.users.show_place import show_place
 from handlers.users.show_qrs import show_qr
+from handlers.users.stocks_check import start_check_stocks
 from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu, orders
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
@@ -478,6 +479,9 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == '📟 Мой заказ':
             await bot.send_message(message.from_user.id, 'Выберите действие:', reply_markup=orders)
             await Orders.order.set()
+
+        elif message.text == 'Проверка товара':
+            await start_check_stocks(message, state)
 
         elif message.text == '🔍 Поиск на складах':
             await search(message, state)
