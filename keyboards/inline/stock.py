@@ -11,7 +11,7 @@ stocks.insert(InlineKeyboardButton(text='Быт.химия и хранение',
 stocks.insert(InlineKeyboardButton(text='Выход', callback_data='exit'))
 
 choise_num = InlineKeyboardMarkup(row_width=3)
-choise_num.insert(InlineKeyboardButton(text='0 в зале', callback_data='zero'))
+choise_num.insert(InlineKeyboardButton(text='0', callback_data='zero'))
 choise_num.insert(InlineKeyboardButton(text='1-3', callback_data='low'))
 choise_num.insert(InlineKeyboardButton(text='4-10', callback_data='norm'))
 choise_num.insert(InlineKeyboardButton(text='Выход', callback_data='exit'))

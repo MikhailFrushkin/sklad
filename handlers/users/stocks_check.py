@@ -32,10 +32,10 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
             case 'exit':
                 await back(call.message, state)
             case _:
-                mes = await bot.send_message(call.from_user.id, 'Выберите количество в зале:',
+                mes = await bot.send_message(call.from_user.id, 'Количество в зале:',
                                              reply_markup=choise_num)
-        data['message_temp'] = mes
-        await Stock.nums.set()
+                data['message_temp'] = mes
+                await Stock.nums.set()
 
 
 @dp.callback_query_handler(state=Stock.nums)
