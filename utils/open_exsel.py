@@ -6,21 +6,21 @@ from loguru import logger
 
 def dowload(sklad):
     try:
-        excel_data_df = pd.read_excel('C:/Users/sklad/utils/file_{}.xls'.format(sklad), sheet_name='Лист1',
+        excel_data_df = pd.read_excel('/Users/sklad/utils/file_{}.xls'.format(sklad), sheet_name='Лист1',
                                       usecols=['Склад',
                                                'Местоположение',
                                                'Код \nноменклатуры',
                                                'Описание товара',
                                                'Доступно',
                                                'Зарезерви\nровано'])
-        excel_data_df.to_csv('C:/Users/sklad/utils/file_{}.csv'.format(sklad))
+        excel_data_df.to_csv('/Users/sklad/utils/file_{}.csv'.format(sklad))
     except Exception as ex:
         logger.debug(ex)
 
 
 def place(message, sklad):
     try:
-        with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
+        with open('/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             answer = []
             for row in reader:
@@ -44,7 +44,7 @@ def place(message, sklad):
 
 def place_dost(message, sklad):
     try:
-        with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
+        with open('/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             answer = []
             for row in reader:
@@ -67,7 +67,7 @@ def place_dost(message, sklad):
 
 
 def search_articul(art, sklad):
-    with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
+    with open('/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:
@@ -86,23 +86,39 @@ def search_articul(art, sklad):
 
 
 def search_articul_order(art, sklad):
-    with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        answer = []
-        art_dict = dict()
-        for row in reader:
-            if row['Код \nноменклатуры'] == art:
-                art_dict['name'] = row['Описание товара']
-                line = '{} - Доступно: {}'.format(
-                    row['Местоположение'],
-                    row['Доступно']).replace('.0', '')
-                answer.append(line)
-        art_dict['answer'] = answer
-    return art_dict
+    try:
+        with open('/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            art_list = []
+            art_dict = {
+                'Код': '',
+                'Местоположение': '',
+                'Описание товара': '',
+                'Доступно': ''
+            }
+            for row in reader:
+                if row['Код \nноменклатуры'] == art:
+                    art_dict['Код'] = art
+                    art_dict['Местоположение'] = row['Местоположение']
+                    art_dict['Описание товара'] = row['Описание товара']
+                    art_dict['Доступно'] = row['Доступно'].replace('.0', '')
+                    art_list.append(art_dict)
+                    art_dict = {
+                        'Код': '',
+                        'Местоположение': '',
+                        'Описание товара': '',
+                        'Доступно': ''
+                    }
+        if len(art_list) > 0:
+            return art_list
+        else:
+            raise Exception
+    except Exception as ex:
+        logger.debug('Артикул не найден на складе {}'.format(ex))
 
 
 def search_all_sklad(art, sklad):
-    with open('C:/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
+    with open('/Users/sklad/utils/file_{}.csv'.format(sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:
@@ -121,7 +137,7 @@ def search_art_name(art):
     line = 'Нет товара в наличии'
     sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
     for i in sklad_list:
-        with open('C:/Users/sklad/utils/file_{}.csv'.format(i), newline='', encoding='utf-8') as csvfile:
+        with open('/Users/sklad/utils/file_{}.csv'.format(i), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 if row['Код \nноменклатуры'] == art:
@@ -130,4 +146,4 @@ def search_art_name(art):
 
 
 if __name__ == '__main__':
-    print(search_articul('80419935'))
+    print(search_art_name('80419935'))
