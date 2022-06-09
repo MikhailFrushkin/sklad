@@ -407,7 +407,7 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
             with open('{}/stikers/seach.tgs'.format(path), 'rb') as sticker:
                 sticker = await call.message.answer_sticker(sticker)
             try:
-                data_url = await get_info(call.data)
+                data_url = get_info(call.data)
                 photo = await call.message.answer_photo(data_url['url_imgs'][0],
                                                         reply_markup=hide)
             except Exception as ex:

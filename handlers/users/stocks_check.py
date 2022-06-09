@@ -8,16 +8,15 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
-from all_requests.requests_mediagroup import get_info
+from all_requests.requests_mediagroup import get_info, get_info_only_image
 from data.config import path
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
 from keyboards.default import menu
-from keyboards.inline.mesto import photo, hide
+from keyboards.inline.mesto import hide
 from keyboards.inline.stock import choise_num, stocks
 from loader import dp, bot
 from state.states import Stock
-from typing import NamedTuple
 
 
 async def start_check_stocks(message, state):
@@ -63,12 +62,7 @@ async def choise_nums(call: types.CallbackQuery, state: FSMContext):
         await Stock.show_stock.set()
 
 
-class Result_Tuple_For_Stocks(NamedTuple):
-    result: dict[str, int] | dict
-    result_zero: dict[tuple[str, str], int] | dict
-
-
-def union_art(sklad: str, group: str) -> Result_Tuple_For_Stocks:
+def union_art(sklad: str, group: str):
     with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         result_for_zero = dict()
@@ -133,9 +127,9 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
                     asyncio.create_task(delete_message(data['{}'.format(key)]))
     else:
         logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
-        if os.path.exists(r"{}/base/json/{}.json".format(path, call.data)):
+        if os.path.exists(r"{}/base/json/{}_photo.json".format(path, call.data)):
             logger.info('нашел json и вывел результат')
-            with open(r"{}/base/json/{}.json".format(path, call.data), "r", encoding='utf-8') as read_file:
+            with open(r"{}/base/json/{}_photo.json".format(path, call.data), "r", encoding='utf-8') as read_file:
                 data_url = json.load(read_file)
                 photo = await call.message.answer_photo(data_url["url_imgs"][0],
                                                         reply_markup=hide)
@@ -143,7 +137,7 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
             with open('{}/stikers/seach.tgs'.format(path), 'rb') as sticker:
                 sticker = await call.message.answer_sticker(sticker)
             try:
-                data_url = await get_info(call.data)
+                data_url = get_info_only_image(call.data)
                 photo = await call.message.answer_photo(data_url['url_imgs'][0],
                                                         reply_markup=hide)
             except Exception as ex:
@@ -215,7 +209,3 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
         await back(call, state)
     logger.info('Список товара товара: {}'.format(line))
     await state.reset_state()
-
-
-if __name__ == '__main__':
-    matching_stock('11')
