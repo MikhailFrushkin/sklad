@@ -150,7 +150,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     else:
                         await bot.send_message(message.from_user.id, '❌Отсутствует на складе {}'.
                                                format(i))
-                await bot.send_message(message.from_user.id, '❔Введите артикул для поиска на всех складах',
+                await bot.send_message(message.from_user.id, '⚠Введите артикул для поиска на всех складах⚠',
                                        reply_markup=exitqr)
                 await Search.art.set()
         else:
@@ -175,7 +175,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     await bot.send_message(message.from_user.id, '❌Отсутствует на складе {}'.
                                            format(data['sklad']), reply_markup=second_menu)
                 await bot.send_message(message.from_user.id,
-                                       '❔Введите артикул для поиска на {} складе'.format(data['sklad']),
+                                       '⚠Введите артикул для поиска на {} складе⚠'.format(data['sklad']),
                                        reply_markup=exitqr)
                 await Search.art.set()
 
@@ -197,7 +197,7 @@ async def order_num(message: types.Message, state: FSMContext):
         set_order(message.from_user.id, data['order'], data['order_num'])
     await Search.art.set()
     await bot.send_message(message.from_user.id,
-                           '❔Введите артикул для поиска на {} складе'.format(data['sklad']),
+                           '⚠Введите артикул для поиска на {} складе⚠'.format(data['sklad']),
                            reply_markup=exitqr)
 
 
