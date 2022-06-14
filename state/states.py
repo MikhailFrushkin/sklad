@@ -31,6 +31,7 @@ class Search(StatesGroup):
     art = State()
     order = State()
     show_all = State()
+    search_name = State()
 
 
 class Orders(StatesGroup):
@@ -41,3 +42,4 @@ class Stock(StatesGroup):
     group = State()
     nums = State()
     show_stock = State()
+    order = State()

@@ -8,8 +8,10 @@ import time
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, Message
+from aiogram.types import ContentType, Message, ParseMode
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
+from aiogram.utils.emoji import emojize
+from aiogram.utils.markdown import text, italic, code
 from loguru import logger
 
 import bot
@@ -30,7 +32,7 @@ from keyboards.inline.quit import exitqr
 from loader import dp, bot
 from state.states import Place, Search, Logging, Messages, QR, Orders
 from utils.check_bd import check
-from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost
+from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost, search_name
 from utils.read_bd import set_order, del_orders, mail
 
 
@@ -442,6 +444,9 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
             await bot.send_message(call.from_user.id, 'Ввeдите количество:', reply_markup=second_menu)
             data['order'] = call.data[2:]
             await Search.order.set()
+        elif call.data == 'name':
+            await bot.send_message(call.from_user.id, 'Введите название товара:', reply_markup=second_menu)
+            await Search.search_name.set()
         else:
             await bot.send_message(call.from_user.id, 'Введите артикул', reply_markup=second_menu)
             await Search.art.set()
@@ -450,12 +455,30 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
         asyncio.create_task(delete_message(data['message2']))
 
 
-@dp.message_handler(content_types=[ContentType.VOICE])
-async def voice_message_handler(message: Message):
-    """Управление голосовыми, пока в разработке"""
-    await bot.send_message(message.from_user.id, 'Иди работай')
-    voice = message.voice
-    await bot.download_file_by_id(voice)
+@dp.message_handler(content_types=['text'], state=Search.search_name)
+async def bot_message(message: types.Message, state: FSMContext):
+    name = message.text.lower()
+    logger.info('пользователь {} {} запистил поиск по имени: {}'.format(message.from_user.id,
+                                                                        message.from_user.first_name,
+                                                                        name))
+    answer = search_name(name)
+    logger.info('Получени ответ: {}'.format(answer))
+    if len(answer) > 0:
+        for i in answer:
+            await bot.send_message(message.from_user.id, '{}'.format(i))
+    else:
+        await bot.send_message(message.from_user.id, 'Ни чего не найдено на складе, по запросу: {}'.format(name))
+    await back(message, state)
+
+
+@dp.message_handler(content_types=[ContentType.STICKER, ContentType.VOICE], state='*')
+async def unknown_message(message: types.Message):
+    message_text = text(emojize('Я не знаю, что с этим делать :astonished:'),
+                        italic('\nЯ просто напомню,'), 'что есть',
+                        code('команда'), '/help')
+    await message.reply(message_text, parse_mode=ParseMode.MARKDOWN)
+    with open('{}/stikers/fuck.tgs'.format(path), 'rb') as sticker:
+        await message.answer_sticker(sticker)
 
 
 @dp.message_handler(content_types=['text'], state='*')

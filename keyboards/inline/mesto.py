@@ -24,9 +24,8 @@ hide.add(InlineKeyboardButton(text='Скрыть фото', callback_data='hide'
 
 
 search_sklad = InlineKeyboardMarkup(row_width=2)
-search_sklad.insert(InlineKeyboardButton(text='011_825', callback_data='011_825'))
 search_sklad.insert(InlineKeyboardButton(text='012_825', callback_data='012_825'))
-search_sklad.insert(InlineKeyboardButton(text='A11_825', callback_data='A11_825'))
 search_sklad.insert(InlineKeyboardButton(text='V_Sales', callback_data='V_Sales'))
 search_sklad.insert(InlineKeyboardButton(text='На всех складах', callback_data='all'))
+search_sklad.insert(InlineKeyboardButton(text='Поиск по названию', callback_data='name'))
 

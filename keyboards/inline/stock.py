@@ -16,3 +16,8 @@ choise_num.insert(InlineKeyboardButton(text='0', callback_data='zero'))
 choise_num.insert(InlineKeyboardButton(text='1-3', callback_data='low'))
 choise_num.insert(InlineKeyboardButton(text='4-10', callback_data='norm'))
 choise_num.insert(InlineKeyboardButton(text='Выход', callback_data='exit'))
+
+
+choise = InlineKeyboardMarkup(row_width=2)
+choise.insert(InlineKeyboardButton(text='Да', callback_data='yes'))
+choise.insert(InlineKeyboardButton(text='Нет', callback_data='no'))

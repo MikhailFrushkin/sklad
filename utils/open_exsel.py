@@ -89,6 +89,26 @@ def search_articul(art, sklad):
     return answer
 
 
+def search_name(name):
+    with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        answer = []
+        for row in reader:
+            if name in row['Описание товара'].lower():
+                line = '✅{} - {}\n' \
+                       '{}' \
+                       '\nДоступно: {} Резерв: {}'.format(
+                    row['Местоположение'],
+                    row['Код \nноменклатуры'],
+                    row['Описание товара'],
+                    0 if row['Доступно'] == '' else row['Доступно'],
+                    0 if row['Зарезерви\nровано'] == '' else row[
+                        'Зарезерви\nровано']) \
+                    .replace('.0', '')
+                answer.append(line)
+    return answer
+
+
 def search_articul_order(art, sklad):
     try:
         with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
