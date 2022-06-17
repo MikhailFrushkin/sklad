@@ -6,7 +6,7 @@ from loguru import logger
 from data.config import path
 
 
-def dowload(sklad):
+def dowload(sklad: str):
     try:
         excel_data_df = pd.read_excel('{}/utils/file_{}.xls'.format(path, sklad), sheet_name='Лист1',
                                       usecols=['Склад',
@@ -22,7 +22,7 @@ def dowload(sklad):
         logger.debug(ex)
 
 
-def place(message, sklad):
+def place(message: str, sklad: str) -> list[str]:
     try:
         with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -33,12 +33,10 @@ def place(message, sklad):
                            '\n---------------------------------' \
                            '\nДоступно: {} Резерв: {}' \
                            '\n---------------------------------' \
-                        .format(
-                        row['Код \nноменклатуры'],
-                        row['Описание товара'],
-                        0 if row['Доступно'] == '' else row['Доступно'],
-                        0 if row['Зарезерви\nровано'] == '' else row[
-                            'Зарезерви\nровано']) \
+                        .format(row['Код \nноменклатуры'], row['Описание товара'],
+                                0 if row['Доступно'] == '' else row['Доступно'],
+                                0 if row['Зарезерви\nровано'] == '' else row[
+                                    'Зарезерви\nровано']) \
                         .replace('.0', '')
                     answer.append(line)
         return answer
@@ -46,7 +44,7 @@ def place(message, sklad):
         logger.debug(ex)
 
 
-def place_dost(message, sklad):
+def place_dost(message: str, sklad: str) -> list[str]:
     try:
         with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -56,11 +54,8 @@ def place_dost(message, sklad):
                     line = '🔄Необходимо убрать с ячейки {}' \
                            '\n{} - {}' \
                            '\nДоступно: {}\n' \
-                        .format(
-                        row['Местоположение'],
-                        row['Код \nноменклатуры'],
-                        row['Описание товара'],
-                        row['Доступно']) \
+                        .format(row['Местоположение'], row['Код \nноменклатуры'], row['Описание товара'],
+                                row['Доступно']) \
                         .replace('.0', '')
                     answer.append(line)
         if len(answer) == 0:
@@ -70,7 +65,7 @@ def place_dost(message, sklad):
         logger.debug(ex)
 
 
-def search_articul(art, sklad):
+def search_articul(art: str, sklad: str) -> list[str]:
     with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
@@ -78,38 +73,33 @@ def search_articul(art, sklad):
             if row['Код \nноменклатуры'] == art:
                 line = '✅{} - {}\n' \
                        '---------------------------------' \
-                       '\nДоступно: {} Резерв: {}'.format(
-                    row['Местоположение'],
-                    row['Описание товара'],
-                    0 if row['Доступно'] == '' else row['Доступно'],
-                    0 if row['Зарезерви\nровано'] == '' else row[
-                        'Зарезерви\nровано']) \
+                       '\nДоступно: {} Резерв: {}'.format(row['Местоположение'], row['Описание товара'],
+                                                          0 if row['Доступно'] == '' else row['Доступно'],
+                                                          0 if row['Зарезерви\nровано'] == '' else row[
+                                                              'Зарезерви\nровано']) \
                     .replace('.0', '')
                 answer.append(line)
     return answer
 
 
-def search_name(name):
+def search_name(name: str) -> list[str]:
     with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:
-            if name in row['Описание товара'].lower():
-                line = '✅{} - {}\n' \
-                       '{}' \
-                       '\nДоступно: {} Резерв: {}'.format(
-                    row['Местоположение'],
-                    row['Код \nноменклатуры'],
-                    row['Описание товара'],
-                    0 if row['Доступно'] == '' else row['Доступно'],
-                    0 if row['Зарезерви\nровано'] == '' else row[
-                        'Зарезерви\nровано']) \
-                    .replace('.0', '')
-                answer.append(line)
+            if not row['Местоположение'].startswith('012_825-Dost') \
+                    and not row['Местоположение'].startswith('012_825-01') \
+                    and not row['Местоположение'].startswith('012_825-OX'):
+                if name in row['Описание товара'].lower():
+                    line = '✅{} - {} Доступно: {}\n' \
+                           '{}'.format(row['Местоположение'], row['Код \nноменклатуры'],
+                                       0 if row['Доступно'] == '' else row['Доступно'], row['Описание товара']) \
+                        .replace('.0', '')
+                    answer.append(line)
     return answer
 
 
-def search_articul_order(art, sklad):
+def search_articul_order(art: str, sklad: str) -> list:
     try:
         with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -141,7 +131,7 @@ def search_articul_order(art, sklad):
         logger.debug('❌Артикул не найден на складе {}'.format(ex))
 
 
-def search_all_sklad(art, sklad):
+def search_all_sklad(art: str, sklad: str) -> list[str]:
     with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
@@ -157,7 +147,7 @@ def search_all_sklad(art, sklad):
     return answer
 
 
-def search_art_name(art):
+def search_art_name(art: str) -> str:
     line = 'Нет товара в наличии'
     sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
     for i in sklad_list:

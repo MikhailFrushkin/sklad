@@ -109,7 +109,7 @@ async def bot_message(message: types.Message, state: FSMContext):
     нажатие админ кнопки на "отправить"
     """
 
-    if message.text == 'Назад':
+    if message.text == 'В главное меню':
         await back(message, state)
     else:
         text_mes = '❗❗❗{}❗❗❗\n'.format(message.text)
@@ -130,7 +130,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
     """
     async with state.proxy() as data:
         if data['sklad'] == 'all':
-            if message.text == 'Назад':
+            if message.text == 'В главное меню':
                 await back(message, state)
             else:
                 await bot.send_message(message.from_user.id, '{}'.format(search_art_name(message.text)))
@@ -156,7 +156,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
                                        reply_markup=exitqr)
                 await Search.art.set()
         else:
-            if message.text == 'Назад':
+            if message.text == 'В главное меню':
                 await back(message, state)
             else:
                 cells = search_articul(message.text, data['sklad'])
@@ -186,7 +186,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
 async def order_num(message: types.Message, state: FSMContext):
     num = message.text
     async with state.proxy() as data:
-        if num == 'Назад':
+        if num == 'В главное меню':
             await back(message, state)
         else:
             if not num.isdigit():
@@ -205,7 +205,7 @@ async def order_num(message: types.Message, state: FSMContext):
 
 @dp.message_handler(content_types=['text'], state=Orders.order)
 async def order_num(message: types.Message, state: FSMContext):
-    if message.text == 'Назад':
+    if message.text == 'В главное меню':
         await back(message, state)
     elif message.text == 'Мой заказ':
         try:
@@ -238,7 +238,7 @@ async def search_sklad(message: types.Message, state: FSMContext):
         if message.text in sklad_list:
             data['sklad'] = message.text
             await bot.send_message(message.from_user.id, 'Загрузите файл.')
-        elif message.text == 'Назад':
+        elif message.text == 'В главное меню':
             await back(message, state)
         else:
             await bot.send_message(message.from_user.id, 'Неверно выбран склад.')
@@ -430,7 +430,7 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
         logger.info('Вывод результата через:{} сек.'.format(time.time() - start_time))
 
 
-@dp.callback_query_handler(state=[Search.sklad, Search.art, Search.sklad])
+@dp.callback_query_handler(state=[Search.sklad, Search.art])
 async def input_art(call: types.CallbackQuery, state: FSMContext):
     """
     Поиск по складам введенного артикула
@@ -463,9 +463,17 @@ async def bot_message(message: types.Message, state: FSMContext):
                                                                         name))
     answer = search_name(name)
     logger.info('Получени ответ: {}'.format(answer))
+    block_message = []
     if len(answer) > 0:
+        count = 0
         for i in answer:
-            await bot.send_message(message.from_user.id, '{}'.format(i))
+            count += 1
+            block_message.append(i)
+            if count == 25:
+                await bot.send_message(message.from_user.id, '{}'.format('\n'.join(block_message)))
+                block_message = []
+                count = 0
+        await bot.send_message(message.from_user.id, '{}'.format('\n'.join(block_message)))
     else:
         await bot.send_message(message.from_user.id, 'Ни чего не найдено на складе, по запросу: {}'.format(name))
     await back(message, state)
@@ -518,7 +526,7 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == '🔍 Поиск на складах':
             await search(message, state)
 
-        elif message.text == 'Назад':
+        elif message.text == 'В главное меню':
             await back(message, state)
 
         elif message.text == '📖 Любой текст в Qr':

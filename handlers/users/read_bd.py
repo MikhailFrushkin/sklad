@@ -1,13 +1,13 @@
 import sqlite3
 
+from aiogram import types
 from loguru import logger
 
 from data.config import path
-from loader import bot
 from utils.open_exsel import search_articul_order
 
 
-def get_bd_info(id):
+def get_bd_info(id: str) -> list:
     """чтение бд"""
     try:
         con = sqlite3.connect(r'{}/base/BD/users.bd'.format(path))
@@ -63,7 +63,7 @@ def del_orders(id: int):
         logger.info("Ошибка при работе с SQLite: {}".format(error))
 
 
-def mail(message):
+def mail(message: types.Message):
     try:
         list_places = []
         all_list = []
@@ -84,11 +84,9 @@ def mail(message):
                     if i[j]['Местоположение'] == place:
                         for item in orders_art:
                             if str(item[0]) == i[0]['Код']:
-                                line = line + '\n\t✅ {}\n\t{} \n\tДоступно:{} К заказу:{}'.format(i[0]['Код'],
-                                                                                                  i[0][
-                                                                                                      'Описание товара'],
-                                                                                                  i[0]['Доступно'],
-                                                                                                  item[1])
+                                line = line + '\n\t✅ {}\n\t{} \n\tДоступно:{} К заказу:{}'. \
+                                    format(i[0]['Код'], i[0]['Описание товара'],
+                                           i[0]['Доступно'], item[1])
             result.append(line)
         return result
 

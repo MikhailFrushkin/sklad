@@ -20,7 +20,7 @@ from state.states import Stock
 
 
 async def start_check_stocks(message, state):
-    if message.text == 'Назад':
+    if message.text == 'В главное меню':
         await back(message, state)
     mes = await bot.send_message(message.from_user.id, 'Выберите группу товара:', reply_markup=stocks)
     async with state.proxy() as data:

@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from data.config import path_chrom_driver, path
 
 
-def timer(func):
+def timer(func: callable):
     def wrapper(*args, **kwargs):
         start = datetime.datetime.now()
         result = func(*args, **kwargs)
@@ -59,7 +59,7 @@ def get_info(art: str):
 
 
 @timer
-def _get_second_url(text) -> str:
+def _get_second_url(text: str) -> str:
     pattern = r'(?<=\\).+?["]'
     result = re.search(pattern, text)
     url_page1 = 'https://hoff.ru' + result[0][:-1]
@@ -70,7 +70,7 @@ def _get_second_url(text) -> str:
 
 
 @timer
-def _get_name(driver):
+def _get_name(driver) -> str:
     name = driver.find_element(
         by=By.CLASS_NAME,
         value='page-title')

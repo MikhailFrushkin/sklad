@@ -13,7 +13,7 @@ menu = ReplyKeyboardMarkup(keyboard=[
 ], resize_keyboard=True)
 
 second_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton('Назад')],
+    [KeyboardButton('В главное меню')],
 ], resize_keyboard=True)
 
 menu_admin = ReplyKeyboardMarkup(keyboard=[
@@ -27,7 +27,6 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('📟 Мой заказ')],
     [KeyboardButton('ℹ Информация')],
     [KeyboardButton('Загрузка базы'),
-     KeyboardButton('mic'),
      KeyboardButton('Отправить')]
 ], resize_keyboard=True)
 
@@ -37,7 +36,7 @@ dowload_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('A11_825'),
      KeyboardButton('V_Sales')],
     [KeyboardButton('RDiff'),
-     KeyboardButton('Назад')],
+     KeyboardButton('В главное меню')],
 ], resize_keyboard=True)
 
 qr_menu = ReplyKeyboardMarkup(keyboard=[
@@ -46,11 +45,11 @@ qr_menu = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('011_825-Exit_Dost')],
     [KeyboardButton('V-Sales_825'),
      KeyboardButton('R12_BrakIn_825')],
-    [KeyboardButton('Назад')],
+    [KeyboardButton('В главное меню')],
 ], resize_keyboard=True)
 
 orders = ReplyKeyboardMarkup(keyboard=[[KeyboardButton('Мой заказ'),
                                         KeyboardButton('Удалить заказ')],
                                        [KeyboardButton('Отправить Мишке'),
-                                        KeyboardButton('Назад')],
+                                        KeyboardButton('В главное меню')],
                                        ], resize_keyboard=True)

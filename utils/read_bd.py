@@ -105,7 +105,6 @@ def mail(message):
             art_dict['Заказ'] = int(item[1])
             art_dict['Подобранно'] = 0
             art_dict_list.append(art_dict)
-        print(art_dict_list)
 
         for place in list_places:
             line = '⚠{}'.format(place)

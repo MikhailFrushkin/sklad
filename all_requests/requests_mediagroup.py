@@ -11,11 +11,10 @@ from data.config import path_chrom_driver, path
 
 def timer(func):
     def wrapper(*args, **kwargs):
-        logger.info('Оборачиваемая функция: {}'.format(func.__name__))
         start = datetime.datetime.now()
         result = func(*args, **kwargs)
         end = datetime.datetime.now()
-        logger.info(end - start)
+        logger.info('Время выполнения функции {} - {}'.format(func.__name__, end - start))
         return result
     return wrapper
 
@@ -49,7 +48,6 @@ def get_info_only_image(art: str):
         driver.quit()
 
         return data
-
     except Exception as ex:
         logger.debug(ex)
 
@@ -135,7 +133,6 @@ def _get_image(driver) -> list[str]:
     for item in range(len(img)):
         if item != 5:
             src = img[item].get_attribute('style')
-            print(src)
             pattern = r'(?<=").+?[g]'
             url_img = re.search(pattern, src)
             url_list.append(url_img[0])
@@ -154,7 +151,6 @@ def _get_one_image(driver) -> list[str]:
     for item in range(len(img)):
         if item != 5:
             src = img[item].get_attribute('style')
-            print(src)
             pattern = r'(?<=").+?[g]'
             url_img = re.search(pattern, src)
             url_list.append(url_img[0])

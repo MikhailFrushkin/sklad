@@ -41,7 +41,7 @@ async def showqr(message: types.Message, state: FSMContext):
     """
     ans_list = ['011_825-Exit_sklad', '011_825-Exit_zal', '011_825-Exit_Dost', 'V-Sales_825', 'R12_BrakIn_825']
     ans = message.text
-    if ans == 'Назад':
+    if ans == 'В главное меню':
         await back(message, state)
     elif ans in ans_list:
         await bot.send_message(message.from_user.id, '{}'.format(ans))
@@ -93,7 +93,7 @@ async def showqr(message: types.Message, state: FSMContext):
 async def gen_qr(message: types.Message, state):
     """Генерация Qrcodre по тексту пользователя"""
     data = message.text
-    if data == 'Назад':
+    if data == 'В главное меню':
         await back(message, state)
     else:
         if len(data) > 500:

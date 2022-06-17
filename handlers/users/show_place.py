@@ -11,7 +11,7 @@ from state.states import Place
 async def show_place(message, state):
     """Просмотр содержимого ячейки"""
     ans = message.text
-    if ans == 'Назад':
+    if ans == 'В главное меню':
         await back(message, state)
     elif ans == 'Помощь':
         await bot_help(message)
