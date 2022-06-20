@@ -14,7 +14,7 @@ from handlers.users.back import back
 from handlers.users.delete_message import delete_message
 from keyboards.default import menu
 from keyboards.inline.mesto import hide
-from keyboards.inline.stock import choise_num, stocks, choise
+from keyboards.inline.stock import choise_num, stocks
 from loader import dp, bot
 from state.states import Stock
 
@@ -138,10 +138,9 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
             except Exception as ex:
                 logger.debug('нет товара{}'.format(ex))
         elif call.data == 'hide':
-            async with state.proxy() as data:
-                for key in data:
-                    if str(key).startswith('photo'):
-                        asyncio.create_task(delete_message(data['{}'.format(key)]))
+            for key in data:
+                if str(key).startswith('photo'):
+                    asyncio.create_task(delete_message(data['{}'.format(key)]))
         else:
             logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
             if os.path.exists(r"{}/base/json/{}_photo.json".format(path, call.data)):
@@ -195,7 +194,7 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
                                                                     ))))
                 # await bot.send_message(call.from_user.id, 'Хотите добавить товары в заказ?', reply_markup=choise)
             else:
-                await bot.send_message(call.from_user.id, 'Все товары вналичие в зале 👌', reply_markup=menu)
+                await bot.send_message(call.from_user.id, 'Все товары в наличии👌', reply_markup=menu)
         elif nums == 3:
             dict_art_012 = union_art('012_825', group)[0]
             dict_art_v = union_art('V_Sales', group)[0]
@@ -210,6 +209,7 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
                             await bot.send_message(call.from_user.id, '{}'.format('\n'.join(line)))
                             line = []
                             count = 0
+            await bot.send_message(call.from_user.id, '{}'.format('\n'.join(line)))
         elif nums == 10:
             dict_art_012 = union_art('012_825', group)[0]
             dict_art_v = union_art('V_Sales', group)[0]
@@ -224,8 +224,8 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
                             await bot.send_message(call.from_user.id, '{}'.format('\n'.join(line)))
                             line = []
                             count = 0
+            await bot.send_message(call.from_user.id, '{}'.format('\n'.join(line)))
         else:
             line = ['нет товара для пополнения']
             await back(call, state)
         logger.info('Список товара товара: {}'.format(line))
-

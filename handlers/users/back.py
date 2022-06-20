@@ -14,6 +14,6 @@ async def back(message: types.Message, state: FSMContext):
         await message.answer('Главное меню.\nВведите артикул. Пример: 80264335', reply_markup=menu_admin)
         await state.reset_state()
     else:
-        logger.info('Нажата кнопка назад')
+        logger.info('Нажата кнопка "В главное меню"')
         await message.answer('Главное меню.\nВведите артикул. Пример: 80264335', reply_markup=menu)
         await state.reset_state()

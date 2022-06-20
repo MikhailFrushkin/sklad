@@ -8,7 +8,7 @@ import time
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, Message, ParseMode
+from aiogram.types import ContentType, ParseMode
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from aiogram.utils.emoji import emojize
 from aiogram.utils.markdown import text, italic, code
@@ -112,9 +112,8 @@ async def bot_message(message: types.Message, state: FSMContext):
     if message.text == 'В главное меню':
         await back(message, state)
     else:
-        text_mes = '❗❗❗{}❗❗❗\n'.format(message.text)
+        text_mes = '❗{}❗\n'.format(message.text)
         logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
-
         connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
         cursor = connect.cursor()
         cursor.execute("SELECT * FROM login_id;")

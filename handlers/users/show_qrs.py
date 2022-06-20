@@ -106,11 +106,7 @@ async def gen_qr(message: types.Message, state):
                 with open('{}/stikers/seach.tgs'.format(path), 'rb') as sticker:
                     sticker = await bot.send_sticker(message.chat.id, sticker)
                 logger.info('Пользователь {} запросил qr на текст: {}'.format(message.from_user.id, message.text))
-                qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L
-                                   , version=2
-                                   , border=4
-                                   , box_size=15,
-                                   )
+                qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L, version=2, border=4, box_size=15)
                 qr.add_data(data)
 
                 qr_img = qr.make_image(image_factory=StyledPilImage,
@@ -129,11 +125,7 @@ async def gen_qr(message: types.Message, state):
 
 
 def gen_qr2(data):
-    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L
-                       , version=2
-                       , border=4
-                       , box_size=15,
-                       )
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L, version=2, border=4, box_size=15)
     qr.add_data(data)
 
     img = qrcode.make('Some data here', image_factory=qrcode.image.svg.SvgPathImage)
