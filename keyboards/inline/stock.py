@@ -9,6 +9,7 @@ stocks.insert(InlineKeyboardButton(text='Посуда', callback_data='22'))
 stocks.insert(InlineKeyboardButton(text='Декор', callback_data='23'))
 stocks.insert(InlineKeyboardButton(text='Быт.химия и хранение', callback_data='28'))
 stocks.insert(InlineKeyboardButton(text='Прихожая', callback_data='35'))
+stocks.insert(InlineKeyboardButton(text='Выгрузить файлом', callback_data='files'))
 stocks.insert(InlineKeyboardButton(text='Выход', callback_data='exit'))
 
 choise_num = InlineKeyboardMarkup(row_width=3)

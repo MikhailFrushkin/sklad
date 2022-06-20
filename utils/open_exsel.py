@@ -39,7 +39,8 @@ def place(message: str, sklad: str) -> list[str]:
                                     'Зарезерви\nровано']) \
                         .replace('.0', '')
                     answer.append(line)
-        return answer
+
+        return answer if len(answer) != 0 else 'Ячейка пуста'
     except Exception as ex:
         logger.debug(ex)
 

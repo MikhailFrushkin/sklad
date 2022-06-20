@@ -2,6 +2,7 @@ import asyncio
 import csv
 import json
 import os
+import pandas as pd
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -34,6 +35,14 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
         data['group'] = call.data
         asyncio.create_task(delete_message(data['message_temp']))
         if call.data == 'exit':
+            await back(call.message, state)
+        elif call.data == 'files':
+            groups_list = save_exsel_pst(creat_pst())
+            try:
+                for i in groups_list:
+                    await call.message.answer_document(open('{}/files/pst_{}.xlsx'.format(path, i), 'rb'))
+            except Exception as ex:
+                logger.info(ex)
             await back(call.message, state)
         else:
             mes = await bot.send_message(call.from_user.id, 'Количество в зале:',
@@ -113,12 +122,6 @@ def _union_result_for_zero(row: dict, result_for_zero) -> dict:
     return result_for_zero
 
 
-# @dp.message_handler(content_types=['text'], state='Stock.order')
-# async def stocks_order(message: types.Message, state: FSMContext):
-#     async with state.proxy() as data:
-#         await bot.send_message(message.from_user.id, 'Введите количество:')
-
-
 @dp.callback_query_handler(state=Stock.show_stock)
 async def answer_call(call: types.CallbackQuery, state: FSMContext):
     """Кол беки с инлайн кнопок и показ  1 картинки в ячейках, проверки товара на представленность"""
@@ -133,8 +136,6 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
             try:
                 for i in data['products']:
                     await call.message.answer('{} {}'.format(i[0][0], i[0][1]))
-                    # await Stock.order.set()
-                    # await stocks_order(call.message, state)
             except Exception as ex:
                 logger.debug('нет товара{}'.format(ex))
         elif call.data == 'hide':
@@ -182,7 +183,7 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
             for key in dict_art_012.keys():
                 if key not in dict_art_v.keys():
                     data['products'].append((key, dict_art_012[key]))
-                    line.append('{} \nна складе: {}'.format(' '.join(key), dict_art_012[key]))
+                    line.append('{} \nНа складе: {}'.format(' '.join(key), dict_art_012[key]))
             if len(line) > 0:
                 await bot.send_message(call.from_user.id, '🆘Товары которые необходимо выставить:🆘', reply_markup=menu)
                 for item in line:
@@ -192,7 +193,6 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
                                                                     callback_data='{}'.format(
                                                                         item[:8]
                                                                     ))))
-                # await bot.send_message(call.from_user.id, 'Хотите добавить товары в заказ?', reply_markup=choise)
             else:
                 await bot.send_message(call.from_user.id, 'Все товары в наличии👌', reply_markup=menu)
         elif nums == 3:
@@ -229,3 +229,78 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
             line = ['нет товара для пополнения']
             await back(call, state)
         logger.info('Список товара товара: {}'.format(line))
+
+
+def creat_pst():
+    groups_list = ['11', '20', '21', '22', '23', '28', '35']
+    mini_group = ['Напольные', 'Костюмные', 'Кресла груши', 'Настенные']
+    result_for_zero = dict()
+    temp_list = []
+    art = []
+    groups_second_list = []
+    for item in groups_list:
+        dict_art_012 = union_art('012_825', item)[1]
+        dict_art_v = union_art('V_Sales', item)[1]
+        count = 0
+        for key in dict_art_012.keys():
+            if key not in dict_art_v.keys():
+                art.append(key[0])
+                count += 1
+        if count > 0:
+            groups_second_list.append(item)
+            with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    if row['ТГ'] == '35' == item\
+                            and row['Краткое наименование'] in mini_group \
+                            and row['Код \nноменклатуры'] in art \
+                            and row['Доступно'].replace('.0', '').isdigit() \
+                            and not row['Местоположение'].startswith('012_825-OX')\
+                            and not row['Местоположение'].startswith('012_825-Dost'):
+                        temp_list.append([row['Код \nноменклатуры'],
+                                          row['Описание товара'].replace(',', ' '),
+                                          row['Местоположение'],
+                                          row['Доступно'].replace('.0', '')])
+                    elif row['ТГ'] == item and row['Код \nноменклатуры'] in art \
+                            and row['Доступно'].replace('.0', '').isdigit() \
+                            and not row['Местоположение'].startswith('012_825-OX') \
+                            and not row['Местоположение'].startswith('012_825-Dost'):
+                        temp_list.append([row['Код \nноменклатуры'],
+                                          row['Описание товара'].replace(',', ' '),
+                                          row['Местоположение'],
+                                          row['Доступно'].replace('.0', '')])
+
+                result_for_zero[item] = sorted(temp_list)
+
+                temp_list = []
+    return result_for_zero, groups_second_list
+
+
+def align_left(x):
+    return ['text-align: left' for x in x]
+
+
+def save_exsel_pst(data):
+    groups_list = data[1]
+    for item in groups_list:
+        with open('{}/files/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
+            file.write("Код номенклатуры,"
+                       "Описание товара,"
+                       "Местоположение,"
+                       "Доступно\n")
+            for i in data[0][item]:
+                file.write('{}\n'.format(','.join(i)))
+        try:
+            df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
+            writer = pd.ExcelWriter('{}/files/pst_{}.xlsx'.format(path, item))
+            df.style.apply(align_left, axis=0).to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
+            writer.sheets['Sheet1'].set_column(0, 4, 20)
+            writer.sheets['Sheet1'].set_column(1, 1, 50)
+            writer.save()
+        except Exception as ex:
+            logger.debug(ex)
+    return groups_list
+
+
+if __name__ == '__main__':
+    save_exsel_pst(creat_pst())

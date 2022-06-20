@@ -272,7 +272,12 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
         if call.data == '012_825-OX':
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
-            await call.message.answer('\n'.join(place('012_825-OX', '012_825')))
+            mes = place('012_825-OX', '012_825')
+            if mes == 'Ячейка пуста':
+                await call.message.answer('{}'.format(mes))
+            else:
+                await call.message.answer('\n'.join(mes))
+            await back(call.message, state)
         elif call.data == 'dost':
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
@@ -292,6 +297,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
                     await call.message.answer('\n'.join(list_1))
                 else:
                     await bot.send_message(call.from_user.id, 'В ячейках нет отказаного товара.')
+            await back(call.message, state)
         elif call.data == 'rdiff':
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
@@ -306,6 +312,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
                     list_1 = []
                     count = 0
             await call.message.answer('\n'.join(list_1))
+            await back(call.message, state)
         else:
             await call.answer(cache_time=5)
             answer_p: str = call.data
@@ -457,7 +464,7 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
 @dp.message_handler(content_types=['text'], state=Search.search_name)
 async def bot_message(message: types.Message, state: FSMContext):
     name = message.text.lower()
-    logger.info('пользователь {} {} запистил поиск по имени: {}'.format(message.from_user.id,
+    logger.info('пользователь {} {} запустил поиск по имени: {}'.format(message.from_user.id,
                                                                         message.from_user.first_name,
                                                                         name))
     answer = search_name(name)
