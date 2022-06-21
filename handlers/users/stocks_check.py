@@ -9,6 +9,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
+from all_requests.parse_on_requests import parse
 from all_requests.requests_mediagroup import get_info_only_image
 from data.config import path
 from handlers.users.back import back
@@ -144,24 +145,12 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
                     asyncio.create_task(delete_message(data['{}'.format(key)]))
         else:
             logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
-            if os.path.exists(r"{}/base/json/{}_photo.json".format(path, call.data)):
-                logger.info('нашел json и вывел результат')
-                with open(r"{}/base/json/{}_photo.json".format(path, call.data), "r", encoding='utf-8') as read_file:
-                    data_url = json.load(read_file)
-                    photo = await call.message.answer_photo(data_url["url_imgs"][0],
-                                                            reply_markup=hide)
-            else:
-                with open('{}/stikers/seach.tgs'.format(path), 'rb') as sticker:
-                    sticker = await call.message.answer_sticker(sticker)
-                try:
-                    data_url = get_info_only_image(call.data)
-                    photo = await call.message.answer_photo(data_url['url_imgs'][0],
-                                                            reply_markup=hide)
-                except Exception as ex:
-                    logger.debug(ex)
-                finally:
-                    asyncio.create_task(delete_message(sticker))
-
+            data2 = parse(call.data)
+            try:
+                photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
+            except Exception as ex:
+                photo = await call.message.answer_photo(data2['pictures'][1], reply_markup=hide)
+                logger.debug(ex)
             try:
                 if 'photo{}'.format(call.data) in data:
                     for key in data:

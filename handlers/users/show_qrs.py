@@ -57,6 +57,7 @@ async def showqr(message: types.Message, state: FSMContext):
 
                     data = ('012_825-0{}-0{}-{}'.format(message.text[0], message.text[1], message.text[2]))
                     qr_code(message, data)
+                    logger.info('Пользователь {} запросил qr на ячейку: {}'.format(message.from_user.id, ans))
                     with open('{}/qcodes/{}.jpg'.format(path, message.text), 'rb') as qrcod:
                         await bot.send_photo(message.from_user.id, qrcod)
                 else:
@@ -72,6 +73,7 @@ async def showqr(message: types.Message, state: FSMContext):
                             .format(message.text[0], message.text[1], message.text[2], message.text[3]))
 
                     qr_code(message, data)
+                    logger.info('Пользователь {} запросил qr на ячейку: {}'.format(message.from_user.id, ans))
                     qrcod = open('{}/qcodes/{}.jpg'.format(path, message.text), 'rb')
                     await bot.send_photo(message.from_user.id, qrcod)
 
@@ -81,10 +83,12 @@ async def showqr(message: types.Message, state: FSMContext):
             else:
                 await bot.send_message(message.from_user.id,
                                        'Неверно указана ячейка!Введите ряд, секцию, ячейку без нулей и пробела')
-
-            logger.info('Пользователь {} запросил qr на ячейку: {}'.format(message.from_user.id, ans))
             time.sleep(1)
-            os.remove('{}/qcodes/{}.jpg'.format(path, ans))
+            try:
+                os.remove('{}/qcodes/{}.jpg'.format(path, ans))
+            except Exception:
+                logger.debug('Пользователь {} {} неверно указал ячейку склада для qr'.
+                             format(message.from_user.id, message.from_user.first_name))
         else:
             await bot.send_message(message.from_user.id, 'Введены буквы или символы')
 

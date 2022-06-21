@@ -15,6 +15,7 @@ from aiogram.utils.markdown import text, italic, code
 from loguru import logger
 
 import bot
+from all_requests.parse_on_requests import parse
 from all_requests.requests_mediagroup import get_info
 from data.config import ADMINS, PASSWORD, path
 from handlers.users.back import back
@@ -120,6 +121,7 @@ async def bot_message(message: types.Message, state: FSMContext):
         one_result = cursor.fetchall()
         for i in one_result:
             await bot.send_message(i[0], text_mes)
+        await back(message, state)
 
 
 @dp.message_handler(content_types=['text'], state=Search.art)
@@ -393,37 +395,23 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(state=[Place.mesto_4, Search.show_all])
 async def answer_call(call: types.CallbackQuery, state: FSMContext):
     """Кол беки с инлайн кнопок и показ  1 картинки в ячейках"""
-    if call.data == 'exit':
-        await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
-        await state.reset_state()
-        logger.info('Очистил state')
-    elif call.data == 'hide':
-        async with state.proxy() as data:
+    async with state.proxy() as data:
+        if call.data == 'exit':
+            await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
+            await state.reset_state()
+            logger.info('Очистил state')
+        elif call.data == 'hide':
             for key in data:
                 if str(key).startswith('photo'):
                     asyncio.create_task(delete_message(data['{}'.format(key)]))
-    else:
-        start_time = time.time()
-        logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
-        if os.path.exists(r"{}/base/json/{}.json".format(path, call.data)):
-            logger.info('нашел json и вывел результат')
-            with open(r"{}/base/json/{}.json".format(path, call.data), "r", encoding='utf-8') as read_file:
-                data_url = json.load(read_file)
-                photo = await call.message.answer_photo(data_url["url_imgs"][0],
-                                                        reply_markup=hide)
         else:
-            with open('{}/stikers/seach.tgs'.format(path), 'rb') as sticker:
-                sticker = await call.message.answer_sticker(sticker)
+            logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
+            data2 = parse(call.data)
             try:
-                data_url = get_info(call.data)
-                photo = await call.message.answer_photo(data_url['url_imgs'][0],
-                                                        reply_markup=hide)
+                photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
             except Exception as ex:
+                photo = await call.message.answer_photo(data2['pictures'][1], reply_markup=hide)
                 logger.debug(ex)
-            finally:
-                asyncio.create_task(delete_message(sticker))
-
-        async with state.proxy() as data:
             try:
                 if 'photo{}'.format(call.data) in data:
                     for key in data:
@@ -433,7 +421,6 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
                 data['photo{}'.format(call.data)] = photo
             except Exception as ex:
                 logger.debug(ex)
-        logger.info('Вывод результата через:{} сек.'.format(time.time() - start_time))
 
 
 @dp.callback_query_handler(state=[Search.sklad, Search.art])
