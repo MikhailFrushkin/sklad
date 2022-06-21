@@ -63,12 +63,18 @@ def parse(art):
 
         name = response.get('data').get('name')
         pictures = response.get('data').get('slider').get('pictures')
+        characteristic = response.get('data').get('characteristic_tab').get('items')
+        print(characteristic)
+        characteristic_list = []
         pictures_list = []
+        for item in characteristic:
+            characteristic_list.append(item)
         for i in pictures:
             pictures_list.append(i['src'])
         data = {
             'id_product': id_product,
             'articul': articul,
+            'characteristic': characteristic_list,
             'url': url,
             'name': name,
             'pictures': pictures_list,
@@ -80,6 +86,7 @@ def parse(art):
             'id_product': None,
             'articul': None,
             'url': None,
+            'characteristic': {'name': '', 'value': ''},
             'name': 'Нет товара на сайте',
             'pictures': ['https://jackwharperconstruction.com/wp-content/uploads/9/c/9/9c980deb1f9f42ef2244b13de3aa118d.jpg'],
             'price': 0
@@ -88,7 +95,7 @@ def parse(art):
 
 
 def main():
-    parse('80336996')
+    parse('80430058')
 
 
 if __name__ == '__main__':

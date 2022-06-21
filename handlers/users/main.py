@@ -49,7 +49,7 @@ async def bot_start(message: types.Message):
         message.text
     ))
     if check(message.from_user.id):
-        sticker = open('{}/stikers/Dicaprio.tgs'.format(path), 'rb')
+        sticker = open('{}/stikers/limur.tgs'.format(path), 'rb')
         await bot.send_sticker(message.chat.id, sticker)
         if str(message.from_user.id) in ADMINS:
             await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
@@ -412,15 +412,7 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
             except Exception as ex:
                 photo = await call.message.answer_photo(data2['pictures'][1], reply_markup=hide)
                 logger.debug(ex)
-            try:
-                if 'photo{}'.format(call.data) in data:
-                    for key in data:
-                        if str(key).startswith('photo'):
-                            asyncio.create_task(delete_message(data['{}'.format(key)]))
-
-                data['photo{}'.format(call.data)] = photo
-            except Exception as ex:
-                logger.debug(ex)
+            data['photo{}'.format(call.data)] = photo
 
 
 @dp.callback_query_handler(state=[Search.sklad, Search.art])

@@ -10,9 +10,11 @@ async def show_media(message: types.Message):
     try:
         data = parse(articul)
         logger.info(data)
-        await bot.send_message(message.from_user.id, data['name'])
-        await bot.send_message(message.from_user.id,
-                               'Цена с сайта: {}(Уточняйте в Вашем магазине).'.format(data['price']))
+        line = data['name']
+        for item in data['characteristic']:
+            line += '\n{} {}'.format(item['name'], item['value'])
+        line += '\nЦена с сайта: {} руб.'.format(data['price'])
+        await bot.send_message(message.from_user.id, line)
         # if len(data['pictures']) >= 2:
         #     media = types.MediaGroup()
         #     for item in data['pictures']:

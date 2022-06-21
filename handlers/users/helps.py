@@ -22,5 +22,4 @@ async def bot_help(message: types.Message):
                          '\nВыбираете отдел ТДД и количество в зале.' 
                          '\nПо всем вопросам обращаться к Михаилу, БЮ 825(склад), \nпочта - muxazila@mail.ru')
 
-    doc = open('{}/doc.txt'.format(path), 'rb')
-    await message.reply_document(doc)
+    await message.answer_document(open('{}/doc.txt'.format(path), 'rb'))

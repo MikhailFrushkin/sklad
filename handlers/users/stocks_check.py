@@ -152,11 +152,6 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
                 photo = await call.message.answer_photo(data2['pictures'][1], reply_markup=hide)
                 logger.debug(ex)
             try:
-                if 'photo{}'.format(call.data) in data:
-                    for key in data:
-                        if str(key).startswith('photo'):
-                            asyncio.create_task(delete_message(data['{}'.format(key)]))
-
                 data['photo{}'.format(call.data)] = photo
             except Exception as ex:
                 logger.debug(ex)
