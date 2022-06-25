@@ -1,0 +1,316 @@
+{
+    "data": {
+        "content_type": "json",
+        "content": [
+            {
+                "custom:include.banners": {
+                    "banners": [
+                        {
+                            "image": {
+                                "mode": "url",
+                                "url": "/upload/medialibrary/376/376ef836a6ffa333321aa4a1570555a7.png"
+                            },
+                            "image_mobile": {
+                                "mode": "url",
+                                "url": "/upload/medialibrary/46a/46aa83ef3e10e6103e9eed60394c77bc.png"
+                            },
+                            "button": [
+                                {
+                                    "disabled": false,
+                                    "text": "Узнать больше",
+                                    "link": "/promo/hoffwithyou/"
+                                }
+                            ],
+                            "active_to": {
+                                "date": "2022-04-03",
+                                "time": "23:59",
+                                "iso": "2022-04-02T23:59:00.000Z"
+                            },
+                            "active_from": {
+                                "date": "2022-03-01",
+                                "time": "00:00",
+                                "iso": "2022-03-01T00:00:00.000Z"
+                            },
+                            "image_no_timer": {
+                                "mode": "url",
+                                "url": "/upload/medialibrary/8b8/8b8a3e464ab1e28222b401f1bbe2517c.jpg"
+                            }
+                        }
+                    ],
+                    "code": "discount",
+                    "description": "",
+                    "title": "",
+                    "cache_type": "A"
+                }
+            },
+            {
+                "custom:discount.sections": {
+                    "actions": [
+                        {
+                            "id": "1181",
+                            "tags": [
+                                1651,
+                                1675
+                            ],
+                            "name": "Декор",
+                            "section_page_url": "/catalog/tovary_dlya_doma/dekor/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/29b/29b9ef9fa3452eaacab82ff223e59d42.jpg",
+                            "discount": 80
+                        },
+                        {
+                            "id": "840",
+                            "tags": [
+                                1651,
+                                1671
+                            ],
+                            "name": "Детские кровати",
+                            "section_page_url": "/catalog/detskaya/detskie_krovati/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/c0a/c0a1ace0a5129c4093460c776843f7b2.jpg",
+                            "discount": 35
+                        },
+                        {
+                            "id": "633",
+                            "tags": [
+                                1651,
+                                1663
+                            ],
+                            "name": "Диваны",
+                            "section_page_url": "/catalog/gostinaya/divany/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/57d/57d3332e44cfd52d020e82fe2aa5cebc.jpg",
+                            "discount": 50
+                        },
+                        {
+                            "id": "5359",
+                            "tags": [
+                                1651,
+                                1675
+                            ],
+                            "name": "Зеркала",
+                            "section_page_url": "/catalog/zerkala/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/a55/a551fa7a443a8f50607678f739da08e0.jpg",
+                            "discount": 41
+                        },
+                        {
+                            "id": "1184",
+                            "tags": [
+                                1651,
+                                1675
+                            ],
+                            "name": "Ковры",
+                            "section_page_url": "/catalog/tovary_dlya_doma/kovry/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/774/774a2d8f6550993a7d4a9f1e1c48e75c.jpg",
+                            "discount": 66
+                        },
+                        {
+                            "id": "2538",
+                            "tags": [
+                                1651,
+                                1667
+                            ],
+                            "name": "Комплекты",
+                            "section_page_url": "/catalog/kuhnya/kuhonnye_garnitury/gotovie_reshenia/komplekti/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/610/61036ccbaf4f062a6f759fd03d63f26f.jpg",
+                            "discount": 50
+                        },
+                        {
+                            "id": "3429",
+                            "tags": [
+                                1651,
+                                1663
+                            ],
+                            "name": "Кресла",
+                            "section_page_url": "/catalog/kresla/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/722/7225b135d0bf03c94d0b5903865fc566.jpg",
+                            "discount": 56
+                        },
+                        {
+                            "id": "687",
+                            "tags": [
+                                1651,
+                                1665
+                            ],
+                            "name": "Кровати",
+                            "section_page_url": "/catalog/spalnya/krovati/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/5b7/5b7d8dff504afc19003739d30bb8b4fc.jpg",
+                            "discount": 50
+                        },
+                        {
+                            "id": "3443",
+                            "tags": [
+                                1651,
+                                1665
+                            ],
+                            "name": "Матрасы",
+                            "section_page_url": "/catalog/matrasy/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/4e9/4e967a2a3cc4dc24fb4fcd98b8a1d79d.jpg",
+                            "discount": 85
+                        },
+                        {
+                            "id": "1182",
+                            "tags": [
+                                1651,
+                                1677
+                            ],
+                            "name": "Освещение",
+                            "section_page_url": "/catalog/tovary_dlya_doma/osveschenie/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/7fc/7fc2dcf4eda6ed0797fd94325051c78d.jpg",
+                            "discount": 77
+                        },
+                        {
+                            "id": "1020",
+                            "tags": [
+                                1651,
+                                1679
+                            ],
+                            "name": "Посуда",
+                            "section_page_url": "/catalog/tovary_dlya_doma/posuda/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/14d/14d124060342c275eaab602685c6d770.jpg",
+                            "discount": 84
+                        },
+                        {
+                            "id": "3408",
+                            "tags": [
+                                1651,
+                                1667
+                            ],
+                            "name": "Столы",
+                            "section_page_url": "/catalog/stoly/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/b5a/b5a1b837778c665b407b44ed9827c0c5.jpg",
+                            "discount": 63
+                        },
+                        {
+                            "id": "3424",
+                            "tags": [
+                                1651,
+                                1667
+                            ],
+                            "name": "Стулья",
+                            "section_page_url": "/catalog/stulya/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/34b/34b8301f5c532783f92c6603dd5c3b11.jpg",
+                            "discount": 57
+                        },
+                        {
+                            "id": "1140",
+                            "tags": [
+                                1651,
+                                1681
+                            ],
+                            "name": "Текстиль",
+                            "section_page_url": "/catalog/tovary_dlya_doma/tekstil/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/954/95474941f43135ffddeec6db3730d54e.jpg",
+                            "discount": 85
+                        },
+                        {
+                            "id": "2269",
+                            "tags": [
+                                1651,
+                                1675
+                            ],
+                            "name": "Товары для ванной",
+                            "section_page_url": "/catalog/tovary_dlya_doma/aksessuary_dlya_vannoy/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/967/967758a85d4916f73f0c1d3a4d30ca0d.jpg",
+                            "discount": 80
+                        },
+                        {
+                            "id": "1183",
+                            "tags": [
+                                1651,
+                                1675
+                            ],
+                            "name": "Хозтовары",
+                            "section_page_url": "/catalog/tovary_dlya_doma/hoztovary/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/216/2163ab85b18bcb89aa2c009a931d94e0.jpg",
+                            "discount": 89
+                        },
+                        {
+                            "id": "3575",
+                            "tags": [
+                                1651,
+                                1663,
+                                1665,
+                                1671
+                            ],
+                            "name": "Шкафы",
+                            "section_page_url": "/catalog/shkafy/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/f07/f071c5f9d3d11d3235d4bade1b4e169f.jpg",
+                            "discount": 50
+                        },
+                        {
+                            "id": "1185",
+                            "tags": [
+                                1651,
+                                1675
+                            ],
+                            "name": "Шторы и карнизы",
+                            "section_page_url": "/catalog/tovary_dlya_doma/shtory/?tovary_so_skidkoi=1",
+                            "picture": "/upload/iblock/c98/c98b881ce60d57a7549392fd5e0250bc.jpg",
+                            "discount": 75
+                        }
+                    ],
+                    "tags": {
+                        "Все": [
+                            1181,
+                            840,
+                            633,
+                            5359,
+                            1184,
+                            2538,
+                            3429,
+                            687,
+                            3443,
+                            1182,
+                            1020,
+                            3408,
+                            3424,
+                            1140,
+                            2269,
+                            1183,
+                            3575,
+                            1185
+                        ],
+                        "Детская мебель": [
+                            840,
+                            3575
+                        ],
+                        "Кухонная мебель": [
+                            2538,
+                            3408,
+                            3424
+                        ],
+                        "Мебель для гостиной": [
+                            633,
+                            3429,
+                            3575
+                        ],
+                        "Мебель для спальни": [
+                            687,
+                            3443,
+                            3575
+                        ],
+                        "Освещение": [
+                            1182
+                        ],
+                        "Посуда": [
+                            1020
+                        ],
+                        "Текстиль": [
+                            1140
+                        ],
+                        "Товары для дома": [
+                            1181,
+                            5359,
+                            1184,
+                            2269,
+                            1183,
+                            1185
+                        ]
+                    }
+                }
+            }
+        ],
+        "seo": {
+            "title": "",
+            "description": ""
+        }
+    }
+}

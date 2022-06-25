@@ -9,7 +9,8 @@ menu = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('📝Проверка товара'),
      KeyboardButton('📟 Мой заказ')],
-    [KeyboardButton('ℹ Информация')],
+    [KeyboardButton('💳 Акции'),
+    KeyboardButton('ℹ Информация')],
 ], resize_keyboard=True)
 
 second_menu = ReplyKeyboardMarkup(keyboard=[
@@ -25,9 +26,11 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('📝Проверка товара'),
      KeyboardButton('📟 Мой заказ')],
-    [KeyboardButton('ℹ Информация')],
+    [KeyboardButton('💳 Акции'),
+     KeyboardButton('ℹ Информация')],
     [KeyboardButton('Загрузка базы'),
-     KeyboardButton('Отправить')]
+     KeyboardButton('Отправить'),
+     KeyboardButton('Обновить Акции')]
 ], resize_keyboard=True)
 
 dowload_menu = ReplyKeyboardMarkup(keyboard=[

@@ -12,10 +12,13 @@ from data.config import path_chrom_driver, path
 def timer(func):
     def wrapper(*args, **kwargs):
         start = datetime.datetime.now()
-        result = func(*args, **kwargs)
+        try:
+            result = func(*args, **kwargs)
+            return result
+        except Exception as ex:
+            logger.debug(ex)
         end = datetime.datetime.now()
         logger.info('Время выполнения функции {} - {}'.format(func.__name__, end - start))
-        return result
     return wrapper
 
 
@@ -73,18 +76,18 @@ def get_info(art: str):
     driver.implicitly_wait(10)
     try:
         name = _get_name(driver)
-        # params = _get_param(driver)
+        params = _get_params(driver)
         urls = _get_image(driver)
         price = _get_price(driver)
         data = {
+            'articul': art,
+            'characteristic': params,
+            'url': url2,
             'name': name,
-            # 'params': params,
-            'price': price,
-            'url_imgs': urls
+            'pictures': urls,
+            'slider_picture': urls,
+            'price': price
         }
-        with open("{}/base/json/{}.json".format(path, art), "w", encoding='utf-8') as write_file:
-            json.dump(data, write_file, indent=4, ensure_ascii=False)
-        driver.quit()
         return data
 
     except Exception as ex:

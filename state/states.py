@@ -43,3 +43,8 @@ class Stock(StatesGroup):
     nums = State()
     show_stock = State()
     order = State()
+
+
+class Action(StatesGroup):
+    set_group = State()
+    show_product = State()

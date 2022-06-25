@@ -16,7 +16,7 @@ from loguru import logger
 
 import bot
 from all_requests.parse_on_requests import parse
-from all_requests.requests_mediagroup import get_info
+from all_requests.new_parser import get_info
 from data.config import ADMINS, PASSWORD, path
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
@@ -31,10 +31,11 @@ from keyboards.default.menu import second_menu, menu_admin, dowload_menu, orders
 from keyboards.inline.mesto import mesto2, mesto3, hide, mesto1
 from keyboards.inline.quit import exitqr
 from loader import dp, bot
-from state.states import Place, Search, Logging, Messages, QR, Orders
+from state.states import Place, Search, Logging, Messages, QR, Orders, Action
 from utils.check_bd import check
 from utils.open_exsel import place, search_articul, dowload, search_all_sklad, search_art_name, place_dost, search_name
 from utils.read_bd import set_order, del_orders, mail
+from all_requests.parse_action import parse_actions, view_actions
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -150,9 +151,6 @@ async def search_sklad(message: types.Message, state: FSMContext):
                             else:
                                 await bot.send_message(message.from_user.id, item)
 
-                    else:
-                        await bot.send_message(message.from_user.id, '❌Отсутствует на складе {}'.
-                                               format(i))
                 await bot.send_message(message.from_user.id, '⚠Введите артикул для поиска на всех складах⚠',
                                        reply_markup=exitqr)
                 await Search.art.set()
@@ -174,9 +172,6 @@ async def search_sklad(message: types.Message, state: FSMContext):
                             else:
                                 await bot.send_message(message.from_user.id, item)
 
-                else:
-                    await bot.send_message(message.from_user.id, '❌Отсутствует на складе {}'.
-                                           format(data['sklad']), reply_markup=second_menu)
                 await bot.send_message(message.from_user.id,
                                        '⚠Введите артикул для поиска на {} складе⚠'.format(data['sklad']),
                                        reply_markup=exitqr)
@@ -410,7 +405,13 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
             try:
                 photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
             except Exception as ex:
-                photo = await call.message.answer_photo(data2['pictures'][1], reply_markup=hide)
+                if os.path.exists(r"{}\base\json\{}.json".format(path, call.data)):
+                    logger.info('нашел json ')
+                    with open(r"{}\base\json\{}.json".format(path, call.data), 'r', encoding='utf-8') as file:
+                        data2 = json.load(file)
+                else:
+                    data2 = get_info(call.data)
+                photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
                 logger.debug(ex)
             data['photo{}'.format(call.data)] = photo
 
@@ -517,6 +518,13 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == '📖 Любой текст в Qr':
             await bot.send_message(message.from_user.id, 'Введите текст.', reply_markup=second_menu)
             await QR.qr.set()
+
+        elif message.text == '💳 Акции':
+            await Action.set_group.set()
+            await view_actions(message, state)
+        elif message.text == 'Обновить Акции':
+            parse_actions()
+            await bot.send_message(message.from_user.id, 'Сканирование завершено')
 
         elif message.text == 'Отправить':
             await bot.send_message(message.from_user.id, 'Введите сообщения для общей рассылки:',

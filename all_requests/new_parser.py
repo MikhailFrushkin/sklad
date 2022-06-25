@@ -44,10 +44,13 @@ def get_info(art: str):
         urls = _get_image(driver)
         price = _get_price(driver)
         data = {
+            'articul': art,
+            'characteristic': params,
+            'url': url2,
             'name': name,
-            'params': params,
-            'price': price,
-            'url_imgs': urls
+            'pictures': urls,
+            'slider_picture': urls,
+            'price': price
         }
         with open("{}/base/json/{}.json".format(path, art), "w", encoding='utf-8') as write_file:
             json.dump(data, write_file, indent=4, ensure_ascii=False)

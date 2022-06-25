@@ -10,7 +10,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
 from all_requests.parse_on_requests import parse
-from all_requests.requests_mediagroup import get_info_only_image
+from all_requests.requests_mediagroup import get_info_only_image, get_info
 from data.config import path
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
@@ -38,10 +38,14 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
         if call.data == 'exit':
             await back(call.message, state)
         elif call.data == 'files':
-            groups_list = save_exsel_pst(creat_pst())
+            logger.info('{} {} выгрузил файлы с 0 остатками'.format(call.from_user.id, call.from_user.first_name))
             try:
+                groups_list = save_exsel_pst(creat_pst())
                 for i in groups_list:
-                    await call.message.answer_document(open('{}/files/pst_{}.xlsx'.format(path, i), 'rb'))
+                    try:
+                        await call.message.answer_document(open('{}/files/pst_{}.xlsx'.format(path, i), 'rb'))
+                    except Exception as ex:
+                        logger.debug('Не удалось выгрузить файл {}'.format(ex))
             except Exception as ex:
                 logger.info(ex)
             await back(call.message, state)
@@ -146,6 +150,8 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
         else:
             logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
             data2 = parse(call.data)
+            if not data2:
+                data2 = get_info(call.data)
             try:
                 photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
             except Exception as ex:
