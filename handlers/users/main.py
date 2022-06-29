@@ -523,8 +523,11 @@ async def bot_message(message: types.Message, state: FSMContext):
             await Action.set_group.set()
             await view_actions(message, state)
         elif message.text == 'Обновить Акции':
-            parse_actions()
-            await bot.send_message(message.from_user.id, 'Сканирование завершено')
+            try:
+                parse_actions()
+                await bot.send_message(message.from_user.id, 'Сканирование завершено')
+            except Exception as ex:
+                await bot.send_message(message.from_user.id, 'Парсер отвалился {}'.format(ex))
 
         elif message.text == 'Отправить':
             await bot.send_message(message.from_user.id, 'Введите сообщения для общей рассылки:',

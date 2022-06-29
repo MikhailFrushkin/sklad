@@ -43,6 +43,7 @@ class Stock(StatesGroup):
     nums = State()
     show_stock = State()
     order = State()
+    min_vitrina = State()
 
 
 class Action(StatesGroup):

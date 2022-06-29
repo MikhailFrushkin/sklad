@@ -16,9 +16,10 @@ from handlers.users.back import back
 from handlers.users.delete_message import delete_message
 from keyboards.default import menu
 from keyboards.inline.mesto import hide
-from keyboards.inline.stock import choise_num, stocks
+from keyboards.inline.stock import choise_num, stocks, choise_group
 from loader import dp, bot
 from state.states import Stock
+from utils.min_stocks import finish, save_exsel_min
 
 
 async def start_check_stocks(message, state):
@@ -49,6 +50,10 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
             except Exception as ex:
                 logger.info(ex)
             await back(call.message, state)
+        elif call.data == 'min':
+            await Stock.min_vitrina.set()
+            await bot.send_message(call.from_user.id, 'Выберите группу:',
+                                   reply_markup=choise_group)
         else:
             mes = await bot.send_message(call.from_user.id, 'Количество в зале:',
                                          reply_markup=choise_num)
@@ -76,60 +81,8 @@ async def choise_nums(call: types.CallbackQuery, state: FSMContext):
         await Stock.show_stock.set()
 
 
-def union_art(sklad: str, group: str):
-    with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        result_for_zero = dict()
-        result = dict()
-        mini_group = ['Напольные', 'Костюмные', 'Кресла груши', 'Настенные']
-        for row in reader:
-            if group == '35':
-                if row['ТГ'] == '35' and row['Краткое наименование'] in mini_group:
-                    if row['Доступно'].replace('.0', '').isdigit() and not row['Местоположение'].startswith(
-                            '012_825-OX') \
-                            and not row['Местоположение'].startswith('012_825-Dost'):
-                        result = _union_result(row, result)
-                        result_for_zero = _union_result_for_zero(row, result_for_zero)
-            elif group == '23':
-                if row['ТГ'] in ['23', '27']:
-                    if row['Доступно'].replace('.0', '').isdigit() and not row['Местоположение'].startswith(
-                            '012_825-OX') \
-                            and not row['Местоположение'].startswith('012_825-Dost'):
-                        result = _union_result(row, result)
-                        result_for_zero = _union_result_for_zero(row, result_for_zero)
-            else:
-                if row['ТГ'] == group:
-                    if row['Доступно'].replace('.0', '').isdigit() and not row['Местоположение'].startswith(
-                            '012_825-OX') \
-                            and not row['Местоположение'].startswith('012_825-Dost'):
-                        result = _union_result(row, result)
-                        result_for_zero = _union_result_for_zero(row, result_for_zero)
-    return result, result_for_zero
-
-
-def _union_result(row: dict, result: dict) -> dict:
-    try:
-        result[row['Код \nноменклатуры']] += int(row['Доступно'].
-                                                 replace('.0', ''))
-    except KeyError:
-        result[row['Код \nноменклатуры']] = int(row['Доступно'].
-                                                replace('.0', ''))
-    return result
-
-
-def _union_result_for_zero(row: dict, result_for_zero) -> dict:
-    try:
-        result_for_zero[(row['Код \nноменклатуры'], row['Описание товара'])] += int(row['Доступно'].
-                                                                                    replace('.0', ''))
-    except KeyError:
-        result_for_zero[(row['Код \nноменклатуры'], row['Описание товара'])] = int(row['Доступно'].
-                                                                                   replace('.0', ''))
-    return result_for_zero
-
-
 @dp.callback_query_handler(state=Stock.show_stock)
 async def answer_call(call: types.CallbackQuery, state: FSMContext):
-    """Кол беки с инлайн кнопок и показ  1 картинки в ячейках, проверки товара на представленность"""
     async with state.proxy() as data:
         if call.data == 'exit':
             await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
@@ -241,11 +194,11 @@ def creat_pst():
             with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
-                    if row['ТГ'] == '35' == item\
+                    if row['ТГ'] == '35' == item \
                             and row['Краткое наименование'] in mini_group \
                             and row['Код \nноменклатуры'] in art \
                             and row['Доступно'].replace('.0', '').isdigit() \
-                            and not row['Местоположение'].startswith('012_825-OX')\
+                            and not row['Местоположение'].startswith('012_825-OX') \
                             and not row['Местоположение'].startswith('012_825-Dost'):
                         temp_list.append([row['Код \nноменклатуры'],
                                           row['Описание товара'].replace(',', ' '),
@@ -264,10 +217,6 @@ def creat_pst():
 
                 temp_list = []
     return result_for_zero, groups_second_list
-
-
-def align_left(x):
-    return ['text-align: left' for x in x]
 
 
 def save_exsel_pst(data):
@@ -290,6 +239,89 @@ def save_exsel_pst(data):
         except Exception as ex:
             logger.debug(ex)
     return groups_list
+
+
+def union_art(sklad: str, group: str):
+    with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        result_for_zero = dict()
+        result = dict()
+        mini_group = ['Напольные', 'Костюмные', 'Кресла груши', 'Настенные']
+        for row in reader:
+            if group == '35':
+                if row['ТГ'] == '35' and row['Краткое наименование'] in mini_group:
+                    if row['Доступно'].replace('.0', '').isdigit() and not row['Местоположение'].startswith(
+                            '012_825-OX') \
+                            and not row['Местоположение'].startswith('012_825-Dost'):
+                        result = _union_result(row, result)
+                        result_for_zero = _union_result_for_zero(row, result_for_zero)
+            elif group == '23':
+                if row['ТГ'] in ['23', '27']:
+                    if row['Доступно'].replace('.0', '').isdigit() and not row['Местоположение'].startswith(
+                            '012_825-OX') \
+                            and not row['Местоположение'].startswith('012_825-Dost'):
+                        result = _union_result(row, result)
+                        result_for_zero = _union_result_for_zero(row, result_for_zero)
+            elif group == '28':
+                if row['ТГ'] in ['24', '28']:
+                    if row['Доступно'].replace('.0', '').isdigit() and not row['Местоположение'].startswith(
+                            '012_825-OX') \
+                            and not row['Местоположение'].startswith('012_825-Dost'):
+                        result = _union_result(row, result)
+                        result_for_zero = _union_result_for_zero(row, result_for_zero)
+            else:
+                if row['ТГ'] == group:
+                    if row['Доступно'].replace('.0', '').isdigit() and not row['Местоположение'].startswith(
+                            '012_825-OX') \
+                            and not row['Местоположение'].startswith('012_825-Dost'):
+                        result = _union_result(row, result)
+                        result_for_zero = _union_result_for_zero(row, result_for_zero)
+    return result, result_for_zero
+
+
+def _union_result(row: dict, result: dict) -> dict:
+    try:
+        result[row['Код \nноменклатуры']] += int(row['Доступно'].
+                                                 replace('.0', ''))
+    except KeyError:
+        result[row['Код \nноменклатуры']] = int(row['Доступно'].
+                                                replace('.0', ''))
+    return result
+
+
+def _union_result_for_zero(row: dict, result_for_zero) -> dict:
+    try:
+        result_for_zero[(row['Код \nноменклатуры'], row['Описание товара'])] += int(row['Доступно'].
+                                                                                    replace('.0', ''))
+    except KeyError:
+        result_for_zero[(row['Код \nноменклатуры'], row['Описание товара'])] = int(row['Доступно'].
+                                                                                   replace('.0', ''))
+    return result_for_zero
+
+
+def align_left(x):
+    return ['text-align: left' for x in x]
+
+
+@dp.callback_query_handler(state=Stock.min_vitrina)
+async def min_vitrina(call: types.CallbackQuery, state: FSMContext):
+    result = finish(call.data)[0]
+    count = 0
+    line = []
+    for i in result:
+        count += 1
+        line.append(i)
+        if count == 20:
+            await bot.send_message(call.from_user.id, '\n'.join(line))
+            count = 0
+            line = []
+    await bot.send_message(call.from_user.id, '\n'.join(line))
+    save_exsel_min(call.data)
+    try:
+        await call.message.answer_document(open('{}/files/min_vitrina_{}.xlsx'.format(path, call.data), 'rb'))
+    except Exception as ex:
+        logger.debug('Не удалось выгрузить файл {}'.format(ex))
+    await back(call.message, state)
 
 
 if __name__ == '__main__':
