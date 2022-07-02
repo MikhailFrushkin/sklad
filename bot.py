@@ -8,7 +8,7 @@ import handlers
 
 async def on_startup(dp):
     """Установка стандартных команд, отправка сообщению админу и запуск бота"""
-    logger.add('logs/info.log', format='{time} {level} {message}', level='INFO')
+    logger.add('logs/info2.log', format='{time} {level} {message}', level='INFO')
     logger.info('Бот запускается')
     await set_default_commands(dp)
     await on_startup_notify(dp)

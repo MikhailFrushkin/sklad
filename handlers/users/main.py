@@ -5,6 +5,7 @@ import os
 import os.path
 import sqlite3
 import time
+import random
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -49,22 +50,18 @@ async def bot_start(message: types.Message):
         message.from_user.username,
         message.text
     ))
-    if check(message.from_user.id):
-        sticker = open('{}/stikers/limur.tgs'.format(path), 'rb')
+    if check(message):
+        hello = ['limur.tgs', 'Dicaprio.tgs', 'hello.tgs', 'hello2.tgs', 'hello3.tgs']
+        sticker = open('{}/stikers/{}'.format(path, random.choice(hello)), 'rb')
         await bot.send_sticker(message.chat.id, sticker)
         if str(message.from_user.id) in ADMINS:
-            await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре',
+            await message.answer('Добро пожаловать, {}!'
+                                 '\nДля помощи нажми на кнопку Информация'
+                                 .format(message.from_user.first_name),
                                  reply_markup=menu_admin)
         else:
             await message.answer('Добро пожаловать, {}!'
-                                 '\nДля показа фотографий товара, описания и цены с сайта'
-                                 '\nВведите артикул. Пример: 80264335.'
-                                 '\n"🤖 Показать Qrcode ячейки" - '
-                                 '\nДля показа Qrcode ячейки на складе. '
-                                 '\n"📦 Содержимое ячейки" - '
-                                 '\nДля показа товара на ячейке.'
-                                 '\n"🔍 Поиск на складах" - '
-                                 '\nДля поиска ячеек, румов и тд. с определенным артикулом.'
+                                 '\nДля помощи нажми на кнопку Информация'
                                  .format(message.from_user.first_name), reply_markup=menu)
     else:
         await helps(message)
@@ -88,7 +85,14 @@ async def bot_message(message: types.Message, state: FSMContext):
         connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
         cursor = connect.cursor()
 
-        cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(id INTEGER, name TEXT, date REAL, БЮ INTEGER)""")
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS login_id(
+        id INTEGER, 
+        name TEXT, 
+        date REAL, 
+        БЮ INTEGER, 
+        Black_status INTEGER)
+        """)
         connect.commit()
 
         cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(message.from_user.id))
@@ -96,8 +100,9 @@ async def bot_message(message: types.Message, state: FSMContext):
         if data is None:
             date = datetime.datetime.now()
             shop = 0
-            user_id = [message.from_user.id, message.from_user.first_name, date, shop]
-            cursor.execute('INSERT INTO login_id VALUES(?,?,?,?);', user_id)
+            black = 0
+            user_id = [message.from_user.id, message.from_user.first_name, date, shop, black]
+            cursor.execute('INSERT INTO login_id VALUES(?,?,?,?,?);', user_id)
             connect.commit()
         await state.reset_state()
         logger.info('Очистил state')
@@ -121,8 +126,62 @@ async def bot_message(message: types.Message, state: FSMContext):
         cursor.execute("SELECT * FROM login_id;")
         one_result = cursor.fetchall()
         for i in one_result:
-            await bot.send_message(i[0], text_mes)
+            try:
+                await bot.send_message(i[0], text_mes)
+            except Exception as ex:
+                logger.debug('Не удалось отправить сообщение {} {}'.format(i, ex))
         await back(message, state)
+
+
+@dp.message_handler(content_types=['text'], state=Place.dowload)
+async def search_sklad(message: types.Message, state: FSMContext):
+    """Загрузка базы с админки"""
+    async with state.proxy() as data:
+        sklad_list = ['011_825', '012_825', 'A11_825', 'RDiff', 'V_Sales', 'Мин.витрина']
+        if message.text in sklad_list:
+            data['sklad'] = message.text
+            await bot.send_message(message.from_user.id, 'Загрузите файл.')
+        elif message.text == 'В главное меню':
+            await back(message, state)
+        else:
+            await bot.send_message(message.from_user.id, 'Неверно выбран склад.')
+            await back(message, state)
+
+
+@dp.message_handler(content_types=ContentTypes.DOCUMENT,
+                    state=[Place.dowload])
+async def doc_handler(message: types.Message, state: FSMContext):
+    """Ловит документ(EXSEL) и загружает"""
+    try:
+        async with state.proxy() as data:
+            if document := message.document:
+                await document.download(
+                    destination_file="{}/utils/file_{}.xls".format(path, data['sklad']),
+                )
+                logger.info('{} - Загружен документ'.format(message.from_user.id))
+                await bot.send_message(message.from_user.id, 'Загружен документ на {} склад.'.format(data['sklad']),
+                                       reply_markup=InlineKeyboardMarkup().add(
+                                           InlineKeyboardButton(text='Загрузить в базу',
+                                                                callback_data='{}'.format(data['sklad'])
+                                                                )))
+
+    except Exception as ex:
+        await bot.send_message(message.from_user.id, 'Ошибка при загрузке эксель')
+        logger.debug(ex)
+
+
+@dp.callback_query_handler(state=Place.dowload)
+async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
+    """Функция загрузки базы"""
+    try:
+        if dowload(call.data):
+            await bot.send_message(call.from_user.id, 'База обновлена', reply_markup=menu_admin)
+        else:
+            await bot.send_message(call.from_user.id, 'Ошибка при записи в csv')
+    except Exception as ex:
+        logger.debug(ex)
+    finally:
+        await back(call.message, state)
 
 
 @dp.message_handler(content_types=['text'], state=Search.art)
@@ -224,42 +283,6 @@ async def order_num(message: types.Message, state: FSMContext):
         await bot.send_message(message.from_user.id, 'Заказ очищен!')
     else:
         await bot.send_message(message.from_user.id, 'Неверная команда!')
-
-
-@dp.message_handler(content_types=['text'], state=Place.dowload)
-async def search_sklad(message: types.Message, state: FSMContext):
-    """Загрузка базы с админки"""
-    async with state.proxy() as data:
-        sklad_list = ['011_825', '012_825', 'A11_825', 'RDiff', 'V_Sales']
-        if message.text in sklad_list:
-            data['sklad'] = message.text
-            await bot.send_message(message.from_user.id, 'Загрузите файл.')
-        elif message.text == 'В главное меню':
-            await back(message, state)
-        else:
-            await bot.send_message(message.from_user.id, 'Неверно выбран склад.')
-            await back(message, state)
-
-
-@dp.message_handler(content_types=ContentTypes.DOCUMENT,
-                    state=[Place.dowload])
-async def doc_handler(message: types.Message, state: FSMContext):
-    """Ловит документ(EXSEL) и загружает"""
-    try:
-        async with state.proxy() as data:
-            if document := message.document:
-                await document.download(
-                    destination_file="{}/utils/file_{}.xls".format(path, data['sklad']),
-                )
-                logger.info('{} - Загружен документ'.format(message.from_user.id))
-                await bot.send_message(message.from_user.id, 'Загружен документ на {} склад.'.format(data['sklad']),
-                                       reply_markup=InlineKeyboardMarkup().add(
-                                           InlineKeyboardButton(text='Загрузить в базу',
-                                                                callback_data='{}'.format(data['sklad'])
-                                                                )))
-
-    except Exception as ex:
-        logger.debug(ex)
 
 
 @dp.callback_query_handler(state=Place.mesto_1)
@@ -374,27 +397,12 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
             await Place.mesto_1.set()
 
 
-@dp.callback_query_handler(state=Place.dowload)
-async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
-    """Функция загрузки базы"""
-    try:
-        dowload(call.data)
-        await bot.send_message(call.from_user.id, 'База обновлена', reply_markup=menu_admin)
-    except Exception as ex:
-        logger.debug(ex)
-    finally:
-        await state.reset_state()
-        logger.info('Очистил state')
-
-
 @dp.callback_query_handler(state=[Place.mesto_4, Search.show_all])
 async def answer_call(call: types.CallbackQuery, state: FSMContext):
     """Кол беки с инлайн кнопок и показ  1 картинки в ячейках"""
     async with state.proxy() as data:
         if call.data == 'exit':
-            await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
-            await state.reset_state()
-            logger.info('Очистил state')
+            await back(call.message, state)
         elif call.data == 'hide':
             for key in data:
                 if str(key).startswith('photo'):
@@ -423,9 +431,7 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
     """
     async with state.proxy() as data:
         if call.data == 'exit':
-            await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
-            await state.reset_state()
-            logger.info('Очистил state')
+            await back(call.message, state)
         elif call.data.startswith('or'):
             await bot.send_message(call.from_user.id, 'Ввeдите количество:', reply_markup=second_menu)
             data['order'] = call.data[2:]
@@ -442,11 +448,11 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
 
 
 @dp.message_handler(content_types=['text'], state=Search.search_name)
-async def bot_message(message: types.Message, state: FSMContext):
+async def bot_message2(message: types.Message, state: FSMContext):
     name = message.text.lower()
-    logger.info('пользователь {} {} запустил поиск по имени: {}'.format(message.from_user.id,
-                                                                        message.from_user.first_name,
-                                                                        name))
+    logger.info('Пользователь {} {} запустил поиск по названию: {}'.format(message.from_user.id,
+                                                                           message.from_user.first_name,
+                                                                           name))
     answer = search_name(name)
     logger.info('Получени ответ: {}'.format(answer))
     block_message = []
@@ -482,7 +488,7 @@ async def bot_message(message: types.Message, state: FSMContext):
     Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
     иначе идем циклом по кортежу и выводим инф
     """
-    if check(message.from_user.id):
+    if check(message) != 3 and check(message):
         if message.text == '🆚 V-Sales_825':
             await bot.send_message(message.from_user.id, 'V-Sales_825')
             qrc = open('{}/qcodes/V-Sales_825.jpg'.format(path), 'rb')
@@ -541,18 +547,36 @@ async def bot_message(message: types.Message, state: FSMContext):
         else:
             start_time = time.time()
             answer = message.text.lower()
-            logger.info('Пользователь {} {}: запросил артикул {}'.format(
-                message.from_user.id,
-                message.from_user.first_name,
-                answer
-            ))
-
+            logger.info(
+                'Пользователь {} {}: запросил артикул {}'.format(message.from_user.id, message.from_user.first_name,
+                                                                 answer))
             if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
                 await show_media(message)
+                await bot.send_message(message.from_user.id, '{}'.format(search_art_name(message.text)))
+                sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
+                await bot.send_message(message.from_user.id, 'Остатки на магазине:\n')
+                full_block = []
+                try:
+                    for i in sklad_list:
+                        cells = search_all_sklad(message.text, i)
+                        if cells:
+                            logger.info('Вернул список ячеек - {}: {}'.format(message.text, cells))
+                            for item in cells:
+                                full_block.append(item)
+                    await bot.send_message(message.from_user.id, '\n'.join(full_block))
+                except Exception as ex:
+                    logger.debug('Ошибка при выводе ячеек в гланом меню {}', ex)
+                    await bot.send_message(message.from_user.id, 'Данный товар отсутствует.')
             else:
                 await bot.send_message(message.from_user.id,
                                        'Неверно указан артикул или его нет на сайте. Пример: 80422781')
             logger.info("--- время выполнения поиска по сайту - {}s seconds ---".format(time.time() - start_time))
+    elif check(message) == 3:
+        await bot.send_message(message.from_user.id, 'Вы заблокированы')
+        with open('{}/stikers/fuck.tgs'.format(path), 'rb') as sticker:
+            await message.answer_sticker(sticker)
+        logger.info(
+            'Заблокированный пользователь {}{} вошел'.format(message.from_user.id, message.from_user.first_name))
     else:
         await helps(message)
         await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')

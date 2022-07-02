@@ -7,24 +7,6 @@ from loguru import logger
 from data.config import path
 
 
-def dowload():
-    try:
-        excel_data_df = pd.read_excel('{}/utils/stocks.xlsx'.format(path), sheet_name='Сток меньше мин витрины',
-                                      usecols=['TG',
-                                               'SKU',
-                                               'Name',
-                                               'masterbox qty',
-                                               'box sku qty',
-                                               'showcase min',
-                                               'stock',
-                                               'stock V sale',
-                                               'stock Store',
-                                               'stock Show Room'])
-        excel_data_df.to_csv('{}/utils/ctocks.csv'.format(path))
-    except Exception as ex:
-        logger.debug(ex)
-
-
 def get_groups():
     try:
         with open('{}/utils/ctocks.csv'.format(path), newline='', encoding='utf-8') as csvfile:
@@ -40,13 +22,12 @@ def get_low_stocks_art(group):
     with open('{}/utils/ctocks.csv'.format(path), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            if row['TG'][:2] == group and (int(row['showcase min']) - int(row['stock V sale'])) > 0:
+            if row['TG'][:2] == group and (int(row['stock V sale']) / int(row['showcase min'])) < 0.65:
                 art_groups.append((row['SKU'],
                                    row['Name'],
                                    row['showcase min'],
                                    row['stock V sale'],
                                    row['stock Show Room']))
-    # with open('result.json', 'w', encoding='utf-8') as file:
     return art_groups
 
 
@@ -60,7 +41,7 @@ def _union_result(row: dict, result: dict) -> dict:
     return result
 
 
-def union_art(group: str):
+def union_art2(group: str):
     with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         result = dict()
@@ -75,23 +56,23 @@ def union_art(group: str):
 
 def finish(group):
     low_stock = get_low_stocks_art(group)
-    stock_sklad = union_art(group)
+    stock_sklad = union_art2(group)
     result = []
     result_for_file = []
     for item in low_stock:
         if item[0] in stock_sklad.keys():
-            result.append(('⛳{art} {name}\nМин.сток:{min} В зале:{vsl} На складе:{sklad}'.format(
-                art=item[0],
-                name=item[1],
-                min=item[2],
-                vsl=item[3],
-                sklad=stock_sklad[item[0]]
-            )))
             order = (int(item[2]) - int(item[3])) \
                 if (int(item[2]) - int(item[3])) < stock_sklad[item[0]] \
                 else stock_sklad[item[0]]
+            result.append(('⛳{art} {name}\nМин.сток:{min} К заказу:{order}'.format(
+                art=item[0],
+                name=item[1],
+                min=item[2],
+                order=order
+            )))
+
             result_for_file.append([item[0], item[1].replace("", ''),
-                                    item[2], item[3], item[4], str(stock_sklad[item[0]]), str(order)])
+                                    item[2], item[3], item[4], str(order)])
     return result, result_for_file
 
 
@@ -104,7 +85,6 @@ def save_exsel_min(group):
                               "Мин.сток",
                               "Запас в зале",
                               "На руме",
-                              "На складе",
                               "К заказу"])
         for i in result:
             file_writer.writerow(i)

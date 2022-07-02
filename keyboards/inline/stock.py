@@ -1,6 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from utils.min_stocks import get_groups
 
 stocks = InlineKeyboardMarkup(row_width=2)
 stocks.insert(InlineKeyboardButton(text='Текстиль', callback_data='11'))
@@ -25,9 +24,3 @@ choise = InlineKeyboardMarkup(row_width=2)
 choise.insert(InlineKeyboardButton(text='Да', callback_data='yes'))
 choise.insert(InlineKeyboardButton(text='Нет', callback_data='no'))
 
-
-groups = get_groups()
-choise_group = InlineKeyboardMarkup(row_width=3)
-for i in groups:
-    choise_group.insert(InlineKeyboardButton(text=i[1], callback_data=i[0]))
-choise_group.insert(InlineKeyboardButton(text='Выход', callback_data='exit'))

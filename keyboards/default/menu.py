@@ -10,7 +10,7 @@ menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('📝Проверка товара'),
      KeyboardButton('📟 Мой заказ')],
     [KeyboardButton('💳 Акции'),
-    KeyboardButton('ℹ Информация')],
+     KeyboardButton('ℹ Информация')],
 ], resize_keyboard=True)
 
 second_menu = ReplyKeyboardMarkup(keyboard=[
@@ -39,7 +39,8 @@ dowload_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('A11_825'),
      KeyboardButton('V_Sales')],
     [KeyboardButton('RDiff'),
-     KeyboardButton('В главное меню')],
+     KeyboardButton('Мин.витрина')],
+    [KeyboardButton('В главное меню')],
 ], resize_keyboard=True)
 
 qr_menu = ReplyKeyboardMarkup(keyboard=[

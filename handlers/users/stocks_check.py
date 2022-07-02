@@ -10,16 +10,16 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
 from all_requests.parse_on_requests import parse
-from all_requests.requests_mediagroup import get_info_only_image, get_info
+from all_requests.requests_mediagroup import get_info
 from data.config import path
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
 from keyboards.default import menu
 from keyboards.inline.mesto import hide
-from keyboards.inline.stock import choise_num, stocks, choise_group
+from keyboards.inline.stock import choise_num, stocks
 from loader import dp, bot
 from state.states import Stock
-from utils.min_stocks import finish, save_exsel_min
+from utils.min_stocks import finish, save_exsel_min, get_groups
 
 
 async def start_check_stocks(message, state):
@@ -31,7 +31,7 @@ async def start_check_stocks(message, state):
     await Stock.group.set()
 
 
-@dp.callback_query_handler(state=Stock.group)
+@dp.callback_query_handler(state=[Stock.group])
 async def check_groups(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['group'] = call.data
@@ -51,6 +51,14 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
                 logger.info(ex)
             await back(call.message, state)
         elif call.data == 'min':
+            groups = get_groups()
+            choise_group = InlineKeyboardMarkup(row_width=3)
+            try:
+                for i in groups:
+                    choise_group.insert(InlineKeyboardButton(text=i[1], callback_data=i[0]))
+                choise_group.insert(InlineKeyboardButton(text='Выход', callback_data='exit'))
+            except Exception as ex:
+                print(ex)
             await Stock.min_vitrina.set()
             await bot.send_message(call.from_user.id, 'Выберите группу:',
                                    reply_markup=choise_group)
@@ -85,9 +93,7 @@ async def choise_nums(call: types.CallbackQuery, state: FSMContext):
 async def answer_call(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         if call.data == 'exit':
-            await call.message.answer('Главное меню. Введите артикул. Пример: 80264335', reply_markup=menu)
-            await state.reset_state()
-            logger.info('Очистил state')
+            await back(call.message, state)
         elif call.data == 'no':
             await back(call.message, state)
         elif call.data == 'yes':
@@ -305,23 +311,30 @@ def align_left(x):
 
 @dp.callback_query_handler(state=Stock.min_vitrina)
 async def min_vitrina(call: types.CallbackQuery, state: FSMContext):
-    result = finish(call.data)[0]
-    count = 0
-    line = []
-    for i in result:
-        count += 1
-        line.append(i)
-        if count == 20:
+    if call.data == 'exit':
+        await back(call.message, state)
+    else:
+        result = finish(call.data)[0]
+        count = 0
+        line = []
+        for i in result:
+            count += 1
+            line.append(i)
+            if count == 20:
+                await bot.send_message(call.from_user.id, '\n'.join(line))
+                count = 0
+                line = []
+
+        try:
             await bot.send_message(call.from_user.id, '\n'.join(line))
-            count = 0
-            line = []
-    await bot.send_message(call.from_user.id, '\n'.join(line))
-    save_exsel_min(call.data)
-    try:
-        await call.message.answer_document(open('{}/files/min_vitrina_{}.xlsx'.format(path, call.data), 'rb'))
-    except Exception as ex:
-        logger.debug('Не удалось выгрузить файл {}'.format(ex))
-    await back(call.message, state)
+            save_exsel_min(call.data)
+            logger.info('{} {} запросил мин.витрину на {}'.format(call.from_user.id,
+                                                                  call.from_user.first_name, call.data))
+            await call.message.answer_document(open('{}/files/min_vitrina_{}.xlsx'.format(path, call.data), 'rb'))
+        except Exception as ex:
+            await bot.send_message(call.from_user.id, 'Все товары в достаточном количестве.')
+            logger.debug('Не удалось выгрузить файл {}'.format(ex))
+        await back(call.message, state)
 
 
 if __name__ == '__main__':

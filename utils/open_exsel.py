@@ -4,22 +4,44 @@ import pandas as pd
 from loguru import logger
 
 from data.config import path
+from loader import bot
 
 
 def dowload(sklad: str):
-    try:
-        excel_data_df = pd.read_excel('{}/utils/file_{}.xls'.format(path, sklad), sheet_name='Лист1',
-                                      usecols=['Склад',
-                                               'Местоположение',
-                                               'Код \nноменклатуры',
-                                               'Краткое наименование',
-                                               'Описание товара',
-                                               'Доступно',
-                                               'Зарезерви\nровано',
-                                               'ТГ'])
-        excel_data_df.to_csv('{}/utils/file_{}.csv'.format(path, sklad))
-    except Exception as ex:
-        logger.debug(ex)
+    if sklad == 'Мин.витрина':
+        try:
+            excel_data_df = pd.read_excel('{}/utils/file_Мин.витрина.xls'.format(path),
+                                          sheet_name='Сток меньше мин витрины',
+                                          usecols=['TG',
+                                                   'SKU',
+                                                   'Name',
+                                                   'masterbox qty',
+                                                   'box sku qty',
+                                                   'showcase min',
+                                                   'stock',
+                                                   'stock V sale',
+                                                   'stock Store',
+                                                   'stock Show Room'])
+            excel_data_df.to_csv('{}/utils/ctocks.csv'.format(path))
+            return True
+        except Exception as ex:
+            logger.debug(ex)
+
+    else:
+        try:
+            excel_data_df = pd.read_excel('{}/utils/file_{}.xls'.format(path, sklad), sheet_name='Лист1',
+                                          usecols=['Склад',
+                                                   'Местоположение',
+                                                   'Код \nноменклатуры',
+                                                   'Краткое наименование',
+                                                   'Описание товара',
+                                                   'Доступно',
+                                                   'Зарезерви\nровано',
+                                                   'ТГ'])
+            excel_data_df.to_csv('{}/utils/file_{}.csv'.format(path, sklad))
+            return True
+        except Exception as ex:
+            logger.debug(ex)
 
 
 def place(message: str, sklad: str) -> list[str]:
