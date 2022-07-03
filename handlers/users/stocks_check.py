@@ -177,7 +177,6 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
         else:
             line = ['нет товара для пополнения']
             await back(call, state)
-        logger.info('Список товара товара: {}'.format(line))
 
 
 def creat_pst():
@@ -317,23 +316,27 @@ async def min_vitrina(call: types.CallbackQuery, state: FSMContext):
         result = finish(call.data)[0]
         count = 0
         line = []
-        for i in result:
-            count += 1
-            line.append(i)
-            if count == 20:
-                await bot.send_message(call.from_user.id, '\n'.join(line))
-                count = 0
-                line = []
-
         try:
-            await bot.send_message(call.from_user.id, '\n'.join(line))
-            save_exsel_min(call.data)
+            for i in result:
+                count += 1
+                line.append(i)
+                if count == 20:
+                    await bot.send_message(call.from_user.id, '\n'.join(line))
+                    count = 0
+                    line = []
+            if len(line) > 0:
+                await bot.send_message(call.from_user.id, '\n'.join(line))
+        except Exception:
+            await bot.send_message(call.from_user.id, 'Все товары в достаточном количестве.')
+            logger.debug('Нет товара для вывода мин.витрины')
+        save_exsel_min(call.data)
+        try:
             logger.info('{} {} запросил мин.витрину на {}'.format(call.from_user.id,
-                                                                  call.from_user.first_name, call.data))
+                                                                     call.from_user.first_name,
+                                                                     call.data))
             await call.message.answer_document(open('{}/files/min_vitrina_{}.xlsx'.format(path, call.data), 'rb'))
         except Exception as ex:
-            await bot.send_message(call.from_user.id, 'Все товары в достаточном количестве.')
-            logger.debug('Не удалось выгрузить файл {}'.format(ex))
+            logger.debug('Не удалось выгрузить файл для {} {}'.format(call.data, ex))
         await back(call.message, state)
 
 

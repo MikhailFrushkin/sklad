@@ -8,8 +8,8 @@ from loguru import logger
 
 from data.config import path
 from handlers.users.back import back
-from keyboards.default import menu
 from keyboards.default.menu import second_menu
+from keyboards.inline.action import product_num
 from keyboards.inline.actions_groups import actions
 from loader import dp, bot
 from state.states import Action
@@ -53,14 +53,10 @@ def parse_actions():
         'area': 'actions/index',
     }
 
-    # response = requests.get('https://hoff.ru/vue/include-page/', params=params, cookies=cookies, headers=headers).json()
-    # with open('action_group.json', 'w', encoding='utf-8') as file:
-    #     json.dump(response, file, indent=4, ensure_ascii=False)
-    # groups_dict = response.get('data').get('content')[1].get('custom:discount.sections').get('actions')
     groups_list = ['1181', '5359', '1184', '1182', '1020', '1140', '2269', '1183', '1185']
     for i in groups_list:
         logger.info('Сканируется группа {}'.format(i))
-        time.sleep(5)
+        time.sleep(3)
 
         params = {
             'category_id': i,
@@ -98,37 +94,55 @@ def parse_actions():
 @dp.message_handler(content_types=['text'], state=Action.set_group)
 async def view_actions(message, state):
     await bot.send_message(message.from_user.id, 'Выберите группу:', reply_markup=actions)
-    await Action.show_product.set()
+    await Action.set_num.set()
+
+
+@dp.callback_query_handler(state=Action.set_num)
+async def view_actionss(call: types.CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        if call.data == 'exit':
+            await back(call.message, state)
+        else:
+            await bot.send_message(call.from_user.id, 'Выберите группу:', reply_markup=product_num)
+            data['group'] = call.data
+            await Action.show_product.set()
 
 
 @dp.callback_query_handler(state=Action.show_product)
 async def view_actionss(call: types.CallbackQuery, state: FSMContext):
-    if call.data == 'exit':
-        await back(call.message, state)
-    else:
-        try:
-            with open('{}/base/json/action/action{}.json'.format(path, call.data), 'r',
-                      encoding='utf-8') as file:
-                catalog = json.load(file)
-                count = 0
-                logger.info('Пользователь {} {} запустил просмотр акций {}'.format(call.from_user.id,
-                                                                                   call.from_user.first_name,
-                                                                                   call.data))
-                for item in catalog:
-                    count += 1
-                    await bot.send_photo(call.from_user.id, item["image"])
-                    await bot.send_message(call.from_user.id, '{} {}\nСтарая цена: {} руб.\nНовая цена: {} руб.'
-                                                              '\nСкидка: {}%'.format(
-                        item["articul"], item["name"],
-                        item["prices"]["old"], item["prices"]["new"], item["discount"]), reply_markup=second_menu)
-
-                    if count == 10:
-                        break
-                    time.sleep(0.5)
-        except Exception as ex:
-            logger.debug(ex)
-        finally:
+    async with state.proxy() as data:
+        if call.data == 'exit':
             await back(call.message, state)
+        else:
+            groups_list = [['Декор', '1181'], ['Зеркала', '5359'], ['Ковры', '1184'],
+                           ['Освещение', '1182'], ['Посуда', '1020'], ['Текстиль', '1140'],
+                           ['Товары для ванной', '2269'], ['Хозтовары', '1183'], ['Шторы и карнизы', '1185']]
+            try:
+                with open('{}/base/json/action/action{}.json'.format(path, data['group']), 'r',
+                          encoding='utf-8') as file:
+                    catalog = json.load(file)
+                    count = 0
+                    logger.info('Пользователь {} {} запустил просмотр акций {} {}'.format(call.from_user.id,
+                                                                                          call.from_user.first_name,
+                                                                                          [
+                                                                                              i for i in groups_list
+                                                                                              if data['group'] in i
+                                                                                          ], call.data))
+                    for item in catalog:
+                        count += 1
+                        await bot.send_photo(call.from_user.id, item["image"])
+                        await bot.send_message(call.from_user.id, '{} {}\nСтарая цена: {} руб.\nНовая цена: {} руб.'
+                                                                  '\nСкидка: {}%'.format(
+                            item["articul"], item["name"],
+                            item["prices"]["old"], item["prices"]["new"], item["discount"]), reply_markup=second_menu)
+
+                        if count == int(call.data):
+                            break
+                        time.sleep(0.5)
+            except Exception as ex:
+                logger.debug(ex)
+            finally:
+                await back(call.message, state)
 
 
 def main():

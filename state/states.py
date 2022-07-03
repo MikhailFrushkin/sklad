@@ -48,4 +48,5 @@ class Stock(StatesGroup):
 
 class Action(StatesGroup):
     set_group = State()
+    set_num = State()
     show_product = State()

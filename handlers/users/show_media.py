@@ -17,7 +17,6 @@ async def show_media(message: types.Message):
     try:
         data = parse(articul)
         if data:
-            logger.info(data)
             line = data['name']
             for item in data['characteristic']:
                 line += '\n{}'.format(item)
