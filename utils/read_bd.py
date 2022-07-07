@@ -105,33 +105,36 @@ def mail(message):
             art_dict['Заказ'] = int(item[1])
             art_dict['Подобранно'] = 0
             art_dict_list.append(art_dict)
-
-        for place in list_places:
-            line = '⚠{}'.format(place)
-            for item in orders_art3:
-                if item[1] > 0:
-                    for i in all_list:
-                        for j in range(len(i)):
-                            if i[j]['Местоположение'] == place:
-                                if str(item[0]) == i[j]['Код']:
-                                    if i[j]['Код'] not in line:
-                                        if int(i[j]['Доступно']) >= item[1]:
-                                            line = line + '\n✅ {}\n{} \nДоступно:{} К заказу:{}'. \
-                                                format(i[j]['Код'],
-                                                       i[j]['Описание товара'],
-                                                       i[j]['Доступно'],
-                                                       item[1])
-                                        else:
-                                            line = line + '\n✅ {}\n{} \nДоступно:{} К заказу:{}'. \
-                                                format(i[j]['Код'],
-                                                       i[j]['Описание товара'],
-                                                       i[j]['Доступно'],
-                                                       i[j]['Доступно'])
-                                        item[1] -= int(i[j]['Доступно'])
-
-            if len(line) > 20:
-                result.append(line)
+        try:
+            for place in list_places:
+                line = '⚠{}'.format(place)
+                try:
+                    for item in orders_art3:
+                        if item[1] > 0:
+                            for i in all_list:
+                                for j in range(len(i)):
+                                    if i[j]['Местоположение'] == place:
+                                        if str(item[0]) == i[j]['Код']:
+                                            if i[j]['Код'] not in line:
+                                                if int(i[j]['Доступно']) >= item[1]:
+                                                    line = line + '\n✅ {}\n{} \nДоступно:{} К заказу:{}'. \
+                                                        format(i[j]['Код'],
+                                                               i[j]['Описание товара'],
+                                                               i[j]['Доступно'],
+                                                               item[1])
+                                                else:
+                                                    line = line + '\n✅ {}\n{} \nДоступно:{} К заказу:{}'. \
+                                                        format(i[j]['Код'],
+                                                               i[j]['Описание товара'],
+                                                               i[j]['Доступно'],
+                                                               i[j]['Доступно'])
+                                                item[1] -= int(i[j]['Доступно'])
+                    if len(line) > 20:
+                        result.append(line)
+                except Exception as ex:
+                    logger.debug(ex)
+        except Exception as ex:
+            logger.debug(ex)
         return result
-
     except Exception as ex:
         logger.debug(ex)

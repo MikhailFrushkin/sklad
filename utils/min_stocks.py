@@ -78,21 +78,22 @@ def finish(group):
 
 def save_exsel_min(group):
     result = finish(group)[1]
-    with open('result_min_vitrina{}.csv'.format(group), 'w', newline='', encoding='utf-8') as file:
+    with open('{}/result_min_vitrina{}.csv'.format(path, group), 'w', newline='', encoding='utf-8') as file:
         file_writer = csv.writer(file, delimiter=",", lineterminator="\r")
         file_writer.writerow(["Артикул",
-                              "Номенкулатура",
+                              "Наименование",
                               "Мин.сток",
-                              "Запас в зале",
+                              "Запас зал",
                               "На руме",
                               "К заказу"])
         for i in result:
             file_writer.writerow(i)
     try:
-        df = pd.read_csv('result_min_vitrina{}.csv'.format(group), delimiter=',', encoding='utf-8')
+        df = pd.read_csv('{}/result_min_vitrina{}.csv'.format(path, group), delimiter=',', encoding='utf-8')
         writer = pd.ExcelWriter('{}/files/min_vitrina_{}.xlsx'.format(path, group))
-        df.style.apply(_align_left, axis=0).to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
-        writer.sheets['Sheet1'].set_column(0, 7, 15)
+        df.style.apply(_align_left, axis=0).to_excel(writer, index=False, na_rep='NaN')
+
+        writer.sheets['Sheet1'].set_column(0, 7, 8)
         writer.sheets['Sheet1'].set_column(1, 1, 50)
         writer.save()
     except Exception as ex:

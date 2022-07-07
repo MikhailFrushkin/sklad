@@ -101,7 +101,7 @@ async def view_actions(message, state):
 async def view_actionss(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         if call.data == 'exit':
-            await back(call.message, state)
+            await back(call, state)
         else:
             await bot.send_message(call.from_user.id, 'Выберите группу:', reply_markup=product_num)
             data['group'] = call.data
@@ -112,7 +112,7 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
 async def view_actionss(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         if call.data == 'exit':
-            await back(call.message, state)
+            await back(call, state)
         else:
             groups_list = [['Декор', '1181'], ['Зеркала', '5359'], ['Ковры', '1184'],
                            ['Освещение', '1182'], ['Посуда', '1020'], ['Текстиль', '1140'],
@@ -142,7 +142,7 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
             except Exception as ex:
                 logger.debug(ex)
             finally:
-                await back(call.message, state)
+                await back(call, state)
 
 
 def main():

@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 from data.config import path
 
 
-def get_info(art: str) -> tuple:
+def get_info(art: str):
     """
     Скрапим всю нужную инфу с вайта по артикулам которые в наличии на складе 012
     :param art: srt

@@ -71,16 +71,25 @@ def place_dost(message: str, sklad: str) -> list[str]:
     try:
         with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
-            answer = []
+            temp_list = []
+            answer = ['🔄Необходимо убрать с Dost\n']
             for row in reader:
                 if row['Местоположение'].startswith(message) and row['Доступно'] != '':
-                    line = '🔄Необходимо убрать с ячейки {}' \
-                           '\n{} - {}' \
-                           '\nДоступно: {}\n' \
-                        .format(row['Местоположение'], row['Код \nноменклатуры'], row['Описание товара'],
-                                row['Доступно']) \
-                        .replace('.0', '')
-                    answer.append(line)
+                    if row['Местоположение'][16:] not in temp_list:
+                        temp_list.append(row['Местоположение'][16:])
+        for item in sorted(temp_list, key=int):
+            with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    if row['Местоположение'].endswith(item) \
+                            and row['Местоположение'].startswith(message) \
+                            and row['Доступно'] != '':
+                        line = 'Ячейка: {}' \
+                               '\n{} - {} Убрать:{}\n'.format(row['Местоположение'], row['Код \nноменклатуры'],
+                                                            row['Описание товара'],
+                                                            row['Доступно']) \
+                            .replace('.0', '')
+                        answer.append(line)
         if len(answer) == 0:
             return ['❌В ячейках нет отказанного товара']
         return answer
@@ -151,7 +160,7 @@ def search_articul_order(art: str, sklad: str) -> list:
         else:
             raise Exception
     except Exception as ex:
-        logger.debug('❌Артикул не найден на складе {}'.format(ex))
+        logger.debug('Артикул не найден на складе {}'.format(ex))
 
 
 def search_all_sklad(art: str, sklad: str) -> list[str]:

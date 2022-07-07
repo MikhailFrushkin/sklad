@@ -19,7 +19,7 @@ from utils.read_bd import set_order
 
 async def search(message, state):
     """Выбор склада для поиска артикула"""
-    logger.info('\nПользователь {}: {} {} запустил поиск на складе'.format(
+    logger.info('Пользователь {}: {} {} запустил поиск на складе'.format(
         message.from_user.id,
         message.from_user.first_name,
         message.from_user.username
@@ -63,7 +63,7 @@ async def input_art(call: types.CallbackQuery, state: FSMContext):
     """
     async with state.proxy() as data:
         if call.data == 'exit':
-            await back(call.message, state)
+            await back(call, state)
         elif call.data.startswith('or'):
             await bot.send_message(call.from_user.id, 'Ввeдите количество:', reply_markup=second_menu)
             data['order'] = call.data[2:]

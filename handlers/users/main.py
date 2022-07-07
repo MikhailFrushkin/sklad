@@ -176,7 +176,7 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
     except Exception as ex:
         logger.debug(ex)
     finally:
-        await back(call.message, state)
+        await back(call, state)
 
 
 @dp.message_handler(content_types=[ContentType.STICKER, ContentType.VOICE], state='*')
@@ -223,28 +223,34 @@ async def bot_message(message: types.Message, state: FSMContext):
     Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
     иначе идем циклом по кортежу и выводим инф
     """
+    id = message.from_user.id
     if check(message) != 3 and check(message):
         if message.text == '🆚 V-Sales_825':
-            await bot.send_message(message.from_user.id, 'V-Sales_825')
+            await bot.send_message(id, 'V-Sales_825')
             qrc = open('{}/qcodes/V-Sales_825.jpg'.format(path), 'rb')
+            logger.info('Пользователь {} {} открыл QR V-Sales_825'.format(id, message.from_user.first_name))
             await bot.send_photo(message.chat.id, qrc)
 
         elif message.text == '🗃 011_825-Exit_sklad':
-            await bot.send_message(message.from_user.id, '011_825-Exit_sklad')
+            await bot.send_message(id, '011_825-Exit_sklad')
             qrc = open('{}/qcodes/011_825-Exit_sklad.jpg'.format(path), 'rb')
+            logger.info('Пользователь {} {} открыл QR 011_825-Exit_sklad'.format(id, message.from_user.first_name))
             await bot.send_photo(message.chat.id, qrc)
 
         elif message.text == '🤖 Qrcode ячейки':
+            logger.info('Пользователь {} {} открыл QR ячейки'.format(id, message.from_user.first_name))
             await show_qr(message)
 
         elif message.text == '📦 Содержимое ячейки':
             await show_place(message, state)
 
         elif message.text == 'ℹ Информация' or message.text == 'Помощь':
+            logger.info('Пользователь {} {} нажал help'.format(id, message.from_user.first_name))
             await bot_help(message)
 
         elif message.text == '📟 Мой заказ':
-            await bot.send_message(message.from_user.id, 'Выберите действие:', reply_markup=orders)
+            logger.info('Пользователь {} {} мой заказ'.format(id, message.from_user.first_name))
+            await bot.send_message(id, 'Выберите действие:', reply_markup=orders)
             await Orders.order.set()
 
         elif message.text == '📝Проверка товара':
@@ -257,34 +263,36 @@ async def bot_message(message: types.Message, state: FSMContext):
             await back(message, state)
 
         elif message.text == '📖 Любой текст в Qr':
-            await bot.send_message(message.from_user.id, 'Введите текст.', reply_markup=second_menu)
+            await bot.send_message(id, 'Введите текст.', reply_markup=second_menu)
             await QR.qr.set()
 
         elif message.text == '💳 Акции':
             await Action.set_group.set()
             await view_actions(message, state)
+
         elif message.text == 'Обновить Акции':
             try:
                 parse_actions()
-                await bot.send_message(message.from_user.id, 'Сканирование завершено')
+                await bot.send_message(id, 'Сканирование завершено')
             except Exception as ex:
-                await bot.send_message(message.from_user.id, 'Парсер отвалился {}'.format(ex))
+                await bot.send_message(id, 'Парсер отвалился {}'.format(ex))
             finally:
                 await back(message, state)
+
         elif message.text == 'Отправить':
-            await bot.send_message(message.from_user.id, 'Введите сообщения для общей рассылки:',
+            await bot.send_message(id, 'Введите сообщения для общей рассылки:',
                                    reply_markup=second_menu)
             await Messages.mes.set()
 
         elif message.text == 'Загрузка базы':
-            await bot.send_message(message.from_user.id, 'Выберите склад', reply_markup=dowload_menu)
+            await bot.send_message(id, 'Выберите склад', reply_markup=dowload_menu)
             await Place.dowload.set()
 
         else:
             start_time = time.time()
             answer = message.text.lower()
             logger.info(
-                'Пользователь {} {}: запросил артикул {}'.format(message.from_user.id, message.from_user.first_name,
+                'Пользователь {} {}: запросил артикул {}'.format(id, message.from_user.first_name,
                                                                  answer))
             if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
                 await show_media(message)
@@ -296,20 +304,27 @@ async def bot_message(message: types.Message, state: FSMContext):
                         if cells:
                             for item in cells:
                                 full_block.append(item)
-                    await bot.send_message(message.from_user.id, '\n'.join(full_block))
+                    if len(full_block) > 1:
+                        await bot.send_message(id, '\n'.join(full_block))
+                    else:
+                        await bot.send_message(id, 'Данный товар отсутствует.')
                 except Exception as ex:
                     logger.debug('Ошибка при выводе ячеек в гланом меню {}', ex)
-                    await bot.send_message(message.from_user.id, 'Данный товар отсутствует.')
+
             else:
-                await bot.send_message(message.from_user.id,
+                await bot.send_message(id,
                                        'Неверно указан артикул или его нет на сайте. Пример: 80422781')
             logger.info("--- время выполнения поиска по сайту - {}s seconds ---".format(time.time() - start_time))
     elif check(message) == 3:
-        await bot.send_message(message.from_user.id, 'Вы заблокированы')
+        await bot.send_message(id, 'Вы заблокированы')
         with open('{}/stikers/fuck.tgs'.format(path), 'rb') as sticker:
             await message.answer_sticker(sticker)
         logger.info(
-            'Заблокированный пользователь {}{} вошел'.format(message.from_user.id, message.from_user.first_name))
+            'Заблокированный пользователь {}{} пытался войти'.format(id,
+                                                                     message.from_user.first_name))
+        await bot.send_message(880277049,
+                               'Заблокированный пользователь {}{} пытался войти'.format(id,
+                                                                                        message.from_user.first_name))
     else:
         await helps(message)
         await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')

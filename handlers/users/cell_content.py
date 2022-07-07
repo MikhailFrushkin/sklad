@@ -61,7 +61,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
                 await call.message.answer('{}'.format(mes))
             else:
                 await call.message.answer('\n'.join(mes))
-            await back(call.message, state)
+            await back(call, state)
         elif call.data == 'dost':
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
@@ -81,7 +81,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
                     await call.message.answer('\n'.join(list_1))
                 else:
                     await bot.send_message(call.from_user.id, 'В ячейках нет отказаного товара.')
-            await back(call.message, state)
+            await back(call, state)
         elif call.data == 'rdiff':
             data['mesto1'] = call.data
             asyncio.create_task(delete_message(data['message1']))
@@ -96,7 +96,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
                     list_1 = []
                     count = 0
             await call.message.answer('\n'.join(list_1))
-            await back(call.message, state)
+            await back(call, state)
         else:
             await call.answer(cache_time=5)
             answer_p: str = call.data
@@ -166,7 +166,7 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
     """Кол беки с инлайн кнопок и показ  1 картинки в ячейках"""
     async with state.proxy() as data:
         if call.data == 'exit':
-            await back(call.message, state)
+            await back(call, state)
         elif call.data == 'hide':
             for key in data:
                 if str(key).startswith('photo'):

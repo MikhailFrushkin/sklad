@@ -1,17 +1,17 @@
-from aiogram import types
 from aiogram.dispatcher import FSMContext
-from loguru import logger
 
 from data.config import ADMINS
 from keyboards.default import menu
 from keyboards.default.menu import menu_admin
+from loader import bot
 
 
-async def back(message: types.Message, state: FSMContext):
+async def back(message, state: FSMContext):
     """Кнопка Назад, скидывает стейты и возвращает в главное меню"""
     if str(message.from_user.id) in ADMINS:
-        await message.answer('Главное меню.\nВведите артикул. Пример: 80264335', reply_markup=menu_admin)
-        await state.reset_state()
+        await bot.send_message(message.from_user.id, 'Главное меню.\nВведите артикул. Пример: 80264335',
+                               reply_markup=menu_admin)
+        # await message.answer('Главное меню.\nВведите артикул. Пример: 80264335', reply_markup=menu_admin)
     else:
-        await message.answer('Главное меню.\nВведите артикул. Пример: 80264335', reply_markup=menu)
-        await state.reset_state()
+        await bot.send_message('Главное меню.\nВведите артикул. Пример: 80264335', reply_markup=menu)
+    await state.reset_state()

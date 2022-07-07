@@ -37,7 +37,7 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
         data['group'] = call.data
         asyncio.create_task(delete_message(data['message_temp']))
         if call.data == 'exit':
-            await back(call.message, state)
+            await back(call, state)
         elif call.data == 'files':
             logger.info('{} {} выгрузил файлы с 0 остатками'.format(call.from_user.id, call.from_user.first_name))
             try:
@@ -49,7 +49,7 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
                         logger.debug('Не удалось выгрузить файл {}'.format(ex))
             except Exception as ex:
                 logger.info(ex)
-            await back(call.message, state)
+            await back(call, state)
         elif call.data == 'min':
             groups = get_groups()
             choise_group = InlineKeyboardMarkup(row_width=3)
@@ -77,7 +77,7 @@ async def choise_nums(call: types.CallbackQuery, state: FSMContext):
         ))
         asyncio.create_task(delete_message(data['message_temp']))
         if call.data == 'exit':
-            await back(call.message, state)
+            await back(call, state)
         elif call.data == 'zero':
             await matching_stock(call, data['group'], 0, state)
         elif call.data == 'low':
@@ -85,7 +85,7 @@ async def choise_nums(call: types.CallbackQuery, state: FSMContext):
         elif call.data == 'norm':
             await matching_stock(call, data['group'], 10, state)
         else:
-            await back(call.message, state)
+            await back(call, state)
         await Stock.show_stock.set()
 
 
@@ -93,9 +93,9 @@ async def choise_nums(call: types.CallbackQuery, state: FSMContext):
 async def answer_call(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         if call.data == 'exit':
-            await back(call.message, state)
+            await back(call, state)
         elif call.data == 'no':
-            await back(call.message, state)
+            await back(call, state)
         elif call.data == 'yes':
             try:
                 for i in data['products']:
@@ -311,7 +311,7 @@ def align_left(x):
 @dp.callback_query_handler(state=Stock.min_vitrina)
 async def min_vitrina(call: types.CallbackQuery, state: FSMContext):
     if call.data == 'exit':
-        await back(call.message, state)
+        await back(call, state)
     else:
         result = finish(call.data)[0]
         count = 0
@@ -327,7 +327,6 @@ async def min_vitrina(call: types.CallbackQuery, state: FSMContext):
             if len(line) > 0:
                 await bot.send_message(call.from_user.id, '\n'.join(line))
         except Exception:
-            await bot.send_message(call.from_user.id, 'Все товары в достаточном количестве.')
             logger.debug('Нет товара для вывода мин.витрины')
         save_exsel_min(call.data)
         try:
@@ -337,7 +336,8 @@ async def min_vitrina(call: types.CallbackQuery, state: FSMContext):
             await call.message.answer_document(open('{}/files/min_vitrina_{}.xlsx'.format(path, call.data), 'rb'))
         except Exception as ex:
             logger.debug('Не удалось выгрузить файл для {} {}'.format(call.data, ex))
-        await back(call.message, state)
+            await bot.send_message(call.from_user.id, 'Все товары в достаточном количестве.')
+        await back(call, state)
 
 
 if __name__ == '__main__':
