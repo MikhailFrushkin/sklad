@@ -5,7 +5,7 @@ import time
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, ParseMode
+from aiogram.types import ContentType, ParseMode, File
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from aiogram.utils.emoji import emojize
 from aiogram.utils.markdown import text, italic, code
@@ -18,6 +18,7 @@ from handlers.users.back import back
 from handlers.users.cell_content import show_place
 from handlers.users.helps import bot_help
 from handlers.users.search import search
+from handlers.users.show_art import show_art_in_main_menu
 from handlers.users.show_media import show_media
 from handlers.users.show_qrs import show_qr
 from handlers.users.stocks_check import start_check_stocks
@@ -179,7 +180,7 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
         await back(call, state)
 
 
-@dp.message_handler(content_types=[ContentType.STICKER, ContentType.VOICE], state='*')
+@dp.message_handler(content_types=[ContentType.STICKER], state='*')
 async def unknown_message(message: types.Message):
     message_text = text(emojize('Я не знаю, что с этим делать :astonished:'),
                         italic('\nЯ просто напомню,'), 'что есть',
@@ -187,6 +188,49 @@ async def unknown_message(message: types.Message):
     await message.reply(message_text, parse_mode=ParseMode.MARKDOWN)
     with open('{}/stikers/fuck.tgs'.format(path), 'rb') as sticker:
         await message.answer_sticker(sticker)
+
+
+@dp.message_handler(content_types=[ContentType.VOICE], state='*')
+async def voice_message_handler(message: types.Message):
+    import uuid
+    import os
+    import speech_recognition as sr
+
+    logger.info("Пользователь {} {} отправил голосовое".format(message.from_user.id,
+                                                               message.from_user.first_name))
+    filename = str(uuid.uuid4())
+    file_name_full = f"{path}/files/voice/" + filename + ".ogg"
+    file_name_full_converted = f"{path}/files/voice/" + filename + ".wav"
+    file_info = await bot.get_file(message.voice.file_id)
+    downloaded_file = await bot.download_file(file_info.file_path)
+    with open(file_name_full, 'wb') as new_file:
+        new_file.write(downloaded_file.getvalue())
+    os.system("ffmpeg -i " + file_name_full + " " + file_name_full_converted)
+    try:
+        r = sr.Recognizer()
+        with sr.AudioFile(file_name_full_converted) as source:
+            audio_text = r.listen(source)
+            try:
+                text = r.recognize_google(audio_text, language='ru-RU')
+                await bot.send_message(message.from_user.id, "{}".format(text))
+                result = read_art(text)
+                logger.info("Вернул текстовое сообщение {}".format(result))
+                await show_art_in_main_menu(message, result)
+            except Exception as ex:
+                result = "Sorry.. run again..."
+    except Exception as ex:
+        logger.debug(ex)
+    await bot.send_message(message.from_user.id, "{}".format(result))
+    os.remove(file_name_full)
+    os.remove(file_name_full_converted)
+
+
+def read_art(text):
+    import re
+    text = text.replace(' ', '').replace(",", "")
+    pattern = "\d{8,}"
+    result = re.search(pattern, text)[0][:8]
+    return result
 
 
 @dp.message_handler(content_types=['text'], state=Orders.order)
@@ -214,6 +258,8 @@ async def order_num(message: types.Message, state: FSMContext):
         await bot.send_message(message.from_user.id, 'Заказ очищен!')
     else:
         await bot.send_message(message.from_user.id, 'Неверная команда!')
+
+
 
 
 @dp.message_handler(content_types=['text'], state='*')
@@ -289,32 +335,9 @@ async def bot_message(message: types.Message, state: FSMContext):
             await Place.dowload.set()
 
         else:
-            start_time = time.time()
             answer = message.text.lower()
-            logger.info(
-                'Пользователь {} {}: запросил артикул {}'.format(id, message.from_user.first_name,
-                                                                 answer))
-            if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
-                await show_media(message)
-                sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
-                full_block = ['Остатки на магазине:']
-                try:
-                    for i in sklad_list:
-                        cells = search_all_sklad(message.text, i)
-                        if cells:
-                            for item in cells:
-                                full_block.append(item)
-                    if len(full_block) > 1:
-                        await bot.send_message(id, '\n'.join(full_block))
-                    else:
-                        await bot.send_message(id, 'Данный товар отсутствует.')
-                except Exception as ex:
-                    logger.debug('Ошибка при выводе ячеек в гланом меню {}', ex)
+            await show_art_in_main_menu(message, answer)
 
-            else:
-                await bot.send_message(id,
-                                       'Неверно указан артикул или его нет на сайте. Пример: 80422781')
-            logger.info("--- время выполнения поиска по сайту - {}s seconds ---".format(time.time() - start_time))
     elif check(message) == 3:
         await bot.send_message(id, 'Вы заблокированы')
         with open('{}/stikers/fuck.tgs'.format(path), 'rb') as sticker:

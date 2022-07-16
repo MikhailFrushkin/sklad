@@ -62,7 +62,7 @@ def place(message: str, sklad: str) -> list[str]:
                         .replace('.0', '')
                     answer.append(line)
 
-        return answer if len(answer) != 0 else 'Ячейка пуста'
+        return answer
     except Exception as ex:
         logger.debug(ex)
 

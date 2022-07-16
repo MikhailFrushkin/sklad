@@ -12,8 +12,8 @@ from handlers.users.delete_message import delete_message
 from loader import bot
 
 
-async def show_media(message: types.Message):
-    articul = message.text.lower()
+async def show_media(message: types.Message, articul):
+
     try:
         data = parse(articul)
         if data:
@@ -51,6 +51,7 @@ async def show_media(message: types.Message):
                 await message.answer_photo(data['pictures'][1])
 
     except Exception as ex:
+        asyncio.create_task(delete_message(sticker))
         er = 'https://jackwharperconstruction.com/wp-content/uploads/9/c/9/9c980deb1f9f42ef2244b13de3aa118d.jpg'
         await bot.send_photo(message.from_user.id, er)
         logger.debug('{}'.format(ex))

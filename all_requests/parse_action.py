@@ -8,11 +8,13 @@ from loguru import logger
 
 from data.config import path
 from handlers.users.back import back
+from handlers.users.show_art import show_art_in_main_menu
 from keyboards.default.menu import second_menu
 from keyboards.inline.action import product_num
 from keyboards.inline.actions_groups import actions
 from loader import dp, bot
 from state.states import Action
+from utils.open_exsel import search_all_sklad
 
 
 def parse_actions():
@@ -110,6 +112,7 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(state=Action.show_product)
 async def view_actionss(call: types.CallbackQuery, state: FSMContext):
+    id = call.from_user.id
     async with state.proxy() as data:
         if call.data == 'exit':
             await back(call, state)
@@ -132,9 +135,26 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
                         count += 1
                         await bot.send_photo(call.from_user.id, item["image"])
                         await bot.send_message(call.from_user.id, '{} {}\nСтарая цена: {} руб.\nНовая цена: {} руб.'
-                                                                  '\nСкидка: {}%'.format(
-                            item["articul"], item["name"],
-                            item["prices"]["old"], item["prices"]["new"], item["discount"]), reply_markup=second_menu)
+                                                                  '\nСкидка: {}%'.format(item["articul"], item["name"],
+                                                                                         item["prices"]["old"],
+                                                                                         item["prices"]["new"],
+                                                                                         item["discount"]),
+                                               reply_markup=second_menu)
+
+                        sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
+                        full_block = ['Остатки на магазине:']
+                        try:
+                            for i in sklad_list:
+                                cells = search_all_sklad(item["articul"], i)
+                                if cells:
+                                    for j in cells:
+                                        full_block.append(j)
+                            if len(full_block) > 1:
+                                await bot.send_message(id, '\n'.join(full_block))
+                            else:
+                                await bot.send_message(id, 'Данный товар отсутствует.')
+                        except Exception as ex:
+                            logger.debug('Ошибка при выводе ячеек в гланом меню {}', ex)
 
                         if count == int(call.data):
                             break

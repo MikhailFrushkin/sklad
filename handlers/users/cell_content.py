@@ -98,8 +98,7 @@ async def place_1(call: types.CallbackQuery, state: FSMContext):
             await call.message.answer('\n'.join(list_1))
             await back(call, state)
         else:
-            await call.answer(cache_time=5)
-            answer_p: str = call.data
+            answer_p = call.data
             asyncio.create_task(delete_message(data['message1']))
             mes1 = await call.message.answer('Выберите секцию:', reply_markup=mesto2)
             data['mesto1'] = answer_p
@@ -126,7 +125,7 @@ async def place_2(call: types.CallbackQuery, state: FSMContext):
 async def place_3(call: types.CallbackQuery, state: FSMContext):
     """Ввод ячейки поиска"""
     await call.answer(cache_time=5)
-    answer: str = call.data
+    answer = call.data
     async with state.proxy() as data:
         data['mesto3'] = answer
         asyncio.create_task(delete_message(data['message1']))
@@ -138,12 +137,11 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
             data['mesto2'],
             data['mesto3']
         )
-        await call.message.answer('Список товара на {}:'.format(result))
         data['result'] = result
         logger.info(data['result'])
-
-        if place(result, '012_825'):
-            for item in place(result, '012_825'):
+        place_list = place(result, '012_825')
+        if len(place_list) != 0:
+            for item in place_list:
                 await call.message.answer(item,
                                           reply_markup=InlineKeyboardMarkup().add(
                                               InlineKeyboardButton(text='Показать фото',
