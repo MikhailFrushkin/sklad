@@ -50,3 +50,10 @@ class Action(StatesGroup):
     set_group = State()
     set_num = State()
     show_product = State()
+
+
+class Verification(StatesGroup):
+    get_groups = State()
+    view_result = State()
+    get_list = State()
+    check_item = State()

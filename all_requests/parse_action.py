@@ -8,7 +8,6 @@ from loguru import logger
 
 from data.config import path
 from handlers.users.back import back
-from handlers.users.show_art import show_art_in_main_menu
 from keyboards.default.menu import second_menu
 from keyboards.inline.action import product_num
 from keyboards.inline.actions_groups import actions

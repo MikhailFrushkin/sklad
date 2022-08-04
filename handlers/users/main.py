@@ -14,6 +14,7 @@ from loguru import logger
 import bot
 from all_requests.parse_action import parse_actions, view_actions
 from data.config import ADMINS, PASSWORD, path
+from handlers.users.Verification import verification_start
 from handlers.users.back import back
 from handlers.users.cell_content import show_place
 from handlers.users.helps import bot_help
@@ -24,8 +25,9 @@ from handlers.users.show_qrs import show_qr
 from handlers.users.stocks_check import start_check_stocks
 from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu, orders
+from keyboards.inline.verification import creat_groups_menu
 from loader import dp, bot
-from state.states import Orders
+from state.states import Orders, Verification
 from state.states import Place, Logging, Messages, QR, Action
 from utils.check_bd import check
 from utils.open_exsel import dowload, search_all_sklad
@@ -49,12 +51,14 @@ async def bot_start(message: types.Message):
         await bot.send_sticker(message.chat.id, sticker)
         if str(message.from_user.id) in ADMINS:
             await message.answer('Добро пожаловать, {}!'
+                                 '\nУшел в отпуск до августа =) Базу либо вообще не буду обновлять, либо редко.'
                                  '\nДля помощи нажми на кнопку Информация(/help)'
                                  .format(message.from_user.first_name),
                                  reply_markup=menu_admin)
         else:
             await message.answer('Добро пожаловать, {}!'
-                                 '\nДля помощи нажми на кнопку Информация'
+                                 '\nУшел в отпуск до августа =) Базу либо вообще не буду обновлять, либо редко.'
+                                 '\nДля помощи нажми на кнопку Информация(/help)'
                                  .format(message.from_user.first_name), reply_markup=menu)
     else:
         await helps(message)
@@ -260,8 +264,6 @@ async def order_num(message: types.Message, state: FSMContext):
         await bot.send_message(message.from_user.id, 'Неверная команда!')
 
 
-
-
 @dp.message_handler(content_types=['text'], state='*')
 async def bot_message(message: types.Message, state: FSMContext):
     """
@@ -294,10 +296,9 @@ async def bot_message(message: types.Message, state: FSMContext):
             logger.info('Пользователь {} {} нажал help'.format(id, message.from_user.first_name))
             await bot_help(message)
 
-        elif message.text == '📟 Мой заказ':
-            logger.info('Пользователь {} {} мой заказ'.format(id, message.from_user.first_name))
-            await bot.send_message(id, 'Выберите действие:', reply_markup=orders)
-            await Orders.order.set()
+        elif message.text == '📑Проверка единичек':
+            logger.info('Пользователь {} {} нажал Проверка единичек'.format(id, message.from_user.first_name))
+            await verification_start(message, state)
 
         elif message.text == '📝Проверка товара':
             await start_check_stocks(message, state)

@@ -12,7 +12,7 @@ from handlers.users.delete_message import delete_message
 from loader import bot
 
 
-async def show_media(message: types.Message, articul):
+async def show_media(message, articul):
 
     try:
         data = parse(articul)
@@ -23,10 +23,10 @@ async def show_media(message: types.Message, articul):
             line += '\nЦена с сайта: {} руб.'.format(data['price'])
             await bot.send_message(message.from_user.id, line)
             try:
-                await message.answer_photo(data['pictures'][0])
+                await bot.send_photo(message.from_user.id, data['pictures'][0])
             except Exception as ex:
                 logger.debug('Первое фото не пошло {}', ex)
-                await message.answer_photo(data['pictures'][1])
+                await bot.send_photo(message.from_user.id, data['pictures'][1])
         else:
             if os.path.exists(r"{}\base\json\{}.json".format(path, articul)):
                 logger.info('нашел json ')
@@ -45,10 +45,10 @@ async def show_media(message: types.Message, articul):
             line += '\nЦена с сайта: {} руб.'.format(data['price'])
             await bot.send_message(message.from_user.id, line)
             try:
-                await message.answer_photo(data['pictures'][0])
+                await bot.send_photo(message.from_user.id, data['pictures'][0])
             except Exception as ex:
                 logger.debug('Первое фото не пошло {}', ex)
-                await message.answer_photo(data['pictures'][1])
+                await bot.send_photo(message.from_user.id, data['pictures'][1])
 
     except Exception as ex:
         asyncio.create_task(delete_message(sticker))

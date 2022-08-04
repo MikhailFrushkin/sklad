@@ -16,3 +16,4 @@ async def back(message, state: FSMContext):
         await bot.send_message(message.from_user.id,
                                'Главное меню.\nВведите артикул. Пример: 80264335', reply_markup=menu)
     await state.reset_state()
+    await state.finish()

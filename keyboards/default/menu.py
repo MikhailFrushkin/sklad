@@ -8,7 +8,8 @@ menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('📦 Содержимое ячейки'),
      KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('📝Проверка товара'),
-     KeyboardButton('📟 Мой заказ')],
+     KeyboardButton('📑Проверка единичек')],
+        # KeyboardButton('📟 Мой заказ')],
     [KeyboardButton('💳 Акции'),
      KeyboardButton('ℹ Информация')],
 ], resize_keyboard=True)
@@ -25,7 +26,8 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('📦 Содержимое ячейки'),
      KeyboardButton('🔍 Поиск на складах')],
     [KeyboardButton('📝Проверка товара'),
-     KeyboardButton('📟 Мой заказ')],
+     KeyboardButton('📑Проверка единичек')],
+    # KeyboardButton('📟 Мой заказ')],
     [KeyboardButton('💳 Акции'),
      KeyboardButton('ℹ Информация')],
     [KeyboardButton('Загрузка базы'),
@@ -57,3 +59,4 @@ orders = ReplyKeyboardMarkup(keyboard=[[KeyboardButton('Мой заказ'),
                                        [KeyboardButton('Отправить Мишке'),
                                         KeyboardButton('В главное меню')],
                                        ], resize_keyboard=True)
+
