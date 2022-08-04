@@ -14,7 +14,7 @@ from loguru import logger
 import bot
 from all_requests.parse_action import parse_actions, view_actions
 from data.config import ADMINS, PASSWORD, path
-from handlers.users.Verification import verification_start
+from handlers.users.Verification import verification_start, create_table
 from handlers.users.back import back
 from handlers.users.cell_content import show_place
 from handlers.users.helps import bot_help
@@ -334,7 +334,8 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == 'Загрузка базы':
             await bot.send_message(id, 'Выберите склад', reply_markup=dowload_menu)
             await Place.dowload.set()
-
+        elif message.text == 'Сброс единичек':
+            await create_table(message)
         else:
             answer = message.text.lower()
             await show_art_in_main_menu(message, answer)

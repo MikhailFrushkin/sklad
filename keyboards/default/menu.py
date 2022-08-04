@@ -32,7 +32,8 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('ℹ Информация')],
     [KeyboardButton('Загрузка базы'),
      KeyboardButton('Отправить'),
-     KeyboardButton('Обновить Акции')]
+     KeyboardButton('Обновить Акции'),
+     KeyboardButton('Сброс единичек')]
 ], resize_keyboard=True)
 
 dowload_menu = ReplyKeyboardMarkup(keyboard=[

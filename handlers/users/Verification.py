@@ -28,7 +28,11 @@ async def verification_start(message, state):
         data['message'] = mes
 
 
-def create_table():
+async def create_table(message):
+    myfile = '{}/database/mydatabase.db'.format(path)
+    if os.path.isfile(myfile):
+        os.remove(myfile)
+        logger.info('База единичек удалена')
     dbhandle.connect()
     Product.create_table()
     try:
@@ -41,17 +45,19 @@ def create_table():
                     group = row['ТГ']
                     temp = Product.create(vendor_code=art, name=name, group=group)
                     temp.save()
+        logger.info('База единичек создана')
+        await bot.send_message(message.from_user.id, 'База единичек создана')
     except peewee.InternalError as px:
         print(str(px))
     finally:
         dbhandle.close()
-    Product.list()
 
 
 @dp.callback_query_handler(state=Verification.get_groups)
 async def groups(call: types.CallbackQuery, state: FSMContext):
     try:
         async with state.proxy() as data:
+
             try:
                 asyncio.create_task(delete_message(data['message']))
             except Exception as ex:
@@ -82,7 +88,6 @@ async def ver_view(call: types.CallbackQuery, state: FSMContext):
         for prod in rows:
             if data['TG'] == prod.group:
                 art_dict[prod.vendor_code] = [prod.group, prod.status]
-        # art_dict = sorted(art_dict)
         dbhandle.close()
 
         if call.data == 'exit':
@@ -91,8 +96,7 @@ async def ver_view(call: types.CallbackQuery, state: FSMContext):
             for prod in art_dict.keys():
                 if art_dict[prod][1] == 'Не проверен' or art_dict[prod][1] == 'Пропущен':
                     if await while_answer(state) == 'break':
-                        await state.reset_state()
-                        await state.finish()
+
                         return
                     flag = False
 
@@ -116,7 +120,7 @@ async def ver_view(call: types.CallbackQuery, state: FSMContext):
             await back(call, state)
         else:
             data['list'] = call.data
-            await get_list(call, state, art_dict)
+            await get_list(call, state)
 
 
 async def while_answer(state: FSMContext):
@@ -161,7 +165,7 @@ def update_states(art: str, new_status: str):
     dbhandle.close()
 
 
-async def get_list(call: types.CallbackQuery, state: FSMContext, art_dict):
+async def get_list(call: types.CallbackQuery, state: FSMContext):
     try:
         async with state.proxy() as data:
             if call.data == 'all_list':
@@ -169,20 +173,19 @@ async def get_list(call: types.CallbackQuery, state: FSMContext, art_dict):
                 await show_list(call, state)
             elif call.data == 'skip_list':
                 await bot.send_message(call.from_user.id, "Список пропущенного товара:")
-                await show_list(call, state, filter=('Пропущен'))
+                await show_list(call, state, filters=('Пропущен'))
             elif call.data == 'tried_list':
                 await bot.send_message(call.from_user.id, "Список проверенного товара:")
-                await show_list(call, state, filter=('Найден', 'Не найден'))
+                await show_list(call, state, filters=('Найден', 'Не найден'))
             elif call.data == 'not_found_list':
                 await bot.send_message(call.from_user.id, "Список не найденного товара:")
-                await show_list(call, state, filter=('Не найден'))
-
+                await show_list(call, state, filters=('Не найден'))
     except Exception as ex:
         logger.debug(ex)
 
 
 async def show_list(call: types.CallbackQuery, state,
-                    filter=('Не проверен', 'Пропущен', 'Не найден', 'Найден')):
+                    filters=('Не проверен', 'Пропущен', 'Не найден', 'Найден')):
     dbhandle.connect()
     rows = Product.select()
     art_dict = dict()
@@ -196,7 +199,7 @@ async def show_list(call: types.CallbackQuery, state,
     product_list = []
     try:
         for key, value in art_dict.items():
-            if value[1] in filter:
+            if value[1] in filters:
                 if count != 25:
                     count += 1
                     count_all += 1
@@ -214,11 +217,10 @@ async def show_list(call: types.CallbackQuery, state,
         await bot.send_message(call.from_user.id, 'Всего позиций: 0')
         logger.debug("Пустое сообщение {}".format(ex))
     await Verification.get_groups.set()
+    # await asyncio.sleep(1)
     await groups(call, state)
 
 
 if __name__ == '__main__':
-    myfile = '{}/database/mydatabase.db'.format(path)
-    if os.path.isfile(myfile):
-        os.remove(myfile)
+
     create_table()
