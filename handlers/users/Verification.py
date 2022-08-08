@@ -12,6 +12,7 @@ from database.products import Product
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
 from handlers.users.show_media import show_media
+from keyboards.inline.quit import exitqr
 from keyboards.inline.verification import creat_groups_menu, verification_view, verification_check_btn, \
     verification_edited_status
 from loader import dp, bot
@@ -123,7 +124,7 @@ async def ver_view(call: types.CallbackQuery, state: FSMContext):
             await bot.send_message(call.from_user.id, 'Вы завершили проверку')
             await back(call, state)
         elif call.data == 'edided':
-            await bot.send_message(call.from_user.id, 'Введите артикул для редактирования:')
+            await bot.send_message(call.from_user.id, 'Введите артикул для редактирования:', reply_markup=exitqr)
             await Verification.edited_status.set()
         else:
             data['list'] = call.data
@@ -133,21 +134,33 @@ async def ver_view(call: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(content_types=['text'], state=Verification.edited_status)
 async def edidet_art(message: types.Message, state: FSMContext):
-    art = message.text
-    dbhandle.connect()
-    query = Product.select().where(Product.vendor_code == int(art))
-    if query.exists():
-        async with state.proxy() as data:
-            data['edidet'] = art
-            await bot.send_message(message.from_user.id, 'Выберите новый статус:',
-                                   reply_markup=verification_edited_status)
-            await Verification.edited_status_art.set()
-    else:
+    try:
+        art = int(message.text)
+        dbhandle.connect()
+        query = Product.select().where(Product.vendor_code == art)
+        if query.exists():
+            async with state.proxy() as data:
+                data['edidet'] = art
+                await bot.send_message(message.from_user.id, 'Выберите новый статус:',
+                                       reply_markup=verification_edited_status)
+                await Verification.edited_status_art.set()
+        else:
+            await bot.send_message(message.from_user.id, 'Неправильно введен артикул')
+            dbhandle.close()
+            await bot.send_message(message.from_user.id, 'Введите артикул для редактирования:', reply_markup=exitqr)
+            await Verification.edited_status.set()
+    except Exception as ex:
         await bot.send_message(message.from_user.id, 'Неправильно введен артикул')
-        dbhandle.close()
-        await bot.send_message(message.from_user.id, 'Введите артикул для редактирования:')
+        await bot.send_message(message.from_user.id, 'Введите артикул для редактирования:', reply_markup=exitqr)
         await Verification.edited_status.set()
-    dbhandle.close()
+    finally:
+        dbhandle.close()
+
+
+@dp.callback_query_handler(state=Verification.edited_status)
+async def get_items(call: types.CallbackQuery, state: FSMContext):
+    if call.data == 'exit':
+        await back(call, state)
 
 
 @dp.callback_query_handler(state=Verification.edited_status_art)
