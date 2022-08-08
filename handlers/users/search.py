@@ -120,14 +120,14 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     if cells:
                         logger.info('Вернул список ячеек - {}: {}'.format(message.text, cells))
                         for item in cells:
-                            if i == '012_825':
-                                await bot.send_message(message.from_user.id, item,
-                                                       reply_markup=InlineKeyboardMarkup(row_width=1).
-                                                       add(InlineKeyboardButton(text='Заказать',
-                                                                                callback_data='or{}'.format(
-                                                                                    message.text))))
-                            else:
-                                await bot.send_message(message.from_user.id, item)
+                        #     if i == '012_825':
+                        #         await bot.send_message(message.from_user.id, item,
+                        #                                reply_markup=InlineKeyboardMarkup(row_width=1).
+                        #                                add(InlineKeyboardButton(text='Заказать',
+                        #                                                         callback_data='or{}'.format(
+                        #                                                             message.text))))
+                        #     else:
+                            await bot.send_message(message.from_user.id, item)
 
                 await bot.send_message(message.from_user.id, '⚠Введите артикул для поиска на всех складах⚠',
                                        reply_markup=exitqr)
@@ -141,14 +141,14 @@ async def search_sklad(message: types.Message, state: FSMContext):
                     if len(cells) != 0:
                         logger.info('Вернул список ячеек - {}'.format(cells))
                         for item in cells:
-                            if data['sklad'] == '012_825':
-                                await bot.send_message(message.from_user.id, item,
-                                                       reply_markup=InlineKeyboardMarkup(row_width=1).
-                                                       add(InlineKeyboardButton(text='Заказать',
-                                                                                callback_data='or{}'.
-                                                                                format(message.text))))
-                            else:
-                                await bot.send_message(message.from_user.id, item)
+                            # if data['sklad'] == '012_825':
+                            #     await bot.send_message(message.from_user.id, item,
+                            #                            reply_markup=InlineKeyboardMarkup(row_width=1).
+                            #                            add(InlineKeyboardButton(text='Заказать',
+                            #                                                     callback_data='or{}'.
+                            #                                                     format(message.text))))
+                            # else:
+                            await bot.send_message(message.from_user.id, item)
 
                 await bot.send_message(message.from_user.id,
                                        '⚠Введите артикул для поиска на {} складе⚠'.format(data['sklad']),

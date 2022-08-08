@@ -57,3 +57,6 @@ class Verification(StatesGroup):
     view_result = State()
     get_list = State()
     check_item = State()
+    edited_status = State()
+    edited_status_art = State()
+

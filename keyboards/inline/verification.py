@@ -17,6 +17,7 @@ def creat_groups_menu():
 
     for i in sorted(groups_list):
         verification_btn_groups.insert(InlineKeyboardButton(text='{}'.format(i), callback_data='{}'.format(i)))
+    verification_btn_groups.insert(InlineKeyboardButton(text='Статистика', callback_data='stat'))
     verification_btn_groups.insert(InlineKeyboardButton(text='В главное меню', callback_data='exit'))
     return verification_btn_groups
 
@@ -27,6 +28,7 @@ verification_view.insert(InlineKeyboardButton(text='Весь список', call
 verification_view.insert(InlineKeyboardButton(text='Проверенныe', callback_data='tried_list'))
 verification_view.insert(InlineKeyboardButton(text='Пропущенные', callback_data='skip_list'))
 verification_view.insert(InlineKeyboardButton(text='Не найденные', callback_data='not_found_list'))
+verification_view.insert(InlineKeyboardButton(text='Редактировать', callback_data='edided'))
 verification_view.insert(InlineKeyboardButton(text='В главное меню', callback_data='exit'))
 
 
@@ -37,3 +39,10 @@ def verification_check_btn(art):
     verification_check.insert(InlineKeyboardButton(text='Пропустить', callback_data='skip{}'.format(art)))
     verification_check.insert(InlineKeyboardButton(text='В главное меню', callback_data='exit'))
     return verification_check
+
+
+verification_edited_status = InlineKeyboardMarkup(row_width=2)
+verification_edited_status.insert(InlineKeyboardButton(text='Найден', callback_data='ok'))
+verification_edited_status.insert(InlineKeyboardButton(text='Не найден', callback_data='no'))
+verification_edited_status.insert(InlineKeyboardButton(text='Пропустить', callback_data='skip_s'))
+verification_edited_status.insert(InlineKeyboardButton(text='В главное меню', callback_data='exit'))
