@@ -55,41 +55,46 @@ def parse_actions():
     }
 
     groups_list = ['1181', '5359', '1184', '1182', '1020', '1140', '2269', '1183', '1185']
+    offset = 1
     for i in groups_list:
         logger.info('Сканируется группа {}'.format(i))
         time.sleep(3)
+        catalog = []
+        for j in range(5):
+            params = {
+                'category_id': i,
+                'limit': '30',
+                'offset': str(offset*30),
+                'showCount': 'true',
+                'type': 'product_list',
+                'tovary_so_skidkoi': '1',
+                'sort': 'discount_desc',
+            }
+            try:
+                response = requests.get('https://hoff.ru/vue/catalog/section/',
+                                        params=params, cookies=cookies, headers=headers).json()
+                producs = response.get('data').get('items')
+                for item in producs:
+                    catalog.append({
+                        'articul': item['articul'],
+                        'name': item['name'],
+                        'image': item['image'],
+                        'prices': {
+                            'new': item['prices']['new'],
+                            'old': item['prices']['old']
+                        },
+                        'discount': item['discount'],
+                        'in_stock': item['in_stock']
+                    })
+                offset += 1
 
-        params = {
-            'category_id': i,
-            'limit': '30',
-            'offset': '0',
-            'showCount': 'true',
-            'type': 'product_list',
-            'tovary_so_skidkoi': '1',
-            'sort': 'discount_desc',
-        }
-        try:
-            response = requests.get('https://hoff.ru/vue/catalog/section/',
-                                    params=params, cookies=cookies, headers=headers).json()
-            producs = response.get('data').get('items')
-            catalog = []
-            for item in producs:
-                catalog.append({
-                    'articul': item['articul'],
-                    'name': item['name'],
-                    'image': item['image'],
-                    'prices': {
-                        'new': item['prices']['new'],
-                        'old': item['prices']['old']
-                    },
-                    'discount': item['discount'],
-                    'in_stock': item['in_stock']
-                })
-            with open('{}/base/json/action/action{}.json'.format(path, params['category_id']), 'w',
-                      encoding='utf-8') as file:
-                json.dump(catalog, file, ensure_ascii=False, indent=4)
-        except Exception as ex:
-            logger.debug(ex)
+                print(len(catalog))
+            except Exception as ex:
+                logger.debug(ex)
+        offset = 1
+        with open('{}/base/json/action/action{}.json'.format(path, params['category_id']), 'w',
+                  encoding='utf-8') as file:
+            json.dump(catalog, file, ensure_ascii=False, indent=4)
 
 
 @dp.message_handler(content_types=['text'], state=Action.set_group)
@@ -104,9 +109,10 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
         if call.data == 'exit':
             await back(call, state)
         else:
-            await bot.send_message(call.from_user.id, 'Выберите группу:', reply_markup=product_num)
-            data['group'] = call.data
+            await bot.send_message(call.from_user.id, 'Выберите количество товаров к показу:', reply_markup=product_num)
+
             await Action.show_product.set()
+            data['group'] = call.data
 
 
 @dp.callback_query_handler(state=Action.show_product)
@@ -131,14 +137,6 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
                                                                                               if data['group'] in i
                                                                                           ], call.data))
                     for item in catalog:
-                        count += 1
-                        await bot.send_photo(call.from_user.id, item["image"])
-                        await bot.send_message(call.from_user.id, '{} {}\nСтарая цена: {} руб.\nНовая цена: {} руб.'
-                                                                  '\nСкидка: {}%'.format(item["articul"], item["name"],
-                                                                                         item["prices"]["old"],
-                                                                                         item["prices"]["new"],
-                                                                                         item["discount"]),
-                                               reply_markup=second_menu)
 
                         sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
                         full_block = ['Остатки на магазине:']
@@ -149,15 +147,24 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
                                     for j in cells:
                                         full_block.append(j)
                             if len(full_block) > 1:
+                                count += 1
+                                await bot.send_photo(call.from_user.id, item["image"])
+                                await bot.send_message(call.from_user.id,
+                                                       '{} {}\nСтарая цена: {} руб.\nНовая цена: {} руб.'
+                                                       '\nСкидка: {}%'.format(item["articul"], item["name"],
+                                                                              item["prices"]["old"],
+                                                                              item["prices"]["new"],
+                                                                              item["discount"]),
+                                                       reply_markup=second_menu)
                                 await bot.send_message(id, '\n'.join(full_block))
-                            else:
-                                await bot.send_message(id, 'Данный товар отсутствует.')
+                                time.sleep(1)
+                            # else:
+                            #     await bot.send_message(id, 'Данный товар отсутствует.')
                         except Exception as ex:
                             logger.debug('Ошибка при выводе ячеек в гланом меню {}', ex)
 
                         if count == int(call.data):
                             break
-                        time.sleep(0.5)
             except Exception as ex:
                 logger.debug(ex)
             finally:

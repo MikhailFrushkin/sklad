@@ -3,6 +3,7 @@ import sqlite3
 from loguru import logger
 
 from data.config import path
+from loader import bot
 
 
 def check(message):

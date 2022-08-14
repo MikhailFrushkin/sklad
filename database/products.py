@@ -55,7 +55,7 @@ class Product(BaseModel):
                                 temp = Product.create(vendor_code=art, name=name, group=group,
                                                       place=place, minigroup_name=minigroup_name)
                                 temp.save()
-                                logger.debug('новый арт добавлен {}'.format(ex))
+                                logger.debug('новый арт добавлен {}'.format(temp))
                 arts_bd = [i.vendor_code for i in Product.select()]
 
                 with open('{}/utils/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:

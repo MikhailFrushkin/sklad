@@ -12,6 +12,7 @@ from database.products import Product
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
 from handlers.users.show_media import show_media
+from keyboards.default.menu import second_menu
 from keyboards.inline.quit import exitqr
 from keyboards.inline.verification import creat_groups_menu, verification_view, verification_check_btn, \
     verification_edited_status
@@ -21,6 +22,7 @@ from state.states import Verification
 
 async def verification_start(message, state):
     async with state.proxy() as data:
+        await bot.send_message(message.from_user.id, 'Проверка единичек.', reply_markup=second_menu)
         mes = await bot.send_message(message.from_user.id, 'Выберите группу:', reply_markup=creat_groups_menu())
         await Verification.get_groups.set()
         data['message'] = mes
@@ -49,6 +51,7 @@ async def groups(call: types.CallbackQuery, state: FSMContext):
             dbhandle.close()
 
             if call.data == 'exit':
+                logger.info('back')
                 await back(call, state)
             elif call.data == 'stat':
                 dbhandle.connect()
@@ -86,6 +89,8 @@ async def groups(call: types.CallbackQuery, state: FSMContext):
 
     except Exception as ex:
         logger.debug(ex)
+    finally:
+        dbhandle.close()
 
 
 @dp.callback_query_handler(state=Verification.view_result)
@@ -95,8 +100,8 @@ async def ver_view(call: types.CallbackQuery, state: FSMContext):
             asyncio.create_task(delete_message(data['message']))
         except Exception as ex:
             logger.debug('Нет сообщения для удаления {}'.format(ex))
-
         if call.data == 'exit':
+            logger.info('back')
             await back(call, state)
         elif call.data == 'start':
             for prod in data['dict'].keys():
@@ -122,6 +127,7 @@ async def ver_view(call: types.CallbackQuery, state: FSMContext):
                         logger.debug('Первое сообщение {}'.format(ex))
 
             await bot.send_message(call.from_user.id, 'Вы завершили проверку')
+            logger.info('back')
             await back(call, state)
         elif call.data == 'edided':
             await bot.send_message(call.from_user.id, 'Введите артикул для редактирования:', reply_markup=exitqr)
@@ -130,6 +136,30 @@ async def ver_view(call: types.CallbackQuery, state: FSMContext):
             data['list'] = call.data
             await asyncio.sleep(1)
             await get_list(call, state)
+
+
+@dp.message_handler(content_types=['text'], state=[Verification.edited_status, Verification.edited_status_art,
+                                                   Verification.view_result, Verification.get_groups,
+                                                   Verification.check_item])
+async def text_ver(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text == 'В главное меню':
+            try:
+                data['answer'] = 'exit'
+                dbhandle.connect()
+                for key, value in data['dict'].items():
+                    status = Product.get(Product.vendor_code == int(key))
+                    if status.status != value[1]:
+                        status.status = value[1]
+                        status.user_id = message.from_user.id
+                        status.updated_at = datetime.datetime.now()
+                        status.save()
+            except Exception as ex:
+                logger.debug(ex)
+            finally:
+                dbhandle.close()
+            await back(message, state)
+            # await while_answer(state)
 
 
 @dp.message_handler(content_types=['text'], state=Verification.edited_status)
@@ -146,11 +176,10 @@ async def edidet_art(message: types.Message, state: FSMContext):
                 await Verification.edited_status_art.set()
         else:
             await bot.send_message(message.from_user.id, 'Неправильно введен артикул')
-            dbhandle.close()
             await bot.send_message(message.from_user.id, 'Введите артикул для редактирования:', reply_markup=exitqr)
             await Verification.edited_status.set()
     except Exception as ex:
-        await bot.send_message(message.from_user.id, 'Неправильно введен артикул')
+        await bot.send_message(message.from_user.id, 'Неправильно введен артикул', reply_markup=second_menu)
         await bot.send_message(message.from_user.id, 'Введите артикул для редактирования:', reply_markup=exitqr)
         await Verification.edited_status.set()
     finally:
@@ -160,6 +189,8 @@ async def edidet_art(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(state=Verification.edited_status)
 async def get_items(call: types.CallbackQuery, state: FSMContext):
     if call.data == 'exit':
+        dbhandle.close()
+        logger.info('back')
         await back(call, state)
 
 
@@ -176,11 +207,13 @@ async def get_items(call: types.CallbackQuery, state: FSMContext):
         elif call.data == 'skip_s':
             status.status = 'Пропущен'
         elif call.data == 'exit':
+            logger.info('back')
             await back(call, state)
         else:
             logger.info('edited_status_art неверный колл')
         status.save()
         dbhandle.close()
+        logger.info('back')
         await back(call, state)
 
 
@@ -228,6 +261,7 @@ async def get_items(call: types.CallbackQuery, state: FSMContext):
                     status.updated_at = datetime.datetime.now()
                     status.save()
             dbhandle.close()
+            logger.info('back')
             await back(call, state)
         if last == art:
             for key, value in data['dict'].items():
@@ -294,8 +328,10 @@ async def show_list(call: types.CallbackQuery, state,
         except Exception as ex:
             await bot.send_message(call.from_user.id, 'Всего позиций: 0')
             logger.debug("Пустое сообщение {}".format(ex))
-        await Verification.get_groups.set()
-        await groups(call, state)
+
+        mes = await bot.send_message(call.from_user.id, "Выберите действие:", reply_markup=verification_view)
+        await Verification.view_result.set()
+        data['message'] = mes
 
 
 if __name__ == '__main__':

@@ -298,7 +298,9 @@ async def bot_message(message: types.Message, state: FSMContext):
 
         elif message.text == '📑Проверка единичек':
             logger.info('Пользователь {} {} нажал Проверка единичек'.format(id, message.from_user.first_name))
-            await verification_start(message, state)
+            await bot.send_message(id, 'В доработке.')
+            # await verification_start(message, state)
+            await back(message, state)
 
         elif message.text == '📝Проверка товара':
             await start_check_stocks(message, state)
@@ -307,6 +309,7 @@ async def bot_message(message: types.Message, state: FSMContext):
             await search(message, state)
 
         elif message.text == 'В главное меню':
+            await bot.send_message(id, 'asdasd')
             await back(message, state)
 
         elif message.text == '📖 Любой текст в Qr':
