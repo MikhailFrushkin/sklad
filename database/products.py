@@ -17,7 +17,7 @@ class BaseModel(Model):
 
 class Product(BaseModel):
     id = PrimaryKeyField(null=False)
-    vendor_code = IntegerField()
+    vendor_code = CharField(max_length=8)
     place = CharField(max_length=25)
     name = TextField()
     group = CharField(max_length=10)

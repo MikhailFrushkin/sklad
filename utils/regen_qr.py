@@ -9,8 +9,7 @@ from data.config import path
 def main():
     """Генерирует qr из списка qr_list
     box-size - качество qr 40 макс(долго регенит)"""
-    qr_list = ['011_825-Exit_sklad', '011_825-Exit_Dost', '011_825-Exit_zal',
-               '011_825-otkaz_sklad', 'R12_BrakIn_825', 'V-Sales_825']
+    qr_list = ['011_825-02-01-0', '012_825-Dost_int8']
     for data in qr_list:
         qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=25)
 

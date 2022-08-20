@@ -51,13 +51,11 @@ async def bot_start(message: types.Message):
         await bot.send_sticker(message.chat.id, sticker)
         if str(message.from_user.id) in ADMINS:
             await message.answer('Добро пожаловать, {}!'
-                                 '\nУшел в отпуск до августа =) Базу либо вообще не буду обновлять, либо редко.'
                                  '\nДля помощи нажми на кнопку Информация(/help)'
                                  .format(message.from_user.first_name),
                                  reply_markup=menu_admin)
         else:
             await message.answer('Добро пожаловать, {}!'
-                                 '\nУшел в отпуск до августа =) Базу либо вообще не буду обновлять, либо редко.'
                                  '\nДля помощи нажми на кнопку Информация(/help)'
                                  .format(message.from_user.first_name), reply_markup=menu)
     else:
@@ -298,9 +296,10 @@ async def bot_message(message: types.Message, state: FSMContext):
 
         elif message.text == '📑Проверка единичек':
             logger.info('Пользователь {} {} нажал Проверка единичек'.format(id, message.from_user.first_name))
-            await bot.send_message(id, 'В доработке.')
-            # await verification_start(message, state)
-            await back(message, state)
+            await verification_start(message, state)
+
+            # await bot.send_message(id, 'В доработке.')
+            # await back(message, state)
 
         elif message.text == '📝Проверка товара':
             await start_check_stocks(message, state)
@@ -309,7 +308,6 @@ async def bot_message(message: types.Message, state: FSMContext):
             await search(message, state)
 
         elif message.text == 'В главное меню':
-            await bot.send_message(id, 'asdasd')
             await back(message, state)
 
         elif message.text == '📖 Любой текст в Qr':
