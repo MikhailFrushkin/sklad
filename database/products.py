@@ -55,8 +55,9 @@ class Product(BaseModel):
                                 temp = Product.create(vendor_code=art, name=name, group=group,
                                                       place=place, minigroup_name=minigroup_name)
                                 temp.save()
-                                logger.debug('новый арт добавлен {}'.format(temp))
-                arts_bd = [i.vendor_code for i in Product.select()]
+                                # logger.debug('новый арт добавлен {}'.format(temp))
+                arts_bd = [int(i.vendor_code) for i in Product.select()]
+                # print(arts_bd)
 
                 with open('{}/utils/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                     reader = csv.DictReader(csvfile)
@@ -64,12 +65,14 @@ class Product(BaseModel):
                     for row in reader:
                         if row['Физические \nзапасы'] == '1' and row['Местоположение'] == 'V-Sales_825':
                             new_art_exsel.append(int(row['Код \nноменклатуры']))
+                    # print(new_art_exsel)
                     for item in arts_bd:
                         if item not in new_art_exsel:
+                            print(type(item), type(new_art_exsel[5]))
                             try:
                                 obj = Product.get(Product.vendor_code == item)
                                 obj.delete_instance()
-                                logger.info('арт удален {}'.format(item))
+                                # logger.info('арт удален {}'.format(item))
                             except Exception as ex:
                                 logger.debug(ex)
 
@@ -107,3 +110,5 @@ class Product(BaseModel):
         database = dbhandle
         db_table = 'Product'
         order_by = ['vendor_code']
+
+

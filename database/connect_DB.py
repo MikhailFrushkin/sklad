@@ -7,3 +7,4 @@ password = 'root'
 db_name = 'Product'
 
 dbhandle = peewee.SqliteDatabase('{}/database/mydatabase.db'.format(path))
+dbdate = peewee.SqliteDatabase('{}/database/DateBase.db'.format(path))
