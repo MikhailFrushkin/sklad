@@ -114,12 +114,8 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
             try:
                 photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
             except Exception as ex:
-                try:
-                    photo = await call.message.answer_photo(data2['pictures'][1], reply_markup=hide)
-                    logger.debug(ex)
-                except Exception as ex:
-                    photo = await call.message.answer_photo('https://jackwharperconstruction.com/wp-content/uploads/9/c/9/9c980deb1f9f42ef2244b13de3aa118d.jpg', reply_markup=hide)
-                    logger.debug(ex)
+                photo = await call.message.answer_photo(data2['pictures'][1], reply_markup=hide)
+                logger.debug(ex)
             try:
                 data['photo{}'.format(call.data)] = photo
             except Exception as ex:
@@ -335,8 +331,8 @@ async def min_vitrina(call: types.CallbackQuery, state: FSMContext):
         save_exsel_min(call.data)
         try:
             logger.info('{} {} запросил мин.витрину на {}'.format(call.from_user.id,
-                                                                  call.from_user.first_name,
-                                                                  call.data))
+                                                                     call.from_user.first_name,
+                                                                     call.data))
             await call.message.answer_document(open('{}/files/min_vitrina_{}.xlsx'.format(path, call.data), 'rb'))
         except Exception as ex:
             logger.debug('Не удалось выгрузить файл для {} {}'.format(call.data, ex))

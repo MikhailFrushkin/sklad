@@ -112,21 +112,25 @@ async def ver_view(call: types.CallbackQuery, state: FSMContext):
                         return
                     try:
                         await state.update_data(answer='false')
+                        print('data[answer]', data['answer'])
                     except Exception as ex:
                         logger.debug(ex)
                     data['flag'] = False
                     await state.update_data(flag=False)
 
                     await show_media(call, prod)
+                    print(prod)
 
-                    await bot.send_message(call.from_user.id, "Артикул: {}\nТовар в наличии?".format(prod),
-                                           reply_markup=verification_check_btn(prod))
+                    mes = await bot.send_message(call.from_user.id, "Артикул: {}\nТовар в наличии?".format(prod),
+                                                 reply_markup=verification_check_btn(prod))
 
                     await Verification.check_item.set()
+                    data['message'] = mes
 
                     while not data['flag']:
                         await asyncio.sleep(2)
                         data['flag'] = await while_answer(state)
+                        print('flag', data['flag'])
                     try:
                         asyncio.create_task(delete_message(data['message']))
                     except Exception as ex:
@@ -167,7 +171,7 @@ async def text_ver(message: types.Message, state: FSMContext):
                 logger.debug(ex)
             finally:
                 dbhandle.close()
-            # await back(message, state)
+            await back(message, state)
         else:
             try:
                 art = message.text
@@ -177,7 +181,7 @@ async def text_ver(message: types.Message, state: FSMContext):
                     async with state.proxy() as data:
                         data['edidet'] = art
                         await bot.send_message(message.from_user.id, 'Выберите новый статус:',
-                                               reply_markup=verification_edited_status)
+                                                     reply_markup=verification_edited_status)
                         await Verification.edited_status_art.set()
                 else:
                     await bot.send_message(message.from_user.id, 'Неправильно введен артикул')
@@ -229,6 +233,7 @@ async def while_answer(state: FSMContext):
     async with state.proxy() as data:
         list_answer = ['yess', 'nooo', 'skip']
         try:
+            print('в цикле', data['answer'])
             if data['answer'] in list_answer:
                 return True
             elif data['answer'] == 'exit':
@@ -243,6 +248,7 @@ async def while_answer(state: FSMContext):
 @dp.callback_query_handler(state=Verification.check_item)
 async def get_items(call: types.CallbackQuery, state: FSMContext):
     try:
+        print(call.data)
         art = call.data[4:]
     except ValueError as ex:
         art = 0
@@ -277,6 +283,7 @@ async def get_items(call: types.CallbackQuery, state: FSMContext):
             await back(call, state)
 
         if art == last:
+            print('asdsafasasfqwew')
             dbhandle.connect()
             for key, value in data['dict'].items():
                 status = Product.get(Product.vendor_code == key)
