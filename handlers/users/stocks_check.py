@@ -3,6 +3,7 @@ import csv
 import json
 import os
 import pandas as pd
+from data.config import ADMINS
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -14,7 +15,7 @@ from all_requests.requests_mediagroup import get_info
 from data.config import path
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
-from keyboards.default import menu
+from keyboards.default.menu import menu, menu_admin
 from keyboards.inline.mesto import hide
 from keyboards.inline.stock import choise_num, stocks
 from loader import dp, bot
@@ -114,8 +115,15 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
             try:
                 photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
             except Exception as ex:
-                photo = await call.message.answer_photo(data2['pictures'][1], reply_markup=hide)
-                logger.debug(ex)
+                try:
+                    photo = await call.message.answer_photo(data2['pictures'][1], reply_markup=hide)
+                    logger.debug(ex)
+                except Exception as ex:
+                    photo = await call.message.answer_photo(
+                        'https://jackwharperconstruction.com/wp-content/uploads'
+                        '/9/c/9/9c980deb1f9f42ef2244b13de3aa118d.jpg',
+                        reply_markup=hide)
+                    logger.debug(ex)
             try:
                 data['photo{}'.format(call.data)] = photo
             except Exception as ex:
@@ -126,6 +134,10 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
     async with state.proxy() as data:
         data['products'] = []
         line = []
+        if call.from_user.id not in [int(i) for i in ADMINS]:
+            menu_check = menu
+        else:
+            menu_check = menu_admin
         if nums == 0:
             dict_art_012 = union_art('012_825', group)[1]
             dict_art_v = union_art('V_Sales', group)[1]
@@ -134,7 +146,8 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
                     data['products'].append((key, dict_art_012[key]))
                     line.append('{} \nНа складе: {}'.format(' '.join(key), dict_art_012[key]))
             if len(line) > 0:
-                await bot.send_message(call.from_user.id, '🆘Товары которые необходимо выставить:🆘', reply_markup=menu)
+                await bot.send_message(call.from_user.id, '🆘Товары которые необходимо выставить:🆘',
+                                       reply_markup=menu_check)
                 for item in line:
                     await bot.send_message(call.from_user.id, '{}'.format(item),
                                            reply_markup=InlineKeyboardMarkup().add(
@@ -143,11 +156,11 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
                                                                         item[:8]
                                                                     ))))
             else:
-                await bot.send_message(call.from_user.id, 'Все товары в наличии👌', reply_markup=menu)
+                await bot.send_message(call.from_user.id, 'Все товары в наличии👌', reply_markup=menu_check)
         elif nums == 3:
             dict_art_012 = union_art('012_825', group)[0]
             dict_art_v = union_art('V_Sales', group)[0]
-            await bot.send_message(call.from_user.id, '⚠️Товары которые можно пополнить:⚠️', reply_markup=menu)
+            await bot.send_message(call.from_user.id, '⚠️Товары которые можно пополнить:⚠️', reply_markup=menu_check)
             count = 0
             for key in dict_art_012.keys():
                 if key in dict_art_v.keys():
@@ -162,7 +175,7 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
         elif nums == 10:
             dict_art_012 = union_art('012_825', group)[0]
             dict_art_v = union_art('V_Sales', group)[0]
-            await bot.send_message(call.from_user.id, '⚠Товары которые можно пополнить:⚠️', reply_markup=menu)
+            await bot.send_message(call.from_user.id, '⚠Товары которые можно пополнить:⚠️', reply_markup=menu_check)
             count = 0
             for key in dict_art_012.keys():
                 if key in dict_art_v.keys():
@@ -331,8 +344,8 @@ async def min_vitrina(call: types.CallbackQuery, state: FSMContext):
         save_exsel_min(call.data)
         try:
             logger.info('{} {} запросил мин.витрину на {}'.format(call.from_user.id,
-                                                                     call.from_user.first_name,
-                                                                     call.data))
+                                                                  call.from_user.first_name,
+                                                                  call.data))
             await call.message.answer_document(open('{}/files/min_vitrina_{}.xlsx'.format(path, call.data), 'rb'))
         except Exception as ex:
             logger.debug('Не удалось выгрузить файл для {} {}'.format(call.data, ex))

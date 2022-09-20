@@ -13,7 +13,6 @@ from loader import bot
 
 
 async def show_media(message, articul):
-
     try:
         data = parse(articul)
         if data:
@@ -23,7 +22,17 @@ async def show_media(message, articul):
             line += '\nЦена с сайта: {} руб.'.format(data['price'])
             await bot.send_message(message.from_user.id, line)
             try:
-                await bot.send_photo(message.from_user.id, data['pictures'][0])
+                if len(data['pictures']) > 2:
+                    count = 0
+                    media = types.MediaGroup()
+                    for i in data['pictures']:
+                        media.attach_photo(types.InputMediaPhoto(i))
+                        count += 1
+                        if count == 5:
+                            break
+                    await bot.send_media_group(message.from_user.id, media=media)
+                else:
+                    await bot.send_photo(message.from_user.id, data['pictures'][0])
             except Exception as ex:
                 logger.debug('Первое фото не пошло {}', ex)
                 await bot.send_photo(message.from_user.id, data['pictures'][1])
@@ -35,7 +44,7 @@ async def show_media(message, articul):
 
             else:
                 with open('{}/stikers/seach.tgs'.format(path), 'rb') as sticker:
-                    sticker = await bot.send_sticker(message.chat.id, sticker)
+                    sticker = await bot.send_sticker(message.from_user.id, sticker)
                     data = get_info(articul)
                     logger.info(data)
                     asyncio.create_task(delete_message(sticker))

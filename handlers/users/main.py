@@ -1,11 +1,11 @@
-import datetime
 import random
 import sqlite3
 import time
-
+from database.connect_DB import *
+from database.date import *
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, ParseMode, File
+from aiogram.types import ContentType, ParseMode
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from aiogram.utils.emoji import emojize
 from aiogram.utils.markdown import text, italic, code
@@ -20,17 +20,16 @@ from handlers.users.cell_content import show_place
 from handlers.users.helps import bot_help
 from handlers.users.search import search
 from handlers.users.show_art import show_art_in_main_menu
-from handlers.users.show_media import show_media
 from handlers.users.show_qrs import show_qr
+from handlers.users.sold_product import read_base_vsl
 from handlers.users.stocks_check import start_check_stocks
 from keyboards.default import menu
-from keyboards.default.menu import second_menu, menu_admin, dowload_menu, orders
-from keyboards.inline.verification import creat_groups_menu
+from keyboards.default.menu import second_menu, menu_admin, dowload_menu
 from loader import dp, bot
-from state.states import Orders, Verification
+from state.states import Orders
 from state.states import Place, Logging, Messages, QR, Action
 from utils.check_bd import check
-from utils.open_exsel import dowload, search_all_sklad
+from utils.open_exsel import dowload
 from utils.read_bd import del_orders, mail
 
 
@@ -152,20 +151,69 @@ async def doc_handler(message: types.Message, state: FSMContext):
     """Ловит документ(EXSEL) и загружает"""
     try:
         async with state.proxy() as data:
-            if document := message.document:
-                await document.download(
-                    destination_file="{}/utils/file_{}.xls".format(path, data['sklad']),
-                )
-                logger.info('{} - Загружен документ'.format(message.from_user.id))
-                await bot.send_message(message.from_user.id, 'Загружен документ на {} склад.'.format(data['sklad']),
-                                       reply_markup=InlineKeyboardMarkup().add(
-                                           InlineKeyboardButton(text='Загрузить в базу',
-                                                                callback_data='{}'.format(data['sklad'])
-                                                                )))
+            if data['sklad'] == 'V_Sales':
+                try:
+                    if os.path.exists('{}/utils/file_old_vsl.xls'.format(path)):
+                        os.remove('{}/utils/file_old_vsl.xls'.format(path))
+                    old_name = '{}/utils/file_{}.xls'.format(path, data['sklad'])
+                    mtime = os.path.getmtime(old_name)
+                    date_old = time.ctime(mtime)
+                    os.rename(old_name, '{}/utils/file_old_vsl.xls'.format(path))
+                    dowload('old_vsl')
+                    myfile = '{}/database/DateBase.db'.format(path)
+
+                    if os.path.isfile(myfile):
+                        dbdate.connect()
+                        for i in DateBase.select():
+                            i.date_V_Sales_old = date_old
+                            i.save()
+                    else:
+                        dbdate.connect()
+                        DateBase.create_table()
+                        temp = DateBase.create(date_V_Sales_old=date_old)
+                        temp.save()
+                        logger.info('создал бд')
+                    dbdate.close()
+                    read_base_vsl()
+                    await bot.send_message(id, 'Обновлен файл с проданным товаром')
+
+                except Exception as ex:
+                    logger.debug(ex)
+            await dowload_exs(message, state)
 
     except Exception as ex:
-        await bot.send_message(message.from_user.id, 'Ошибка при загрузке эксель')
+        await bot.send_message(message.from_user.id, 'Ошибка при загрузке эксель {}'.format(ex))
         logger.debug(ex)
+
+
+async def dowload_exs(message, state):
+    async with state.proxy() as data:
+        dbdate.connect()
+        if document := message.document:
+            await document.download(
+                destination_file="{}/utils/file_{}.xls".format(path, data['sklad']),
+            )
+            logger.info('{} - Загружен документ'.format(message.from_user.id))
+            await bot.send_message(message.from_user.id, 'Загружен документ на {} склад.'.format(data['sklad']),
+                                   reply_markup=InlineKeyboardMarkup().add(
+                                       InlineKeyboardButton(text='Загрузить в базу',
+                                                            callback_data='{}'.format(data['sklad'])
+                                                            )))
+        mtime = os.path.getmtime("{}/utils/file_{}.xls".format(path, data['sklad']))
+        date_new = time.ctime(mtime)
+        for i in DateBase.select():
+            if data['sklad'] == 'V_Sales':
+                i.date_V_Sales_new = date_new
+            elif data['sklad'] == '011_825':
+                i.date_011_825 = date_new
+            elif data['sklad'] == '012_825':
+                i.date_012_825 = date_new
+            elif data['sklad'] == 'A11_825':
+                i.date_A11_825 = date_new
+            elif data['sklad'] == 'RDiff':
+                i.date_RDiff = date_new
+            i.save()
+        dbdate.close()
 
 
 @dp.callback_query_handler(state=Place.dowload)
@@ -220,6 +268,7 @@ async def voice_message_handler(message: types.Message):
                 await show_art_in_main_menu(message, result)
             except Exception as ex:
                 result = "Sorry.. run again..."
+                logger.debug(ex)
     except Exception as ex:
         logger.debug(ex)
     await bot.send_message(message.from_user.id, "{}".format(result))
@@ -227,11 +276,11 @@ async def voice_message_handler(message: types.Message):
     os.remove(file_name_full_converted)
 
 
-def read_art(text):
+def read_art(text_s):
     import re
-    text = text.replace(' ', '').replace(",", "")
+    text_s = text_s.replace(' ', '').replace(",", "")
     pattern = "\d{8,}"
-    result = re.search(pattern, text)[0][:8]
+    result = re.search(pattern, text_s)[0][:8]
     return result
 
 
@@ -298,11 +347,18 @@ async def bot_message(message: types.Message, state: FSMContext):
             logger.info('Пользователь {} {} нажал Проверка единичек'.format(id, message.from_user.first_name))
             await verification_start(message, state)
 
-            # await bot.send_message(id, 'В доработке.')
-            # await back(message, state)
-
         elif message.text == '📝Проверка товара':
             await start_check_stocks(message, state)
+
+        elif message.text == '💰 Проданный товар':
+            dbdate.connect()
+            logger.info('Пользователь {} {} нажал Проданный товар'.format(id, message.from_user.first_name))
+            for i in DateBase.select():
+                await bot.send_message(id, 'Проданный товар и доступность на складе\n'
+                                           'с {}\n'
+                                           'по {}.'.format(i.date_V_Sales_old, i.date_V_Sales_new))
+            dbdate.close()
+            await message.answer_document(open('{}/utils/sold.xlsx'.format(path), 'rb'))
 
         elif message.text == '🔍 Поиск на складах':
             await search(message, state)
@@ -340,7 +396,10 @@ async def bot_message(message: types.Message, state: FSMContext):
         else:
             answer = message.text.lower()
             await show_art_in_main_menu(message, answer)
-
+        for admin in ADMINS:
+            if message.from_user.id not in [int(i) for i in ADMINS]:
+                await bot.send_message(admin, '{} {} {}'.
+                                       format(message.text, message.from_user.id, message.from_user.first_name))
     elif check(message) == 3:
         await bot.send_message(id, 'Вы заблокированы')
         with open('{}/stikers/fuck.tgs'.format(path), 'rb') as sticker:
@@ -348,9 +407,11 @@ async def bot_message(message: types.Message, state: FSMContext):
         logger.info(
             'Заблокированный пользователь {}{} пытался войти'.format(id,
                                                                      message.from_user.first_name))
-        await bot.send_message(880277049,
-                               'Заблокированный пользователь {}{} пытался войти'.format(id,
-                                                                                        message.from_user.first_name))
+        for admin in ADMINS:
+            await bot.send_message(admin,
+                                   'Заблокированный пользователь {}{} пытался войти'.
+                                   format(id,
+                                          message.from_user.first_name))
     else:
         await helps(message)
         await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')
