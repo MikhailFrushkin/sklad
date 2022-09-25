@@ -70,6 +70,7 @@ def read_base_vsl():
     for key, value in result_dict.items():
         if len(value) == 6:
             output.append([i for i in value.values()])
+    print(output)
 
     result_for_exsel(output)
 

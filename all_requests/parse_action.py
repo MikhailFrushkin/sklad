@@ -163,7 +163,7 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
                         except Exception as ex:
                             logger.debug('Ошибка при выводе ячеек в гланом меню {}', ex)
 
-                        if count == int(call.data):
+                        if count == int(call.data) or count == 20:
                             break
             except Exception as ex:
                 logger.debug(ex)

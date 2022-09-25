@@ -16,7 +16,10 @@ async def show_art_in_main_menu(message, answer):
         'Пользователь {} {}: запросил артикул {}'.format(id, message.from_user.first_name,
                                                          answer))
     try:
-        if len(answer) == 8 and answer.isdigit() and answer[:2] == '80':
+        if (len(answer) == 8 and answer.isdigit() and answer[:2] == '80') or\
+                (len(answer) == 6 and answer.isdigit()):
+            if len(answer) == 6:
+                answer = '80' + answer
             await show_media(message, answer)
             sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
             full_block = ['Остатки на магазине:']

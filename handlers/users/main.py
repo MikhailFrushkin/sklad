@@ -175,7 +175,7 @@ async def doc_handler(message: types.Message, state: FSMContext):
                         logger.info('создал бд')
                     dbdate.close()
                     read_base_vsl()
-                    await bot.send_message(id, 'Обновлен файл с проданным товаром')
+                    await bot.send_message(message.from_user.id, 'Обновлен файл с проданным товаром')
 
                 except Exception as ex:
                     logger.debug(ex)
