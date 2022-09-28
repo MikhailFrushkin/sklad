@@ -14,6 +14,7 @@ from loguru import logger
 import bot
 from all_requests.parse_action import parse_actions, view_actions
 from data.config import ADMINS, PASSWORD, path
+from database.products import NullProduct
 from handlers.users.Verification import verification_start, create_table
 from handlers.users.back import back
 from handlers.users.cell_content import show_place
@@ -22,7 +23,7 @@ from handlers.users.search import search
 from handlers.users.show_art import show_art_in_main_menu
 from handlers.users.show_qrs import show_qr
 from handlers.users.sold_product import read_base_vsl
-from handlers.users.stocks_check import start_check_stocks
+from handlers.users.stocks_check import start_check_stocks, save_exsel_pst, creat_pst, union_art
 from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu
 from loader import dp, bot
@@ -174,8 +175,6 @@ async def doc_handler(message: types.Message, state: FSMContext):
                         temp.save()
                         logger.info('создал бд')
                     dbdate.close()
-                    read_base_vsl()
-                    await bot.send_message(message.from_user.id, 'Обновлен файл с проданным товаром')
 
                 except Exception as ex:
                     logger.debug(ex)
@@ -220,10 +219,52 @@ async def dowload_exs(message, state):
 async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
     """Функция загрузки базы"""
     try:
-        if dowload(call.data):
-            await bot.send_message(call.from_user.id, 'База обновлена', reply_markup=menu_admin)
-        else:
-            await bot.send_message(call.from_user.id, 'Ошибка при записи в csv')
+        async with state.proxy() as data:
+            if dowload(call.data):
+                await bot.send_message(call.from_user.id, 'База обновлена', reply_markup=menu_admin)
+                if data['sklad'] == 'V_Sales':
+                    try:
+                        read_base_vsl()
+                        await bot.send_message(call.from_user.id, 'Обновлен файл с проданным товаром')
+                        dbhandle.connect()
+                        NullProduct.create_table()
+                        groups_list = ['11', '20', '21', '22', '23', '28', '35']
+                        data_nulls = dict()
+                        products = []
+                        for group in groups_list:
+                            dict_art_012 = union_art('012_825', group)[1]
+                            dict_art_v = union_art('V_Sales', group)[1]
+                            for key in dict_art_012.keys():
+                                if key not in dict_art_v.keys():
+                                    products.append(key)
+                            data_nulls[group] = products
+                            products = []
+
+                        for key, value in data_nulls.items():
+                            try:
+                                row = NullProduct.get(NullProduct.group == key)
+                                row.num = len(value)
+                                row.save()
+                            except Exception:
+                                temp = NullProduct.create(group=key, num=len(value))
+                                temp.save()
+                        dbhandle.close()
+                        await bot.send_message(call.from_user.id,
+                                               'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
+                                               '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
+                                               'Прихожая: {}\n'.format(
+                                                   len(data_nulls['11']),
+                                                   len(data_nulls['20']),
+                                                   len(data_nulls['21']),
+                                                   len(data_nulls['22']),
+                                                   len(data_nulls['23']),
+                                                   len(data_nulls['28']),
+                                                   len(data_nulls['35']),
+                                               ))
+                    except Exception as ex:
+                        logger.debug(ex)
+            else:
+                await bot.send_message(call.from_user.id, 'Ошибка при записи в csv')
     except Exception as ex:
         logger.debug(ex)
     finally:
@@ -244,7 +285,10 @@ async def unknown_message(message: types.Message):
 async def voice_message_handler(message: types.Message):
     import uuid
     import os
-    import speech_recognition as sr
+    try:
+        import speech_recognition as sr
+    except ModuleNotFoundError as ex:
+        logger.debug(ex)
 
     logger.info("Пользователь {} {} отправил голосовое".format(message.from_user.id,
                                                                message.from_user.first_name))
@@ -348,6 +392,24 @@ async def bot_message(message: types.Message, state: FSMContext):
             await verification_start(message, state)
 
         elif message.text == '📝Проверка товара':
+            data_nulls_res = {}
+            dbhandle.connect()
+            data_nulls = NullProduct.select()
+            for key in data_nulls:
+                data_nulls_res[key.group] = key.num
+            dbhandle.close()
+            await bot.send_message(message.from_user.id,
+                                   'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
+                                   '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
+                                   'Прихожая: {}\n'.format(
+                                       data_nulls_res['11'],
+                                       data_nulls_res['20'],
+                                       data_nulls_res['21'],
+                                       data_nulls_res['22'],
+                                       data_nulls_res['23'],
+                                       data_nulls_res['28'],
+                                       data_nulls_res['35'],
+                                   ))
             await start_check_stocks(message, state)
 
         elif message.text == '💰 Проданный товар':

@@ -1,7 +1,5 @@
 import asyncio
 import csv
-import json
-import os
 import pandas as pd
 from data.config import ADMINS
 
@@ -24,28 +22,31 @@ from utils.min_stocks import finish, save_exsel_min, get_groups
 
 
 async def start_check_stocks(message, state):
-    if message.text == 'В главное меню':
-        await back(message, state)
-    mes = await bot.send_message(message.from_user.id, 'Выберите группу товара:', reply_markup=stocks)
     async with state.proxy() as data:
+        if message.text == 'В главное меню':
+            await back(message, state)
+        mes = await bot.send_message(message.from_user.id, 'Выберите группу товара:', reply_markup=stocks)
         data['message_temp'] = mes
-    await Stock.group.set()
+        await Stock.group.set()
 
 
 @dp.callback_query_handler(state=[Stock.group])
 async def check_groups(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['group'] = call.data
-        asyncio.create_task(delete_message(data['message_temp']))
+        try:
+            asyncio.create_task(delete_message(data['message_temp']))
+        except Exception as ex:
+            logger.debug(ex)
         if call.data == 'exit':
             await back(call, state)
         elif call.data == 'files':
             logger.info('{} {} выгрузил файлы с 0 остатками'.format(call.from_user.id, call.from_user.first_name))
             try:
-                groups_list = save_exsel_pst(creat_pst())
-                for i in groups_list:
+
+                for i in data['groups_list']:
                     try:
-                        await call.message.answer_document(open('{}/files/pst_{}.xlsx'.format(path, i), 'rb'))
+                        await call.message.answer_document(open('{}/pst_{}.xlsx'.format(path, i), 'rb'))
                     except Exception as ex:
                         logger.debug('Не удалось выгрузить файл {}'.format(ex))
             except Exception as ex:
@@ -59,7 +60,7 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
                     choise_group.insert(InlineKeyboardButton(text=i[1], callback_data=i[0]))
                 choise_group.insert(InlineKeyboardButton(text='Выход', callback_data='exit'))
             except Exception as ex:
-                print(ex)
+                logger.debug(ex)
             await Stock.min_vitrina.set()
             await bot.send_message(call.from_user.id, 'Выберите группу:',
                                    reply_markup=choise_group)
@@ -196,6 +197,15 @@ def creat_pst():
     groups_list = ['11', '20', '21', '22', '23', '28', '35']
     mini_group = ['Напольные', 'Костюмные', 'Кресла груши', 'Настенные']
     result_for_zero = dict()
+    zero_data = {
+        '11': 0,
+        '20': 0,
+        '21': 0,
+        '22': 0,
+        '23': 0,
+        '28': 0,
+        '35': 0
+    }
     temp_list = []
     art = []
     groups_second_list = []
@@ -212,7 +222,7 @@ def creat_pst():
             with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
-                    if row['ТГ'] == '35' == item \
+                    if row['ТГ'] == '35' \
                             and row['Краткое наименование'] in mini_group \
                             and row['Код \nноменклатуры'] in art \
                             and row['Доступно'].replace('.0', '').isdigit() \
@@ -230,17 +240,19 @@ def creat_pst():
                                           row['Описание товара'].replace(',', ' '),
                                           row['Местоположение'],
                                           row['Доступно'].replace('.0', '')])
-
-                result_for_zero[item] = sorted(temp_list)
+                temp_list2 = list(set([i[0] for i in temp_list]))
+                zero_data[item] = len(temp_list2)
+                result_for_zero[item] = sorted(temp_list2)
 
                 temp_list = []
-    return result_for_zero, groups_second_list
+
+    return result_for_zero, groups_second_list, zero_data
 
 
 def save_exsel_pst(data):
     groups_list = data[1]
     for item in groups_list:
-        with open('{}/files/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
+        with open('{}/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
             file.write("Код номенклатуры,"
                        "Описание товара,"
                        "Местоположение,"
@@ -248,15 +260,16 @@ def save_exsel_pst(data):
             for i in data[0][item]:
                 file.write('{}\n'.format(','.join(i)))
         try:
-            df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
-            writer = pd.ExcelWriter('{}/files/pst_{}.xlsx'.format(path, item))
-            df.style.apply(align_left, axis=0).to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
+            df = pd.read_csv('{}/result_{}.csv'.format(path, item), encoding='utf-8')
+            writer = pd.ExcelWriter('{}/pst_{}.xlsx'.format(path, item))
+            df.reset_index(drop=True).style.apply(align_left, axis=0). \
+                to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
             writer.sheets['Sheet1'].set_column(0, 4, 20)
             writer.sheets['Sheet1'].set_column(1, 1, 50)
-            writer.save()
+            writer.close()
         except Exception as ex:
             logger.debug(ex)
-    return groups_list
+    return groups_list, data[2]
 
 
 def union_art(sklad: str, group: str):

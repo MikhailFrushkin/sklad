@@ -66,11 +66,10 @@ def read_base_vsl():
                 if key[0] in result_dict.keys() and value > 0:
                     result_dict[key[0]]['На складе'] = value
     except Exception as ex:
-        print(ex)
+        logger.debug(ex)
     for key, value in result_dict.items():
         if len(value) == 6:
             output.append([i for i in value.values()])
-    print(output)
 
     result_for_exsel(output)
 
@@ -88,21 +87,8 @@ def _union_result_for_zero(row: dict, union_atr) -> dict:
 
 def result_for_exsel(output):
     list_list = []
-    data = {
-            'Артикул': [],
-            'Описание товара': [],
-            'ТГ': [],
-            'Проданно': [],
-            'Остаток VSL': [],
-            'На складе': []}
     for i in output:
-        data['Артикул'].append(i[0])
-        data['Описание товара'].append(i[1])
-        data['ТГ'].append(i[2])
         list_list.append(i[2])
-        data['Проданно'].append(i[3])
-        data['Остаток VSL'].append(i[4])
-        data['На складе'].append(i[5])
     list_group = (sorted(list(set(list_list))))
     try:
         writer = pd.ExcelWriter('{}/utils/sold.xlsx'.format(path))
@@ -138,8 +124,7 @@ def result_for_exsel(output):
             worksheet.set_column('A:A', 18, cell_format2)
             worksheet.set_column('B:B', 80, cell_format2)
             worksheet.set_column('C:F', 12, cell_format3)
-
-        writer.save()
+        writer.close()
     except Exception as ex:
         logger.debug(ex)
 

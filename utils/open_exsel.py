@@ -10,18 +10,7 @@ from loader import bot
 def dowload(sklad: str):
     if sklad == 'Мин.витрина':
         try:
-            excel_data_df = pd.read_excel('{}/utils/file_Мин.витрина.xls'.format(path),
-                                          sheet_name='Сток меньше мин витрины',
-                                          usecols=['TG',
-                                                   'SKU',
-                                                   'Name',
-                                                   'masterbox qty',
-                                                   'box sku qty',
-                                                   'showcase min',
-                                                   'stock',
-                                                   'stock V sale',
-                                                   'stock Store',
-                                                   'stock Show Room'])
+            excel_data_df = pd.read_excel('{}/utils/file_Мин.витрина.xls'.format(path))
             excel_data_df.to_csv('{}/utils/ctocks.csv'.format(path))
             return True
         except Exception as ex:
@@ -29,16 +18,7 @@ def dowload(sklad: str):
 
     else:
         try:
-            excel_data_df = pd.read_excel('{}/utils/file_{}.xls'.format(path, sklad), sheet_name='Лист1',
-                                          usecols=['Склад',
-                                                   'Местоположение',
-                                                   'Код \nноменклатуры',
-                                                   'Краткое наименование',
-                                                   'Описание товара',
-                                                   'Физические \nзапасы',
-                                                   'Доступно',
-                                                   'Зарезерви\nровано',
-                                                   'ТГ'])
+            excel_data_df = pd.read_excel('{}/utils/file_{}.xls'.format(path, sklad))
             excel_data_df.to_csv('{}/utils/file_{}.csv'.format(path, sklad))
             return True
         except Exception as ex:

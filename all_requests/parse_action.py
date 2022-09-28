@@ -88,7 +88,6 @@ def parse_actions():
                     })
                 offset += 1
 
-                print(len(catalog))
             except Exception as ex:
                 logger.debug(ex)
         offset = 1

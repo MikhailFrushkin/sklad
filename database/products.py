@@ -15,6 +15,17 @@ class BaseModel(Model):
         database = dbhandle
 
 
+class NullProduct(BaseModel):
+    id = PrimaryKeyField(null=False)
+    group = CharField(max_length=8)
+    num = IntegerField(default=0)
+
+    class META:
+        database = dbhandle
+        db_table = 'NullProduct'
+        order_by = ['group']
+
+
 class Product(BaseModel):
     id = PrimaryKeyField(null=False)
     vendor_code = CharField(max_length=8)
@@ -50,14 +61,13 @@ class Product(BaseModel):
                             minigroup_name = row['Краткое наименование']
 
                             try:
-                                temp = Product.get(Product.vendor_code == int(art))
+                                Product.get(Product.vendor_code == int(art))
                             except Exception as ex:
                                 temp = Product.create(vendor_code=art, name=name, group=group,
                                                       place=place, minigroup_name=minigroup_name)
                                 temp.save()
-                                # logger.debug('новый арт добавлен {}'.format(temp))
+                                logger.debug(ex)
                 arts_bd = [int(i.vendor_code) for i in Product.select()]
-                # print(arts_bd)
 
                 with open('{}/utils/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                     reader = csv.DictReader(csvfile)
@@ -65,19 +75,17 @@ class Product(BaseModel):
                     for row in reader:
                         if row['Физические \nзапасы'] == '1' and row['Местоположение'] == 'V-Sales_825':
                             new_art_exsel.append(int(row['Код \nноменклатуры']))
-                    # print(new_art_exsel)
                     for item in arts_bd:
                         if item not in new_art_exsel:
                             try:
                                 obj = Product.get(Product.vendor_code == item)
                                 obj.delete_instance()
-                                # logger.info('арт удален {}'.format(item))
                             except Exception as ex:
                                 logger.debug(ex)
 
                 logger.info('База единичек обновлена')
             except peewee.InternalError as px:
-                print(str(px))
+                logger.debug(str(px))
             finally:
                 dbhandle.close()
         else:
@@ -100,7 +108,7 @@ class Product(BaseModel):
                 logger.info('База единичек создана')
                 arts_bd = [i.vendor_code for i in Product.select()]
             except peewee.InternalError as px:
-                print(str(px))
+                logger.debug(str(px))
             finally:
                 dbhandle.close()
         return len(arts_bd)
@@ -109,5 +117,3 @@ class Product(BaseModel):
         database = dbhandle
         db_table = 'Product'
         order_by = ['vendor_code']
-
-
