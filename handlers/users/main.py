@@ -154,12 +154,12 @@ async def doc_handler(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             if data['sklad'] == 'V_Sales':
                 try:
-                    if os.path.exists('{}/utils/file_old_vsl.xls'.format(path)):
-                        os.remove('{}/utils/file_old_vsl.xls'.format(path))
-                    old_name = '{}/utils/file_{}.xls'.format(path, data['sklad'])
+                    if os.path.exists('{}/files/file_old_vsl.xls'.format(path)):
+                        os.remove('{}/files/file_old_vsl.xls'.format(path))
+                    old_name = '{}/files/file_{}.xls'.format(path, data['sklad'])
                     mtime = os.path.getmtime(old_name)
                     date_old = time.ctime(mtime)
-                    os.rename(old_name, '{}/utils/file_old_vsl.xls'.format(path))
+                    os.rename(old_name, '{}/files/file_old_vsl.xls'.format(path))
                     dowload('old_vsl')
                     myfile = '{}/database/DateBase.db'.format(path)
 
@@ -190,7 +190,7 @@ async def dowload_exs(message, state):
         dbdate.connect()
         if document := message.document:
             await document.download(
-                destination_file="{}/utils/file_{}.xls".format(path, data['sklad']),
+                destination_file="{}/files/file_{}.xls".format(path, data['sklad']),
             )
             logger.info('{} - Загружен документ'.format(message.from_user.id))
             await bot.send_message(message.from_user.id, 'Загружен документ на {} склад.'.format(data['sklad']),
@@ -198,7 +198,7 @@ async def dowload_exs(message, state):
                                        InlineKeyboardButton(text='Загрузить в базу',
                                                             callback_data='{}'.format(data['sklad'])
                                                             )))
-        mtime = os.path.getmtime("{}/utils/file_{}.xls".format(path, data['sklad']))
+        mtime = os.path.getmtime("{}/files/file_{}.xls".format(path, data['sklad']))
         date_new = time.ctime(mtime)
         for i in DateBase.select():
             if data['sklad'] == 'V_Sales':
@@ -420,7 +420,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                                            'с {}\n'
                                            'по {}.'.format(i.date_V_Sales_old, i.date_V_Sales_new))
             dbdate.close()
-            await message.answer_document(open('{}/utils/sold.xlsx'.format(path), 'rb'))
+            await message.answer_document(open('{}/files/sold.xlsx'.format(path), 'rb'))
 
         elif message.text == '🔍 Поиск на складах':
             await search(message, state)

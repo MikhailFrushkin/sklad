@@ -9,7 +9,7 @@ from data.config import path
 
 def get_groups():
     try:
-        with open('{}/utils/ctocks.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/ctocks.csv'.format(path), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             groups_list = sorted(set([(row['TG'][:2], row['TG'][4:].title()) for row in reader]))
             return groups_list
@@ -19,7 +19,7 @@ def get_groups():
 
 def get_low_stocks_art(group):
     art_groups = []
-    with open('{}/utils/ctocks.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+    with open('{}/files/ctocks.csv'.format(path), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             if row['TG'][:2] == group and (int(row['stock V sale']) / int(row['showcase min'])) < 0.65:
@@ -42,7 +42,7 @@ def _union_result(row: dict, result: dict) -> dict:
 
 
 def union_art2(group: str):
-    with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+    with open('{}/files/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         result = dict()
         for row in reader:
@@ -78,7 +78,7 @@ def finish(group):
 
 def save_exsel_min(group):
     result = finish(group)[1]
-    with open('{}/result_min_vitrina{}.csv'.format(path, group), 'w', newline='', encoding='utf-8') as file:
+    with open('{}/files/result_min_vitrina{}.csv'.format(path, group), 'w', newline='', encoding='utf-8') as file:
         file_writer = csv.writer(file, delimiter=",", lineterminator="\r")
         file_writer.writerow(["Артикул",
                               "Наименование",
@@ -89,7 +89,7 @@ def save_exsel_min(group):
         for i in result:
             file_writer.writerow(i)
     try:
-        df = pd.read_csv('{}/result_min_vitrina{}.csv'.format(path, group), delimiter=',', encoding='utf-8')
+        df = pd.read_csv('{}/files/result_min_vitrina{}.csv'.format(path, group), delimiter=',', encoding='utf-8')
         writer = pd.ExcelWriter('{}/files/min_vitrina_{}.xlsx'.format(path, group))
         df.style.apply(_align_left, axis=0).to_excel(writer, index=False, na_rep='NaN')
 

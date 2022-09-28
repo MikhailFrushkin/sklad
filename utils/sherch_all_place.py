@@ -12,7 +12,7 @@ def creat_pst():
     result_for_zero = dict()
     temp_list = []
     for item in groups_list:
-        with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 if item == '35':
@@ -37,14 +37,14 @@ def creat_pst():
 def save_exsel_pst(data):
     groups_list = ['11', '20', '21', '22', '23', '28', '35']
     for item in groups_list:
-        with open('result_{}.csv'.format(item), 'w', encoding='utf-8') as file:
+        with open('{}/files/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
             file.write("Код номенклатуры,"
                        "Местоположение,"
                        "Доступно\n")
             for i in data[item]:
                 file.write('{}\n'.format(','.join(i)))
-        df = pd.read_csv('result_{}.csv'.format(item), encoding='utf-8')
-        df.to_excel('pst_{}.xlsx'.format(item), 'Sheet1', index=False)
+        df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
+        df.to_excel('{}/files/pst_{}.xlsx'.format(path, item), 'Sheet1', index=False)
 
 
 if __name__ == '__main__':

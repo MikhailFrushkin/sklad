@@ -14,7 +14,7 @@ from data.config import path
 def read_base_vsl():
     data_art = {}
     try:
-        with open('{}/utils/file_old_vsl.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/file_old_vsl.csv'.format(path), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 data_art[row['Код \nноменклатуры']] = \
@@ -26,7 +26,7 @@ def read_base_vsl():
         logger.debug(ex)
 
     try:
-        with open('{}/utils/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 if row['Код \nноменклатуры'] in data_art.keys():
@@ -55,7 +55,7 @@ def read_base_vsl():
     union_atr = dict()
     output = list()
     try:
-        with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 if not row['Местоположение'].startswith('012_825-Dost') \
@@ -91,7 +91,7 @@ def result_for_exsel(output):
         list_list.append(i[2])
     list_group = (sorted(list(set(list_list))))
     try:
-        writer = pd.ExcelWriter('{}/utils/sold.xlsx'.format(path))
+        writer = pd.ExcelWriter('{}/files/sold.xlsx'.format(path))
         for group in list_group:
             data = {
                 'Артикул': [],

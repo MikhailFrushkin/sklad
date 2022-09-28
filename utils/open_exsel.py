@@ -10,16 +10,16 @@ from loader import bot
 def dowload(sklad: str):
     if sklad == 'Мин.витрина':
         try:
-            excel_data_df = pd.read_excel('{}/utils/file_Мин.витрина.xls'.format(path))
-            excel_data_df.to_csv('{}/utils/ctocks.csv'.format(path))
+            excel_data_df = pd.read_excel('{}/files/file_Мин.витрина.xls'.format(path))
+            excel_data_df.to_csv('{}/files/ctocks.csv'.format(path))
             return True
         except Exception as ex:
             logger.debug(ex)
 
     else:
         try:
-            excel_data_df = pd.read_excel('{}/utils/file_{}.xls'.format(path, sklad))
-            excel_data_df.to_csv('{}/utils/file_{}.csv'.format(path, sklad))
+            excel_data_df = pd.read_excel('{}/files/file_{}.xls'.format(path, sklad))
+            excel_data_df.to_csv('{}/files/file_{}.csv'.format(path, sklad))
             return True
         except Exception as ex:
             logger.debug(ex)
@@ -27,7 +27,7 @@ def dowload(sklad: str):
 
 def place(message: str, sklad: str) -> list[str]:
     try:
-        with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             answer = []
             for row in reader:
@@ -50,7 +50,7 @@ def place(message: str, sklad: str) -> list[str]:
 
 def place_dost(message: str, sklad: str) -> list[str]:
     try:
-        with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             temp_list = []
             answer = ['🔄Необходимо убрать с Dost\n']
@@ -59,7 +59,7 @@ def place_dost(message: str, sklad: str) -> list[str]:
                     if row['Местоположение'][16:] not in temp_list:
                         temp_list.append(row['Местоположение'][16:])
         for item in sorted(temp_list, key=int):
-            with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
+            with open('{}/files/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
                     if row['Местоположение'].endswith(item) \
@@ -79,7 +79,7 @@ def place_dost(message: str, sklad: str) -> list[str]:
 
 
 def search_articul(art: str, sklad: str) -> list[str]:
-    with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
+    with open('{}/files/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:
@@ -96,7 +96,7 @@ def search_articul(art: str, sklad: str) -> list[str]:
 
 
 def search_name(name: str) -> list[str]:
-    with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+    with open('{}/files/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:
@@ -114,7 +114,7 @@ def search_name(name: str) -> list[str]:
 
 def search_articul_order(art: str, sklad: str) -> list:
     try:
-        with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             art_list = []
             art_dict = {
@@ -145,7 +145,7 @@ def search_articul_order(art: str, sklad: str) -> list:
 
 
 def search_all_sklad(art: str, sklad: str) -> list[str]:
-    with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
+    with open('{}/files/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:
@@ -164,7 +164,7 @@ def search_art_name(art: str) -> str:
     line = 'Нет товара в наличии'
     sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
     for i in sklad_list:
-        with open('{}/utils/file_{}.csv'.format(path, i), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/file_{}.csv'.format(path, i), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 if row['Код \nноменклатуры'] == art:

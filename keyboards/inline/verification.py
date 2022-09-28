@@ -8,7 +8,7 @@ from data.config import path
 def creat_groups_menu():
     verification_btn_groups = InlineKeyboardMarkup(row_width=4)
 
-    with open('{}/utils/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+    with open('{}/files/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         groups_list = []
         for row in reader:

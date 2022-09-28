@@ -50,7 +50,7 @@ class Product(BaseModel):
         if os.path.isfile(myfile):
             dbhandle.connect()
             try:
-                with open('{}/utils/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+                with open('{}/files/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                     reader = csv.DictReader(csvfile)
                     for row in reader:
                         if row['Физические \nзапасы'] == '1' and row['Местоположение'] == 'V-Sales_825':
@@ -69,7 +69,7 @@ class Product(BaseModel):
                                 logger.debug(ex)
                 arts_bd = [int(i.vendor_code) for i in Product.select()]
 
-                with open('{}/utils/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+                with open('{}/files/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                     reader = csv.DictReader(csvfile)
                     new_art_exsel = []
                     for row in reader:
@@ -93,7 +93,7 @@ class Product(BaseModel):
             Product.create_table()
             try:
 
-                with open('{}/utils/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+                with open('{}/files/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                     reader = csv.DictReader(csvfile)
                     for row in reader:
                         if row['Физические \nзапасы'] == '1' and row['Местоположение'] == 'V-Sales_825':

@@ -111,7 +111,7 @@ def all_art():
     Список артикулов из файла
     :return:
     """
-    with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+    with open('{}/files/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         answer = []
         for row in reader:

@@ -46,7 +46,7 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
 
                 for i in data['groups_list']:
                     try:
-                        await call.message.answer_document(open('{}/pst_{}.xlsx'.format(path, i), 'rb'))
+                        await call.message.answer_document(open('{}/files/pst_{}.xlsx'.format(path, i), 'rb'))
                     except Exception as ex:
                         logger.debug('Не удалось выгрузить файл {}'.format(ex))
             except Exception as ex:
@@ -219,7 +219,7 @@ def creat_pst():
                 count += 1
         if count > 0:
             groups_second_list.append(item)
-            with open('{}/utils/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+            with open('{}/files/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
                     if row['ТГ'] == '35' \
@@ -252,7 +252,7 @@ def creat_pst():
 def save_exsel_pst(data):
     groups_list = data[1]
     for item in groups_list:
-        with open('{}/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
+        with open('{}/files/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
             file.write("Код номенклатуры,"
                        "Описание товара,"
                        "Местоположение,"
@@ -260,8 +260,8 @@ def save_exsel_pst(data):
             for i in data[0][item]:
                 file.write('{}\n'.format(','.join(i)))
         try:
-            df = pd.read_csv('{}/result_{}.csv'.format(path, item), encoding='utf-8')
-            writer = pd.ExcelWriter('{}/pst_{}.xlsx'.format(path, item))
+            df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
+            writer = pd.ExcelWriter('{}/files/pst_{}.xlsx'.format(path, item))
             df.reset_index(drop=True).style.apply(align_left, axis=0). \
                 to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
             writer.sheets['Sheet1'].set_column(0, 4, 20)
@@ -273,7 +273,7 @@ def save_exsel_pst(data):
 
 
 def union_art(sklad: str, group: str):
-    with open('{}/utils/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
+    with open('{}/files/file_{}.csv'.format(path, sklad), newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         result_for_zero = dict()
         result = dict()
