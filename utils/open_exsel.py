@@ -4,13 +4,12 @@ import pandas as pd
 from loguru import logger
 
 from data.config import path
-from loader import bot
 
 
 def dowload(sklad: str):
     if sklad == 'Мин.витрина':
         try:
-            excel_data_df = pd.read_excel('{}/files/file_Мин.витрина.xls'.format(path))
+            excel_data_df = pd.read_excel('{}/files/file_Мин.витрина.xlsx'.format(path))
             excel_data_df.to_csv('{}/files/ctocks.csv'.format(path))
             return True
         except Exception as ex:
@@ -18,7 +17,7 @@ def dowload(sklad: str):
 
     else:
         try:
-            excel_data_df = pd.read_excel('{}/files/file_{}.xls'.format(path, sklad))
+            excel_data_df = pd.read_excel('{}/files/file_{}.xlsx'.format(path, sklad))
             excel_data_df.to_csv('{}/files/file_{}.csv'.format(path, sklad))
             return True
         except Exception as ex:

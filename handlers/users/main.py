@@ -152,32 +152,31 @@ async def doc_handler(message: types.Message, state: FSMContext):
     """Ловит документ(EXSEL) и загружает"""
     try:
         async with state.proxy() as data:
-            if data['sklad'] == 'V_Sales':
-                try:
-                    if os.path.exists('{}/files/file_old_vsl.xls'.format(path)):
-                        os.remove('{}/files/file_old_vsl.xls'.format(path))
-                    old_name = '{}/files/file_{}.xls'.format(path, data['sklad'])
-                    mtime = os.path.getmtime(old_name)
-                    date_old = time.ctime(mtime)
-                    os.rename(old_name, '{}/files/file_old_vsl.xls'.format(path))
-                    dowload('old_vsl')
-                    myfile = '{}/database/DateBase.db'.format(path)
+            try:
+                if os.path.exists('{}/files/file_old_{}.xlsx'.format(path, data['sklad'])):
+                    os.remove('{}/files/file_old_{}.xlsx'.format(path, data['sklad']))
+                old_name = '{}/files/file_{}.xlsx'.format(path, data['sklad'])
+                mtime = os.path.getmtime(old_name)
+                date_old = time.ctime(mtime)
+                os.rename(old_name, '{}/files/file_old_{}.xlsx'.format(path, data['sklad']))
+                dowload('old_{}'.format(data['sklad']))
+                myfile = '{}/database/DateBase.db'.format(path)
 
-                    if os.path.isfile(myfile):
-                        dbdate.connect()
-                        for i in DateBase.select():
-                            i.date_V_Sales_old = date_old
-                            i.save()
-                    else:
-                        dbdate.connect()
-                        DateBase.create_table()
-                        temp = DateBase.create(date_V_Sales_old=date_old)
-                        temp.save()
-                        logger.info('создал бд')
-                    dbdate.close()
+                if os.path.isfile(myfile):
+                    dbdate.connect()
+                    for i in DateBase.select():
+                        i.date_V_Sales_old = date_old
+                        i.save()
+                else:
+                    dbdate.connect()
+                    DateBase.create_table()
+                    temp = DateBase.create(date_V_Sales_old=date_old)
+                    temp.save()
+                    logger.info('создал бд')
+                dbdate.close()
 
-                except Exception as ex:
-                    logger.debug(ex)
+            except Exception as ex:
+                logger.debug(ex)
             await dowload_exs(message, state)
 
     except Exception as ex:
@@ -190,7 +189,7 @@ async def dowload_exs(message, state):
         dbdate.connect()
         if document := message.document:
             await document.download(
-                destination_file="{}/files/file_{}.xls".format(path, data['sklad']),
+                destination_file="{}/files/file_{}.xlsx".format(path, data['sklad']),
             )
             logger.info('{} - Загружен документ'.format(message.from_user.id))
             await bot.send_message(message.from_user.id, 'Загружен документ на {} склад.'.format(data['sklad']),
@@ -198,7 +197,7 @@ async def dowload_exs(message, state):
                                        InlineKeyboardButton(text='Загрузить в базу',
                                                             callback_data='{}'.format(data['sklad'])
                                                             )))
-        mtime = os.path.getmtime("{}/files/file_{}.xls".format(path, data['sklad']))
+        mtime = os.path.getmtime("{}/files/file_{}.xlsx".format(path, data['sklad']))
         date_new = time.ctime(mtime)
         for i in DateBase.select():
             if data['sklad'] == 'V_Sales':
@@ -228,6 +227,7 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
                         await bot.send_message(call.from_user.id, 'Обновлен файл с проданным товаром')
                         dbhandle.connect()
                         NullProduct.create_table()
+                        save_exsel_pst(creat_pst())
                         groups_list = ['11', '20', '21', '22', '23', '28', '35']
                         data_nulls = dict()
                         products = []

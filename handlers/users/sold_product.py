@@ -14,7 +14,7 @@ from data.config import path
 def read_base_vsl():
     data_art = {}
     try:
-        with open('{}/files/file_old_vsl.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+        with open('{}/files/file_old_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 data_art[row['Код \nноменклатуры']] = \
@@ -70,7 +70,6 @@ def read_base_vsl():
     for key, value in result_dict.items():
         if len(value) == 6:
             output.append([i for i in value.values()])
-
     result_for_exsel(output)
 
 
@@ -109,7 +108,7 @@ def result_for_exsel(output):
                     data['Остаток VSL'].append(i[4])
                     data['На складе'].append(i[5])
             df_marks = pd.DataFrame(data)
-            sorted_df = df_marks.sort_values(by='Артикул')
+            sorted_df = df_marks.sort_values(by='Проданно', ascending=False)
             sorted_df.to_excel(writer, sheet_name='{}'.format(group), index=False, na_rep='NaN')
 
             workbook = writer.book

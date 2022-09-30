@@ -43,8 +43,7 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
         elif call.data == 'files':
             logger.info('{} {} выгрузил файлы с 0 остатками'.format(call.from_user.id, call.from_user.first_name))
             try:
-
-                for i in data['groups_list']:
+                for i in ['11', '20', '21', '22', '23', '28', '35']:
                     try:
                         await call.message.answer_document(open('{}/files/pst_{}.xlsx'.format(path, i), 'rb'))
                     except Exception as ex:
@@ -64,6 +63,11 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
             await Stock.min_vitrina.set()
             await bot.send_message(call.from_user.id, 'Выберите группу:',
                                    reply_markup=choise_group)
+        elif call.data == 'ebel':
+            try:
+                await call.message.answer_document(open('{}/files/result_ebel.xlsx'.format(path), 'rb'))
+            except Exception as ex:
+                logger.debug('Не удалось выгрузить файл {}'.format(ex))
         else:
             mes = await bot.send_message(call.from_user.id, 'Количество в зале:',
                                          reply_markup=choise_num)
@@ -139,6 +143,7 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
             menu_check = menu
         else:
             menu_check = menu_admin
+
         if nums == 0:
             dict_art_012 = union_art('012_825', group)[1]
             dict_art_v = union_art('V_Sales', group)[1]
@@ -194,7 +199,7 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
 
 
 def creat_pst():
-    groups_list = ['11', '20', '21', '22', '23', '28', '35']
+    groups_list = ['11', '20', '21', '22', '23', '28', '31', '33', '34', '35', '36', '37', '38', '39', '40', '46', '49']
     mini_group = ['Напольные', 'Костюмные', 'Кресла груши', 'Настенные']
     result_for_zero = dict()
     zero_data = {
@@ -207,16 +212,22 @@ def creat_pst():
         '35': 0
     }
     temp_list = []
+    temp_list_ebel = []
     art = []
+    art_ebel = []
     groups_second_list = []
     for item in groups_list:
         dict_art_012 = union_art('012_825', item)[1]
         dict_art_v = union_art('V_Sales', item)[1]
+        dict_art_a11 = union_art('A11_825', item)[1]
         count = 0
         for key in dict_art_012.keys():
             if key not in dict_art_v.keys():
                 art.append(key[0])
                 count += 1
+        for key in dict_art_012.keys():
+            if key not in dict_art_v.keys() and key not in dict_art_a11.keys():
+                art_ebel.append(key[0])
         if count > 0:
             groups_second_list.append(item)
             with open('{}/files/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
@@ -240,35 +251,69 @@ def creat_pst():
                                           row['Описание товара'].replace(',', ' '),
                                           row['Местоположение'],
                                           row['Доступно'].replace('.0', '')])
+                    elif row['ТГ'] in ['31', '33', '34', '35', '36', '37', '38', '39', '40', '46', '49'] \
+                            and row['Код \nноменклатуры'] in art_ebel \
+                            and row['Доступно'].replace('.0', '').isdigit() \
+                            and not row['Местоположение'].startswith('012_825-OX') \
+                            and not row['Местоположение'].startswith('012_825-Dost'):
+                        temp_list_ebel.append([row['Код \nноменклатуры'],
+                                               row['Описание товара'].replace(',', ' '),
+                                               row['Местоположение'],
+                                               row['Доступно'].replace('.0', '')])
+
                 temp_list2 = list(set([i[0] for i in temp_list]))
                 zero_data[item] = len(temp_list2)
-                result_for_zero[item] = sorted(temp_list2)
-
+                result_for_zero[item] = sorted(temp_list)
                 temp_list = []
+    nulls_ebel = []
+    for i in temp_list_ebel:
+        if i not in nulls_ebel:
+            nulls_ebel.append(i)
+
+    result_for_zero['ebel'] = nulls_ebel
 
     return result_for_zero, groups_second_list, zero_data
 
 
 def save_exsel_pst(data):
     groups_list = data[1]
+    groups_list2 = ['11', '20', '21', '22', '23', '28', '35']
     for item in groups_list:
-        with open('{}/files/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
-            file.write("Код номенклатуры,"
-                       "Описание товара,"
-                       "Местоположение,"
-                       "Доступно\n")
-            for i in data[0][item]:
-                file.write('{}\n'.format(','.join(i)))
-        try:
-            df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
-            writer = pd.ExcelWriter('{}/files/pst_{}.xlsx'.format(path, item))
-            df.reset_index(drop=True).style.apply(align_left, axis=0). \
-                to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
-            writer.sheets['Sheet1'].set_column(0, 4, 20)
-            writer.sheets['Sheet1'].set_column(1, 1, 50)
-            writer.close()
-        except Exception as ex:
-            logger.debug(ex)
+        if item in groups_list2:
+            with open('{}/files/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
+                file.write("Код номенклатуры,"
+                           "Описание товара,"
+                           "Местоположение,"
+                           "Доступно\n")
+                for i in data[0][item]:
+                    file.write('{}\n'.format(','.join(i)))
+            try:
+                df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
+                writer = pd.ExcelWriter('{}/files/pst_{}.xlsx'.format(path, item))
+                df.reset_index(drop=True).style.apply(align_left, axis=0). \
+                    to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
+                writer.sheets['Sheet1'].set_column(0, 4, 20)
+                writer.sheets['Sheet1'].set_column(1, 1, 50)
+                writer.close()
+            except Exception as ex:
+                logger.debug(ex)
+    with open('{}/files/result_ebel.csv'.format(path), 'w', encoding='utf-8') as file:
+        file.write("Код номенклатуры,"
+                   "Описание товара,"
+                   "Местоположение,"
+                   "Доступно\n")
+        for i in data[0]['ebel']:
+            file.write('{}\n'.format(','.join(i)))
+    try:
+        df = pd.read_csv('{}/files/result_ebel.csv'.format(path), encoding='utf-8')
+        writer = pd.ExcelWriter('{}/files/result_ebel.xlsx'.format(path))
+        df.sort_values('Код номенклатуры').reset_index(drop=True).style.apply(align_left, axis=0). \
+            to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
+        writer.sheets['Sheet1'].set_column(0, 4, 20)
+        writer.sheets['Sheet1'].set_column(1, 1, 50)
+        writer.close()
+    except Exception as ex:
+        logger.debug(ex)
     return groups_list, data[2]
 
 
