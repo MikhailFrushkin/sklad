@@ -10,6 +10,7 @@ from all_requests.parse_on_requests import parse
 from data.config import path
 from handlers.users.delete_message import delete_message
 from loader import bot
+import random
 
 
 async def show_media(message, articul):
@@ -34,8 +35,9 @@ async def show_media(message, articul):
                 else:
                     await bot.send_photo(message.from_user.id, data['pictures'][0])
             except Exception as ex:
+                print()
                 logger.debug('Первое фото не пошло {}', ex)
-                await bot.send_photo(message.from_user.id, data['pictures'][1])
+                await bot.send_photo(message.from_user.id, data['pictures'][random.randint(1, 3)])
         else:
             if os.path.exists(r"{}\base\json\{}.json".format(path, articul)):
                 logger.info('нашел json ')

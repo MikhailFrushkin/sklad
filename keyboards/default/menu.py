@@ -1,18 +1,17 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton('🆚 V-Sales_825'),
-     KeyboardButton('🗃 011_825-Exit_sklad')],
-    [KeyboardButton('🤖 Qrcode ячейки'),
-     KeyboardButton('📖 Любой текст в Qr')],
-    [KeyboardButton('📦 Содержимое ячейки'),
-     KeyboardButton('🔍 Поиск на складах')],
+    [KeyboardButton('🆚V-Sales_825'), KeyboardButton('🗃011_825-Exit_sklad'), KeyboardButton('🤖Qrcode ячейки')],
+    [KeyboardButton('📖Любой текст в Qr'),
+     KeyboardButton('📦Содержимое ячейки'),
+     KeyboardButton('🔍Поиск на складах')],
     [KeyboardButton('📝Проверка товара'),
-     KeyboardButton('💰 Проданный товар'),
+     KeyboardButton('💰Проданный товар'),
      KeyboardButton('📑Проверка единичек')],
     # KeyboardButton('📟 Мой заказ')],
-    [KeyboardButton('💳 Акции'),
-     KeyboardButton('ℹ Информация')],
+    [KeyboardButton('💳Акции'),
+     KeyboardButton('ℹИнформация'),
+     KeyboardButton('☎Телефоны')],
 ], resize_keyboard=True)
 
 second_menu = ReplyKeyboardMarkup(keyboard=[
@@ -20,18 +19,17 @@ second_menu = ReplyKeyboardMarkup(keyboard=[
 ], resize_keyboard=True)
 
 menu_admin = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton('🆚 V-Sales_825'),
-     KeyboardButton('🗃 011_825-Exit_sklad')],
-    [KeyboardButton('🤖 Qrcode ячейки'),
-     KeyboardButton('📖 Любой текст в Qr')],
-    [KeyboardButton('📦 Содержимое ячейки'),
-     KeyboardButton('🔍 Поиск на складах')],
+    [KeyboardButton('🆚V-Sales_825'), KeyboardButton('🗃011_825-Exit_sklad'), KeyboardButton('🤖Qrcode ячейки')],
+    [KeyboardButton('📖Любой текст в Qr'),
+     KeyboardButton('📦Содержимое ячейки'),
+     KeyboardButton('🔍Поиск на складах')],
     [KeyboardButton('📝Проверка товара'),
-     KeyboardButton('💰 Проданный товар'),
+     KeyboardButton('💰Проданный товар'),
      KeyboardButton('📑Проверка единичек')],
     # KeyboardButton('📟 Мой заказ')],
-    [KeyboardButton('💳 Акции'),
-     KeyboardButton('ℹ Информация')],
+    [KeyboardButton('💳Акции'),
+     KeyboardButton('ℹИнформация'),
+     KeyboardButton('☎Телефоны')],
     [KeyboardButton('Загрузка базы'),
      KeyboardButton('Отправить')],
     [KeyboardButton('Обновить Акции'),

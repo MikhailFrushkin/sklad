@@ -17,6 +17,7 @@ def dowload(sklad: str):
 
     else:
         try:
+            logger.info('Old файл {}'.format(sklad))
             excel_data_df = pd.read_excel('{}/files/file_{}.xlsx'.format(path, sklad))
             excel_data_df.to_csv('{}/files/file_{}.csv'.format(path, sklad))
             return True

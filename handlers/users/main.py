@@ -1,6 +1,8 @@
+import os
 import random
 import sqlite3
 import time
+import pandas as pd
 from database.connect_DB import *
 from database.date import *
 from aiogram import types
@@ -26,8 +28,9 @@ from handlers.users.sold_product import read_base_vsl
 from handlers.users.stocks_check import start_check_stocks, save_exsel_pst, creat_pst, union_art
 from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu
+from keyboards.inline.graf import graf_check
 from loader import dp, bot
-from state.states import Orders
+from state.states import Orders, Graf
 from state.states import Place, Logging, Messages, QR, Action
 from utils.check_bd import check
 from utils.open_exsel import dowload
@@ -364,28 +367,46 @@ async def bot_message(message: types.Message, state: FSMContext):
     """
     id = message.from_user.id
     if check(message) != 3 and check(message):
-        if message.text == '🆚 V-Sales_825':
+        if message.text == '🆚V-Sales_825':
             await bot.send_message(id, 'V-Sales_825')
             qrc = open('{}/qcodes/V-Sales_825.jpg'.format(path), 'rb')
             logger.info('Пользователь {} {} открыл QR V-Sales_825'.format(id, message.from_user.first_name))
             await bot.send_photo(message.chat.id, qrc)
 
-        elif message.text == '🗃 011_825-Exit_sklad':
+        elif message.text == '🗃011_825-Exit_sklad':
             await bot.send_message(id, '011_825-Exit_sklad')
             qrc = open('{}/qcodes/011_825-Exit_sklad.jpg'.format(path), 'rb')
             logger.info('Пользователь {} {} открыл QR 011_825-Exit_sklad'.format(id, message.from_user.first_name))
             await bot.send_photo(message.chat.id, qrc)
 
-        elif message.text == '🤖 Qrcode ячейки':
+        elif message.text == '🤖Qrcode ячейки':
             logger.info('Пользователь {} {} открыл QR ячейки'.format(id, message.from_user.first_name))
             await show_qr(message)
 
-        elif message.text == '📦 Содержимое ячейки':
+        elif message.text == '📦Содержимое ячейки':
             await show_place(message, state)
 
-        elif message.text == 'ℹ Информация' or message.text == 'Помощь':
+        elif message.text == 'ℹИнформация' or message.text == 'Помощь':
             logger.info('Пользователь {} {} нажал help'.format(id, message.from_user.first_name))
             await bot_help(message)
+
+        elif message.text == '☎Телефоны':
+            try:
+                excel_data_df = pd.read_excel('{}/Телефоны.xlsx'.format(path))
+                excel_data_df.to_csv('{}/Телефоны.scv'.format(path))
+                with open('{}/Телефоны.scv'.format(path), newline='', encoding='utf-8') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    line = []
+                    for row in reader:
+                        line.append('{} - {}'.format(row['Должность'], str(row['Номер телефона']).replace('.', ',')))
+                    await bot.send_message(id, '\n'.join(line), reply_markup=second_menu)
+                    await message.answer_document(open('{}/График.xls'.format(path), 'rb'), reply_markup=graf_check)
+                    await Graf.check_graf.set()
+
+            except Exception as ex:
+                logger.debug(ex)
+            finally:
+                os.remove('{}/Телефоны.scv'.format(path))
 
         elif message.text == '📑Проверка единичек':
             logger.info('Пользователь {} {} нажал Проверка единичек'.format(id, message.from_user.first_name))
@@ -394,14 +415,18 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == '📝Проверка товара':
             data_nulls_res = {}
             dbhandle.connect()
+            dbdate.connect()
             data_nulls = NullProduct.select()
+            data_time = DateBase.select()
             for key in data_nulls:
                 data_nulls_res[key.group] = key.num
-            dbhandle.close()
+
             await bot.send_message(message.from_user.id,
+                                   '{}\n'
                                    'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
                                    '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
                                    'Прихожая: {}\n'.format(
+                                       *[i.date_V_Sales_new for i in data_time],
                                        data_nulls_res['11'],
                                        data_nulls_res['20'],
                                        data_nulls_res['21'],
@@ -411,8 +436,9 @@ async def bot_message(message: types.Message, state: FSMContext):
                                        data_nulls_res['35'],
                                    ))
             await start_check_stocks(message, state)
-
-        elif message.text == '💰 Проданный товар':
+            dbhandle.close()
+            dbdate.close()
+        elif message.text == '💰Проданный товар':
             dbdate.connect()
             logger.info('Пользователь {} {} нажал Проданный товар'.format(id, message.from_user.first_name))
             for i in DateBase.select():
@@ -422,17 +448,17 @@ async def bot_message(message: types.Message, state: FSMContext):
             dbdate.close()
             await message.answer_document(open('{}/files/sold.xlsx'.format(path), 'rb'))
 
-        elif message.text == '🔍 Поиск на складах':
+        elif message.text == '🔍Поиск на складах':
             await search(message, state)
 
         elif message.text == 'В главное меню':
             await back(message, state)
 
-        elif message.text == '📖 Любой текст в Qr':
+        elif message.text == '📖Любой текст в Qr':
             await bot.send_message(id, 'Введите текст.', reply_markup=second_menu)
             await QR.qr.set()
 
-        elif message.text == '💳 Акции':
+        elif message.text == '💳Акции':
             await Action.set_group.set()
             await view_actions(message, state)
 
