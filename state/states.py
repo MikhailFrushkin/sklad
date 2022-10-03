@@ -60,3 +60,7 @@ class Verification(StatesGroup):
     edited_status = State()
     edited_status_art = State()
 
+
+class Graf(StatesGroup):
+    check_graf = State()
+    day_graf = State()
