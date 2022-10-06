@@ -39,6 +39,7 @@ class DateBase(BaseModel):
     date_012_825 = DateField(default=datetime.date.today)
     date_A11_825 = DateField(default=datetime.date.today)
     date_RDiff = DateField(default=datetime.date.today)
+    date_RDiff_old = DateField(default=datetime.date.today)
 
     class META:
         database = dbdate

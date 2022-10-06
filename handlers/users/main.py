@@ -17,10 +17,11 @@ import bot
 from all_requests.parse_action import parse_actions, view_actions
 from data.config import ADMINS, PASSWORD, path
 from database.products import NullProduct
-from handlers.users.Verification import verification_start, create_table
+from handlers.users.Verification import verification_start, create_table2
 from handlers.users.back import back
 from handlers.users.cell_content import show_place
 from handlers.users.helps import bot_help
+from handlers.users.info_rdiff import read_all_base, new_rdiff_to_exsel
 from handlers.users.search import search
 from handlers.users.show_art import show_art_in_main_menu
 from handlers.users.show_qrs import show_qr
@@ -164,20 +165,31 @@ async def doc_handler(message: types.Message, state: FSMContext):
                 os.rename(old_name, '{}/files/file_old_{}.xlsx'.format(path, data['sklad']))
                 dowload('old_{}'.format(data['sklad']))
                 myfile = '{}/database/DateBase.db'.format(path)
-
-                if os.path.isfile(myfile):
-                    dbdate.connect()
-                    for i in DateBase.select():
-                        i.date_V_Sales_old = date_old
-                        i.save()
-                else:
-                    dbdate.connect()
-                    DateBase.create_table()
-                    temp = DateBase.create(date_V_Sales_old=date_old)
-                    temp.save()
-                    logger.info('создал бд')
+                if data['sklad'] == 'V_Sales':
+                    if os.path.isfile(myfile):
+                        dbdate.connect()
+                        for i in DateBase.select():
+                            i.date_V_Sales_old = date_old
+                            i.save()
+                    else:
+                        dbdate.connect()
+                        DateBase.create_table()
+                        temp = DateBase.create(date_V_Sales_old=date_old)
+                        temp.save()
+                        logger.info('создал бд')
+                elif data['sklad'] == 'RDiff':
+                    if os.path.isfile(myfile):
+                        dbdate.connect()
+                        for i in DateBase.select():
+                            i.date_RDiff_old = date_old
+                            i.save()
+                    else:
+                        dbdate.connect()
+                        DateBase.create_table()
+                        temp = DateBase.create(date_RDiff_old=date_old)
+                        temp.save()
+                        logger.info('создал бд')
                 dbdate.close()
-
             except Exception as ex:
                 logger.debug(ex)
             await dowload_exs(message, state)
@@ -189,7 +201,6 @@ async def doc_handler(message: types.Message, state: FSMContext):
 
 async def dowload_exs(message, state):
     async with state.proxy() as data:
-        dbdate.connect()
         if document := message.document:
             await document.download(
                 destination_file="{}/files/file_{}.xlsx".format(path, data['sklad']),
@@ -202,6 +213,14 @@ async def dowload_exs(message, state):
                                                             )))
         mtime = os.path.getmtime("{}/files/file_{}.xlsx".format(path, data['sklad']))
         date_new = time.ctime(mtime)
+        print(date_new, data['sklad'])
+        myfile = '{}/database/DateBase.db'.format(path)
+        if os.path.isfile(myfile):
+            dbdate.connect()
+        else:
+            dbdate.connect()
+            DateBase.create_table()
+            logger.info('создал бд')
         for i in DateBase.select():
             if data['sklad'] == 'V_Sales':
                 i.date_V_Sales_new = date_new
@@ -390,7 +409,7 @@ async def bot_message(message: types.Message, state: FSMContext):
             logger.info('Пользователь {} {} нажал help'.format(id, message.from_user.first_name))
             await bot_help(message)
 
-        elif message.text == '☎Телефоны':
+        elif message.text == 'Телефоны':
             try:
                 excel_data_df = pd.read_excel('{}/Телефоны.xlsx'.format(path))
                 excel_data_df.to_csv('{}/Телефоны.scv'.format(path))
@@ -480,7 +499,20 @@ async def bot_message(message: types.Message, state: FSMContext):
             await bot.send_message(id, 'Выберите склад', reply_markup=dowload_menu)
             await Place.dowload.set()
         elif message.text == 'Сброс единичек':
-            await create_table(message)
+            await create_table2(message)
+        elif message.text == '🤬Новые Рдиффы':
+            dbdate.connect()
+            logger.info('Пользователь {} {} нажал Проданный товар'.format(id, message.from_user.first_name))
+            for i in DateBase.select():
+                await bot.send_message(id, 'Новые рдиффы\n'
+                                           'с {}\n'
+                                           'по {}.'.format(i.date_RDiff_old, i.date_RDiff))
+            await message.answer_document(open('{}/files/new_rdiff.xlsx'.format(path), 'rb'))
+            dbdate.close()
+        elif message.text == 'Обновить новые рдиффы':
+            read_all_base()
+            new_rdiff_to_exsel()
+            await bot.send_message(id, 'Рдиффы обновленны')
         else:
             answer = message.text.lower()
             await show_art_in_main_menu(message, answer)

@@ -49,7 +49,7 @@ async def check_graf(call: types.CallbackQuery, state: FSMContext):
                     if row[day][:2].isdigit():
                         line.append('{}\n{} по {}'.format(row['ФИО'],
                                                           'Дежурный c ' + row[day][:5] if row[day][:5].startswith(
-                                                              '09') else 'c ' + row[day][:5], row[day][6:]))
+                                                              '09:00') else 'c ' + row[day][:5], row[day][6:]))
                 await bot.send_message(call.from_user.id, '\n'.join(line))
                 await back(call, state)
         except Exception as ex:

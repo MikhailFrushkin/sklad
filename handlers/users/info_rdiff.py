@@ -1,53 +1,8 @@
 import json
 
-from aiogram import types
-import time
-from data.config import path
-from database.connect_DB import dbdate
-from database.date import *
-import random
-import sqlite3
-import time
 from database.connect_DB import *
-from database.date import *
-from aiogram import types
-from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, ParseMode
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
-from aiogram.utils.emoji import emojize
-from aiogram.utils.markdown import text, italic, code
-from loguru import logger
-
-import bot
-from all_requests.parse_action import parse_actions, view_actions
-from data.config import ADMINS, PASSWORD, path
-from database.products import NullProduct
-from handlers.users.Verification import verification_start, create_table
-from handlers.users.back import back
-from handlers.users.cell_content import show_place
-from handlers.users.helps import bot_help
-from handlers.users.search import search
-from handlers.users.show_art import show_art_in_main_menu
-from handlers.users.show_qrs import show_qr
-from handlers.users.sold_product import read_base_vsl
-from handlers.users.stocks_check import start_check_stocks, save_exsel_pst, creat_pst, union_art
-from keyboards.default import menu
-from keyboards.default.menu import second_menu, menu_admin, dowload_menu
-from loader import dp, bot
-from state.states import Orders
-from state.states import Place, Logging, Messages, QR, Action
-from utils.check_bd import check
-from utils.open_exsel import dowload
-from utils.read_bd import del_orders, mail
-import csv
-import os
-
-from loguru import logger
 from database.date import *
 import pandas as pd
-from database.connect_DB import *
-import peewee
-from peewee import *
 
 
 def read_all_base():
@@ -65,7 +20,7 @@ def read_all_base():
                     art_dict[row['Код \nноменклатуры']] = [{
                         row['Местоположение']: row['Физические \nзапасы']
                     }]
-    with open('old_base_arts.json', 'w', encoding='utf-8') as file:
+    with open('{}/files/old_base_arts.json'.format(path), 'w', encoding='utf-8') as file:
         json.dump(art_dict, file, ensure_ascii=False, indent=4)
 
     art_dict = {}
@@ -81,8 +36,9 @@ def read_all_base():
                     art_dict[row['Код \nноменклатуры']] = [{
                         row['Местоположение']: row['Физические \nзапасы']
                     }]
-    with open('new_base_arts.json', 'w', encoding='utf-8') as file:
+    with open('{}/files/new_base_arts.json'.format(path), 'w', encoding='utf-8') as file:
         json.dump(art_dict, file, ensure_ascii=False, indent=4)
+    new_rdiff()
 
 
 def new_rdiff():
@@ -98,14 +54,15 @@ def new_rdiff():
             temp = [row2['Код \nноменклатуры'], row2['Описание товара'], row2['Физические \nзапасы']]
             if temp not in rdiff_list:
                 rdiff_list_new.append(row2['Код \nноменклатуры'])
-    print(rdiff_list_new)
+    # print(len(rdiff_list_new))
     view_place_rdiff(rdiff_list_new)
+    matching_rdiff()
 
 
 def view_place_rdiff(rdiff_list_new):
-    with open('new_base_arts.json', 'r', encoding='utf-8') as file:
+    with open('{}/files/new_base_arts.json'.format(path), 'r', encoding='utf-8') as file:
         data_new = json.load(file)
-    with open('old_base_arts.json', 'r', encoding='utf-8') as file:
+    with open('{}/files/old_base_arts.json'.format(path), 'r', encoding='utf-8') as file:
         data_old = json.load(file)
     data_place = {
     }
@@ -114,15 +71,134 @@ def view_place_rdiff(rdiff_list_new):
         try:
             data_place[art] = {}
             if art in data_new.keys():
-                data_place[art]['old'] = data_new[art]
+                data_place[art]['new'] = data_new[art]
             if art in data_old.keys():
-                data_place[art]['new'] = data_old[art]
+                data_place[art]['old'] = data_old[art]
         except KeyError as ex:
-            print(art, ex)
-    print(data_place)
-    with open('result.json', 'w', encoding='utf-8') as file:
+            logger.debug(art, ex)
+    with open('{}/files/result.json'.format(path), 'w', encoding='utf-8') as file:
         json.dump(data_place, file, ensure_ascii=False, indent=4)
 
+
+def matching_rdiff():
+    with open('{}/files/result.json'.format(path), 'r', encoding='utf-8') as file:
+        data_rdiff = json.load(file)
+    art_list = [i for i, j in data_rdiff.items()]
+
+    list_cell_art = {}
+    for i in art_list:
+        list_cell = []
+        try:
+            for old in data_rdiff.get(i).get('old'):
+                list_cell.append(list(old.keys())[0])
+        except Exception as ex:
+            logger.debug('У артикула {} нет ячейки в старом файле {}'.format(i, ex))
+        try:
+            for new in data_rdiff.get(i).get('new'):
+                list_cell.append(list(new.keys())[0])
+        except Exception as ex:
+            logger.debug('У артикула {} нет ячейки в новом файле {}'.format(i, ex))
+        list_cell = sorted(list(set(list_cell)))
+        list_cell_art[i] = list_cell
+    result = {}
+    for i in art_list:
+        result_cells = []
+        for cell in list_cell_art[i]:
+
+            try:
+                a = [int(list(item.values())[0]) for item in data_rdiff.get(i).get('old') if
+                     cell == list(item.keys())[0]]
+            except Exception:
+                a = []
+            try:
+                b = [int(list(item.values())[0]) for item in data_rdiff.get(i).get('new') if
+                     cell == list(item.keys())[0]]
+            except Exception:
+                b = []
+            if len(a) == 0:
+                list_num = [0, b[0], b[0]]
+            elif len(b) == 0:
+                list_num = [a[0], 0, -a[0]]
+            else:
+                list_num = [a[0], b[0], b[0] - a[0]]
+            result_cells.append([cell, list_num])
+
+        result[i] = result_cells
+    # for key, value in result.items():
+    #     print(key)
+    #     for i in value:
+    #         print('{} дельта: {}\nБыло: {} Стало: {}'.format(i[0], i[1][2], i[1][0], i[1][1]))
+    with open('{}/files/output.json'.format(path), 'w', encoding='utf-8') as file:
+        json.dump(result, file, ensure_ascii=False, indent=4)
+    return result
+
+
+def new_rdiff_to_exsel():
+    data = matching_rdiff()
+    print(len(list(data.keys())))
+    data2 = {
+            'Артикул': [],
+            'Старая ячейка': [],
+            'Количество(с)': [],
+            'Новая ячейка': [],
+            'Количество(н)': [],
+            'Дельта': []
+    }
+    count_art = 0
+    for key, value in data.items():
+        count = 0
+        for i in value:
+            if count == 0:
+                data2['Артикул'].append(key)
+            else:
+                data2['Артикул'].append('')
+            data2['Старая ячейка'].append(i[0])
+            data2['Количество(с)'].append(i[1][0])
+            data2['Новая ячейка'].append(i[0])
+            data2['Количество(н)'].append(i[1][1])
+            data2['Дельта'].append(i[1][2])
+            count += 1
+        count_art += 1
+        if count_art != len(list(data.keys())):
+            data2['Артикул'].append('')
+            data2['Старая ячейка'].append('')
+            data2['Количество(с)'].append('')
+            data2['Новая ячейка'].append('')
+            data2['Количество(н)'].append('')
+            data2['Дельта'].append('')
+            # data2['Артикул'].append('Артикул')
+            # data2['Старая ячейка'].append('Старая ячейка')
+            # data2['Количество(с)'].append('Количество(с)')
+            # data2['Новая ячейка'].append('Новая ячейка')
+            # data2['Количество(н)'].append('Количество(н)')
+            # data2['Дельта'].append('Дельта')
+    df_marks = pd.DataFrame(data2)
+    writer = pd.ExcelWriter('{}/files/new_rdiff.xlsx'.format(path))
+    df_marks.to_excel(writer, sheet_name='Сверка', index=False, na_rep='NaN')
+    workbook = writer.book
+    worksheet = writer.sheets['Сверка']
+    cell_format = workbook.add_format()
+    cell_format.set_align('center')
+    cell_format.set_bold()
+    cell_format.set_border(1)
+    cell_format.set_num_format('[Green]General;[Red]-General;General')
+
+    cell_format2 = workbook.add_format({'align': 'left',
+                                        'valign': 'vcenter',
+                                        'border': 1})
+
+    cell_format3 = workbook.add_format({'align': 'center',
+                                        'valign': 'vcenter',
+                                        'border': 1})
+
+    worksheet.set_column('A:A', 10, cell_format2)
+    worksheet.set_column('B:B', 18, cell_format2)
+    worksheet.set_column('D:D', 18, cell_format2)
+    worksheet.set_column('C:C', 14, cell_format3)
+    worksheet.set_column('E:E', 14, cell_format3)
+    worksheet.set_column('F:F', 14, cell_format)
+    writer.close()
+
+
 if __name__ == '__main__':
-    read_all_base()
-    new_rdiff()
+    new_rdiff_to_exsel()

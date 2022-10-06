@@ -28,7 +28,7 @@ async def verification_start(message, state):
         data['message'] = mes
 
 
-async def create_table(message):
+async def create_table2(message):
     await bot.send_message(message.from_user.id, 'Количество единичек на V_sales: {}'.format(Product.update_bot()))
 
 
