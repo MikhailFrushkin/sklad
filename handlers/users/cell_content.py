@@ -9,7 +9,6 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
 import bot
-from all_requests.new_parser import get_info
 from all_requests.parse_on_requests import parse
 from data.config import path
 from handlers.users.back import back
@@ -179,8 +178,6 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
                     logger.info('нашел json ')
                     with open(r"{}\base\json\{}.json".format(path, call.data), 'r', encoding='utf-8') as file:
                         data2 = json.load(file)
-                else:
-                    data2 = get_info(call.data)
-                photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
-                logger.debug(ex)
+                    photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
+                    logger.debug(ex)
             data['photo{}'.format(call.data)] = photo

@@ -54,7 +54,7 @@ def new_rdiff():
             temp = [row2['Код \nноменклатуры'], row2['Описание товара'], row2['Физические \nзапасы']]
             if temp not in rdiff_list:
                 rdiff_list_new.append(row2['Код \nноменклатуры'])
-    # print(len(rdiff_list_new))
+
     view_place_rdiff(rdiff_list_new)
     matching_rdiff()
 
@@ -124,10 +124,7 @@ def matching_rdiff():
             result_cells.append([cell, list_num])
 
         result[i] = result_cells
-    # for key, value in result.items():
-    #     print(key)
-    #     for i in value:
-    #         print('{} дельта: {}\nБыло: {} Стало: {}'.format(i[0], i[1][2], i[1][0], i[1][1]))
+
     with open('{}/files/output.json'.format(path), 'w', encoding='utf-8') as file:
         json.dump(result, file, ensure_ascii=False, indent=4)
     return result
@@ -137,12 +134,12 @@ def new_rdiff_to_exsel():
     data = matching_rdiff()
     print(len(list(data.keys())))
     data2 = {
-            'Артикул': [],
-            'Старая ячейка': [],
-            'Количество(с)': [],
-            'Новая ячейка': [],
-            'Количество(н)': [],
-            'Дельта': []
+        'Артикул': [],
+        'Старая ячейка': [],
+        'Количество(с)': [],
+        'Новая ячейка': [],
+        'Количество(н)': [],
+        'Дельта': []
     }
     count_art = 0
     for key, value in data.items():
@@ -166,17 +163,20 @@ def new_rdiff_to_exsel():
             data2['Новая ячейка'].append('')
             data2['Количество(н)'].append('')
             data2['Дельта'].append('')
-            # data2['Артикул'].append('Артикул')
-            # data2['Старая ячейка'].append('Старая ячейка')
-            # data2['Количество(с)'].append('Количество(с)')
-            # data2['Новая ячейка'].append('Новая ячейка')
-            # data2['Количество(н)'].append('Количество(н)')
-            # data2['Дельта'].append('Дельта')
+    print(data)
     df_marks = pd.DataFrame(data2)
     writer = pd.ExcelWriter('{}/files/new_rdiff.xlsx'.format(path))
-    df_marks.to_excel(writer, sheet_name='Сверка', index=False, na_rep='NaN')
+    dbdate.connect()
+    for i in DateBase.select():
+        date_old = i.date_RDiff_old
+        date_new = i.date_RDiff
+    dbdate.close()
+    df_marks.to_excel(writer, sheet_name='с {} по {}'.format(date_old[4:-14].replace('  ', ' '),
+                                                             date_new[4:-14].replace('  ', ' ')), index=False,
+                      na_rep='NaN')
     workbook = writer.book
-    worksheet = writer.sheets['Сверка']
+    worksheet = writer.sheets['с {} по {}'.format(date_old[4:-14].replace('  ', ' '),
+                                                  date_new[4:-14].replace('  ', ' '))]
     cell_format = workbook.add_format()
     cell_format.set_align('center')
     cell_format.set_bold()

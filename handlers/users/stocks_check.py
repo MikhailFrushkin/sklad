@@ -9,7 +9,6 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
 from all_requests.parse_on_requests import parse
-from all_requests.requests_mediagroup import get_info
 from data.config import path
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
@@ -115,8 +114,6 @@ async def answer_call(call: types.CallbackQuery, state: FSMContext):
         else:
             logger.info('Пользователь {} запросил картинку на арт.{}'.format(call.from_user.id, call.data))
             data2 = parse(call.data)
-            if not data2:
-                data2 = get_info(call.data)
             try:
                 photo = await call.message.answer_photo(data2['pictures'][0], reply_markup=hide)
             except Exception as ex:

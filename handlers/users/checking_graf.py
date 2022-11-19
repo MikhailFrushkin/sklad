@@ -1,27 +1,16 @@
-import asyncio
 import csv
 import os
 
 import pandas as pd
-from data.config import ADMINS
-
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
-from all_requests.parse_on_requests import parse
-from all_requests.requests_mediagroup import get_info
 from data.config import path
 from handlers.users.back import back
-from handlers.users.delete_message import delete_message
-from keyboards.default.menu import menu, menu_admin
 from keyboards.inline.graf import graf_days
-from keyboards.inline.mesto import hide
-from keyboards.inline.stock import choise_num, stocks
 from loader import dp, bot
-from state.states import Stock, Graf
-from utils.min_stocks import finish, save_exsel_min, get_groups
+from state.states import Graf
 
 
 @dp.callback_query_handler(state=[Graf.check_graf])

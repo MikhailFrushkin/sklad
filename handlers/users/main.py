@@ -2,12 +2,14 @@ import os
 import random
 import sqlite3
 import time
+from io import BytesIO
+
 import pandas as pd
 from database.connect_DB import *
 from database.date import *
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, ParseMode
+from aiogram.types import ContentType, ParseMode, InputFile
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from aiogram.utils.emoji import emojize
 from aiogram.utils.markdown import text, italic, code
@@ -111,7 +113,7 @@ async def input_password(message: types.Message, state: FSMContext):
                                                                               message.from_user.first_name))
 
 
-@dp.message_handler(content_types=['text'], state=Messages.mes)
+@dp.message_handler(content_types=['text', 'document', 'photo'], state=Messages.mes)
 async def message_for_users(message: types.Message, state: FSMContext):
     """
     Рассылка сообщения пользователям бота,
@@ -121,18 +123,83 @@ async def message_for_users(message: types.Message, state: FSMContext):
     if message.text == 'В главное меню':
         await back(message, state)
     else:
-        text_mes = '❗{}❗\n'.format(message.text)
-        logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
-        connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
-        cursor = connect.cursor()
-        cursor.execute("SELECT * FROM login_id;")
-        one_result = cursor.fetchall()
-        for i in one_result:
+        if document := message.document:
             try:
-                await bot.send_message(i[0], text_mes)
+                logger.info('{} - Загружен документ'.format(message.from_user.id))
+                media_list = ['png', 'jpg', 'jpeg']
+                ex = document.file_name.split('.')[-1]
+                print(ex)
+                if ex in media_list:
+                    print('фото')
+                    await document.download(
+                        destination_file="{}/files/file.{}".format(path, ex),
+                    )
+                    photo = InputFile("{}/files/file.{}".format(path, ex))
+
+
+                    connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
+                    cursor = connect.cursor()
+                    cursor.execute("SELECT * FROM login_id;")
+                    one_result = cursor.fetchall()
+                    for i in one_result:
+                        try:
+                            await bot.send_photo(i[0], photo=photo)
+                        except Exception as exp:
+                            logger.debug('Не удалось отправить сообщение {} {}'.format(i, exp))
+                    await back(message, state)
+
+                else:
+                    print('док')
+                    await document.download(
+                        destination_file="{}/files/file.{}".format(path, ex),
+                    )
+                    connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
+                    cursor = connect.cursor()
+                    cursor.execute("SELECT * FROM login_id;")
+                    one_result = cursor.fetchall()
+                    for i in one_result:
+                        try:
+                            await bot.send_document(i[0], document=open("{}/files/file.{}".format(path, ex), 'rb'))
+
+                        except Exception as exp:
+                            logger.debug('Не удалось отправить сообщение {} {}'.format(i, exp))
+                    await back(message, state)
+
+
             except Exception as ex:
-                logger.debug('Не удалось отправить сообщение {} {}'.format(i, ex))
-        await back(message, state)
+                logger.debug(ex)
+        elif photo := message.photo:
+            try:
+                print('Загрузка фото')
+                p = await message.photo[-1].download("{}/files/file.png".format(path))
+                photo = InputFile("{}/files/file.png".format(path))
+                connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
+                cursor = connect.cursor()
+                cursor.execute("SELECT * FROM login_id;")
+                one_result = cursor.fetchall()
+                for i in one_result:
+                    try:
+                        await bot.send_photo(i[0], photo=photo)
+                    except Exception as exp:
+                        logger.debug('Не удалось отправить сообщение {} {}'.format(i, exp))
+                await back(message, state)
+            except Exception as ex:
+                logger.debug(ex)
+        else:
+            text_mes = '❗{}❗\n'.format(message.text)
+            logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
+            connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
+            cursor = connect.cursor()
+            cursor.execute("SELECT * FROM login_id;")
+            one_result = cursor.fetchall()
+            for i in one_result:
+                try:
+                    await bot.send_message(i[0], text_mes)
+                except Exception as ex:
+                    logger.debug('Не удалось отправить сообщение {} {}'.format(i, ex))
+            await back(message, state)
+
+
 
 
 @dp.message_handler(content_types=['text'], state=Place.dowload)
@@ -460,6 +527,10 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == '💰Проданный товар':
             dbdate.connect()
             logger.info('Пользователь {} {} нажал Проданный товар'.format(id, message.from_user.first_name))
+            await bot.send_message(id,
+                                   'В доработке, т.к. стали принимать на весло, '
+                                   'некорректное движение теперь, с весла на склад и т.д.'
+                                   '\nВ свободное время допилю)')
             for i in DateBase.select():
                 await bot.send_message(id, 'Проданный товар и доступность на складе\n'
                                            'с {}\n'
@@ -502,7 +573,7 @@ async def bot_message(message: types.Message, state: FSMContext):
             await create_table2(message)
         elif message.text == '🤬Новые Рдиффы':
             dbdate.connect()
-            logger.info('Пользователь {} {} нажал Проданный товар'.format(id, message.from_user.first_name))
+            logger.info('Пользователь {} {} нажал Новые рдиффы'.format(id, message.from_user.first_name))
             for i in DateBase.select():
                 await bot.send_message(id, 'Новые рдиффы\n'
                                            'с {}\n'
@@ -536,3 +607,5 @@ async def bot_message(message: types.Message, state: FSMContext):
         await helps(message)
         await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')
         await Logging.log.set()
+
+

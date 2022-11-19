@@ -67,7 +67,11 @@ def parse(art):
         for item in characteristic:
             characteristic_list.append('{} {}'.format(item['name'], item['value']))
         for i in pictures:
-            pictures_list.append(i['src'])
+            if i['src'].startswith('http'):
+                pictures_list.append(i['src'])
+            else:
+                pictures_list.append('https://hoff.ru/' + i['src'])
+                print('https://hoff.ru/' + i['src'])
         data = {
             'id_product': id_product,
             'articul': articul,
