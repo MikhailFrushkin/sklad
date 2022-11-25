@@ -86,7 +86,7 @@ def parse(art):
             json.dump(data, write_file, indent=4, ensure_ascii=False)
         return data
     except Exception as ex:
-        logger.debug('Нет товара на сайте =( {} или 1 парсер отвалился'.format(ex))
+        logger.debug('Нет товара на сайте =( {}'.format(ex))
 
 
 def main():

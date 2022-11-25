@@ -1,6 +1,10 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 
+class EditKeyboard(StatesGroup):
+    edit = State()
+
+
 class Showphoto(StatesGroup):
     show_qr = State()
     show_all = State()

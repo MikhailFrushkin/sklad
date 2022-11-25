@@ -19,9 +19,12 @@ import bot
 from all_requests.parse_action import parse_actions, view_actions
 from data.config import ADMINS, PASSWORD, path
 from database.products import NullProduct
+from database.users import Users
 from handlers.users.Verification import verification_start, create_table2
 from handlers.users.back import back
 from handlers.users.cell_content import show_place
+from handlers.users.delete_message import delete_message
+from handlers.users.edit_keyboard import inlane_edit_keyboard, create_keyboard
 from handlers.users.helps import bot_help
 from handlers.users.info_rdiff import read_all_base, new_rdiff_to_exsel
 from handlers.users.search import search
@@ -33,7 +36,7 @@ from keyboards.default import menu
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu
 from keyboards.inline.graf import graf_check
 from loader import dp, bot
-from state.states import Orders, Graf
+from state.states import Orders, Graf, EditKeyboard
 from state.states import Place, Logging, Messages, QR, Action
 from utils.check_bd import check
 from utils.open_exsel import dowload
@@ -61,13 +64,153 @@ async def bot_start(message: types.Message):
                                  .format(message.from_user.first_name),
                                  reply_markup=menu_admin)
         else:
-            await message.answer('Добро пожаловать, {}!'
-                                 '\nДля помощи нажми на кнопку Информация(/help)'
-                                 .format(message.from_user.first_name), reply_markup=menu)
+            try:
+                await message.answer('Добро пожаловать, {}!'
+                                     '\nДля помощи нажми на кнопку Информация(/help)'
+                                     .format(message.from_user.first_name),
+                                     reply_markup=create_keyboard(message.from_user.id))
+            except Exception as ex:
+                await message.answer('Добро пожаловать, {}!'
+                                     '\nДля помощи нажми на кнопку Информация(/help)'
+                                     .format(message.from_user.first_name),
+                                     reply_markup=menu)
+                logger.debug(message.from_user.first_name, ex)
     else:
         await helps(message)
         await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')
         await Logging.log.set()
+
+
+@dp.message_handler(commands=['keyboard'], state='*')
+async def keyboard_user(message: types.Message, state: FSMContext):
+    """Команда для редактирования главного меню"""
+    await state.reset_state()
+    await state.finish()
+    async with state.proxy() as data:
+        message_k = await bot.send_message(message.from_user.id, 'Выберите кнопки меню:',
+                                           reply_markup=inlane_edit_keyboard(message.from_user.id))
+        await EditKeyboard.edit.set()
+        data['mes'] = message_k
+
+
+@dp.callback_query_handler(state=EditKeyboard.edit)
+async def keyboard(call: types.CallbackQuery, state: FSMContext):
+    """смена буливого при нажатии на клавиши ,какую кнопку показывать в меню или нет"""
+    async with state.proxy() as data:
+        dbhandle.connect()
+        query = Users.get(Users.id_tg == call.from_user.id)
+        await delete_message(data['mes'])
+        if call.data == 'exit':
+            dbhandle.close()
+            await back(call, state)
+        else:
+            if call.data == 'vsales':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.vsales:
+                    new_s.keyboard.vsales = False
+                else:
+                    new_s.keyboard.vsales = True
+                new_s.keyboard.save()
+
+            if call.data == 'ex_sklad':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.ex_sklad:
+                    new_s.keyboard.ex_sklad = False
+                else:
+                    new_s.keyboard.ex_sklad = True
+                new_s.keyboard.save()
+
+            if call.data == 'qr_cell':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.qr_cell:
+                    new_s.keyboard.qr_cell = False
+                else:
+                    new_s.keyboard.qr_cell = True
+                new_s.keyboard.save()
+
+            if call.data == 'text_qr':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.text_qr:
+                    new_s.keyboard.text_qr = False
+                else:
+                    new_s.keyboard.text_qr = True
+                new_s.keyboard.save()
+
+            if call.data == 'text_qr':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.text_qr:
+                    new_s.keyboard.text_qr = False
+                else:
+                    new_s.keyboard.text_qr = True
+                new_s.keyboard.save()
+
+            if call.data == 'content':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.content:
+                    new_s.keyboard.content = False
+                else:
+                    new_s.keyboard.content = True
+                new_s.keyboard.save()
+
+            if call.data == 'search':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.search:
+                    new_s.keyboard.search = False
+                else:
+                    new_s.keyboard.search = True
+                new_s.keyboard.save()
+
+            if call.data == 'check':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.check:
+                    new_s.keyboard.check = False
+                else:
+                    new_s.keyboard.check = True
+                new_s.keyboard.save()
+
+            if call.data == 'buy':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.buy:
+                    new_s.keyboard.buy = False
+                else:
+                    new_s.keyboard.buy = True
+                new_s.keyboard.save()
+
+            if call.data == 'check_one':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.check_one:
+                    new_s.keyboard.check_one = False
+                else:
+                    new_s.keyboard.check_one = True
+                new_s.keyboard.save()
+
+            if call.data == 'stock':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.stock:
+                    new_s.keyboard.stock = False
+                else:
+                    new_s.keyboard.stock = True
+                new_s.keyboard.save()
+
+            if call.data == 'info':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.info:
+                    new_s.keyboard.info = False
+                else:
+                    new_s.keyboard.info = True
+                new_s.keyboard.save()
+
+            if call.data == 'tel':
+                new_s = Users.get(Users.id_tg == call.from_user.id)
+                if query.keyboard.tel:
+                    new_s.keyboard.tel = False
+                else:
+                    new_s.keyboard.tel = True
+                new_s.keyboard.save()
+            dbhandle.close()
+            message_k = await bot.send_message(call.from_user.id, 'Выберите кнопки меню:',
+                                               reply_markup=inlane_edit_keyboard(call.from_user.id))
+            data['mes'] = message_k
 
 
 @dp.message_handler(commands=['help'], state='*')
@@ -134,8 +277,7 @@ async def message_for_users(message: types.Message, state: FSMContext):
                     await document.download(
                         destination_file="{}/files/file.{}".format(path, ex),
                     )
-                    photo = InputFile("{}/files/file.{}".format(path, ex))
-
+                    # photo = InputFile("{}/files/file.{}".format(path, ex))
 
                     connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
                     cursor = connect.cursor()
@@ -143,9 +285,10 @@ async def message_for_users(message: types.Message, state: FSMContext):
                     one_result = cursor.fetchall()
                     for i in one_result:
                         try:
-                            await bot.send_photo(i[0], photo=photo)
+                            with open("{}/files/file.{}".format(path, ex), 'rb') as photo:
+                                await bot.send_photo(i[0], photo=photo)
                         except Exception as exp:
-                            logger.debug('Не удалось отправить сообщение {} {}'.format(i, exp))
+                            logger.debug('Не удалось отправить фото {} {}'.format(i, exp))
                     await back(message, state)
 
                 else:
@@ -171,15 +314,15 @@ async def message_for_users(message: types.Message, state: FSMContext):
         elif photo := message.photo:
             try:
                 print('Загрузка фото')
-                p = await message.photo[-1].download("{}/files/file.png".format(path))
-                photo = InputFile("{}/files/file.png".format(path))
+                await message.photo[-1].download("{}/files/file.png".format(path))
                 connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
                 cursor = connect.cursor()
                 cursor.execute("SELECT * FROM login_id;")
                 one_result = cursor.fetchall()
                 for i in one_result:
                     try:
-                        await bot.send_photo(i[0], photo=photo)
+                        with open("{}/files/file.png".format(path), 'rb') as photo:
+                            await bot.send_photo(i[0], photo=photo)
                     except Exception as exp:
                         logger.debug('Не удалось отправить сообщение {} {}'.format(i, exp))
                 await back(message, state)
@@ -198,8 +341,6 @@ async def message_for_users(message: types.Message, state: FSMContext):
                 except Exception as ex:
                     logger.debug('Не удалось отправить сообщение {} {}'.format(i, ex))
             await back(message, state)
-
-
 
 
 @dp.message_handler(content_types=['text'], state=Place.dowload)
@@ -607,5 +748,3 @@ async def bot_message(message: types.Message, state: FSMContext):
         await helps(message)
         await bot.send_message(message.from_user.id, 'Нет доступа, введите пароль!')
         await Logging.log.set()
-
-

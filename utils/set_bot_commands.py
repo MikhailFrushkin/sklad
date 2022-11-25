@@ -6,6 +6,7 @@ async def set_default_commands(dp):
     await dp.bot.set_my_commands(
         [
             types.BotCommand('start', 'Запустить бота'),
+            types.BotCommand('keyboard', 'Настройка главного меню'),
             types.BotCommand('help', 'Помощь')
         ]
     )

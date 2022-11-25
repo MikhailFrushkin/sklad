@@ -12,6 +12,7 @@ from all_requests.parse_on_requests import parse
 from data.config import path
 from handlers.users.back import back
 from handlers.users.delete_message import delete_message
+from handlers.users.edit_keyboard import create_keyboard
 from keyboards.default.menu import menu, menu_admin
 from keyboards.inline.mesto import hide
 from keyboards.inline.stock import choise_num, stocks
@@ -137,7 +138,11 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
         data['products'] = []
         line = []
         if call.from_user.id not in [int(i) for i in ADMINS]:
-            menu_check = menu
+            try:
+                menu_check = create_keyboard(call.from_user.id)
+            except Exception as ex:
+                menu_check = menu
+                logger.debug(call.from_user.first_name, ex)
         else:
             menu_check = menu_admin
 

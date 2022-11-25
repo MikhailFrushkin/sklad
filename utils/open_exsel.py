@@ -66,7 +66,7 @@ def place_dost(message: str, sklad: str) -> list[str]:
                             and row['Местоположение'].startswith(message) \
                             and row['Доступно'] != '':
                         line = 'Ячейка: {}' \
-                               '\n{} - {} Убрать:{}\n'.format(row['Местоположение'], row['Код \nноменклатуры'],
+                               '\n{}\n{}\nУбрать:{}\n'.format(row['Местоположение'], row['Код \nноменклатуры'],
                                                             row['Описание товара'],
                                                             row['Доступно']) \
                             .replace('.0', '')
