@@ -31,7 +31,6 @@ def get_codes(file):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     config = r'--oem 3 --psm 6'
-    print(pytesseract.image_to_string(img, config=config))
 
 
 if __name__ == '__main__':

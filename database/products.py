@@ -40,8 +40,6 @@ class Product(BaseModel):
     @staticmethod
     def list():
         query = Product.select()
-        for row in query:
-            print(row.id, row.vendor_code, row.name, row.group, row.minigroup_name, row.status)
         return Product.select()
 
     @staticmethod

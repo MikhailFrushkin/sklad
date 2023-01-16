@@ -32,7 +32,6 @@ async def show_media(message, articul):
                 else:
                     await bot.send_photo(message.from_user.id, data['pictures'][0])
             except Exception as ex:
-                print()
                 logger.debug('Первое фото не пошло {}', ex)
                 await bot.send_photo(message.from_user.id, data['pictures'][random.randint(1, 3)])
         else:

@@ -87,7 +87,6 @@ def create_keyboard(id_user):
     if query.keyboard.tel:
         menu.insert(KeyboardButton('Телефоны'))
     dbhandle.close()
-    print(menu)
     if len(menu['keyboard']) == 0:
         menu.insert(KeyboardButton('В главное меню'))
     return menu

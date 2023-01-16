@@ -334,7 +334,7 @@ def union_art(sklad: str, group: str):
                         result = _union_result(row, result)
                         result_for_zero = _union_result_for_zero(row, result_for_zero)
             elif group == '23':
-                if row['ТГ'] in ['23', '27']:
+                if row['ТГ'] in ['12', '23', '27'] and row['НГ'] != '112':
                     if row['Доступно'].replace('.0', '').isdigit() and not row['Местоположение'].startswith(
                             '012_825-OX') \
                             and not row['Местоположение'].startswith('012_825-Dost'):

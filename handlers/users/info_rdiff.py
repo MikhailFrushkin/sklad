@@ -132,7 +132,6 @@ def matching_rdiff():
 
 def new_rdiff_to_exsel():
     data = matching_rdiff()
-    print(len(list(data.keys())))
     data2 = {
         'Артикул': [],
         'Старая ячейка': [],
@@ -163,7 +162,7 @@ def new_rdiff_to_exsel():
             data2['Новая ячейка'].append('')
             data2['Количество(н)'].append('')
             data2['Дельта'].append('')
-    print(data)
+
     df_marks = pd.DataFrame(data2)
     writer = pd.ExcelWriter('{}/files/new_rdiff.xlsx'.format(path))
     dbdate.connect()

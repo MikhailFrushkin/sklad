@@ -71,7 +71,6 @@ def parse(art):
                 pictures_list.append(i['src'])
             else:
                 pictures_list.append('https://hoff.ru/' + i['src'])
-                print('https://hoff.ru/' + i['src'])
         data = {
             'id_product': id_product,
             'articul': articul,

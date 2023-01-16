@@ -97,6 +97,7 @@ async def keyboard_user(message: types.Message, state: FSMContext):
 async def keyboard(call: types.CallbackQuery, state: FSMContext):
     """смена буливого при нажатии на клавиши ,какую кнопку показывать в меню или нет"""
     async with state.proxy() as data:
+        dbhandle.close()
         dbhandle.connect()
         query = Users.get(Users.id_tg == call.from_user.id)
         await delete_message(data['mes'])
@@ -271,9 +272,8 @@ async def message_for_users(message: types.Message, state: FSMContext):
                 logger.info('{} - Загружен документ'.format(message.from_user.id))
                 media_list = ['png', 'jpg', 'jpeg']
                 ex = document.file_name.split('.')[-1]
-                print(ex)
                 if ex in media_list:
-                    print('фото')
+
                     await document.download(
                         destination_file="{}/files/file.{}".format(path, ex),
                     )
@@ -292,7 +292,6 @@ async def message_for_users(message: types.Message, state: FSMContext):
                     await back(message, state)
 
                 else:
-                    print('док')
                     await document.download(
                         destination_file="{}/files/file.{}".format(path, ex),
                     )
@@ -421,7 +420,6 @@ async def dowload_exs(message, state):
                                                             )))
         mtime = os.path.getmtime("{}/files/file_{}.xlsx".format(path, data['sklad']))
         date_new = time.ctime(mtime)
-        print(date_new, data['sklad'])
         myfile = '{}/database/DateBase.db'.format(path)
         if os.path.isfile(myfile):
             dbdate.connect()
