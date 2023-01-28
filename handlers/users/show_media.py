@@ -19,6 +19,7 @@ async def show_media(message, articul):
                 line += '\n{}'.format(item)
             line += '\nЦена с сайта: {} руб.'.format(data['price'])
             await bot.send_message(message.from_user.id, line)
+            await bot.send_message(message.from_user.id, 'Упаковка:\n{}'.format('\n'.join(data['box'])))
             try:
                 if len(data['pictures']) > 2:
                     count = 0

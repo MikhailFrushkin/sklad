@@ -3,7 +3,6 @@ import random
 import sqlite3
 import time
 from io import BytesIO
-
 import pandas as pd
 from database.connect_DB import *
 from database.date import *
@@ -17,7 +16,7 @@ from loguru import logger
 
 import bot
 from all_requests.parse_action import parse_actions, view_actions
-from data.config import ADMINS, PASSWORD, path
+from data.config import ADMINS, PASSWORD, path, hidden
 from database.products import NullProduct
 from database.users import Users
 from handlers.users.Verification import verification_start, create_table2
@@ -41,6 +40,15 @@ from state.states import Place, Logging, Messages, QR, Action
 from utils.check_bd import check
 from utils.open_exsel import dowload
 from utils.read_bd import del_orders, mail
+
+
+async def say_ib(message, state):
+    await bot.send_message(message.from_user.id,
+                           'Функция недоступна, возможно через некоторое время(пару лет) сотрудники '
+                           'ИБ позволят нам пользоваться '
+                           'функционалом, который мало того что удобен, так и местами в '
+                           '5 раз быстрее способствует выполнению текущих бизнес-процессов')
+    await back(message, state)
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -609,7 +617,10 @@ async def bot_message(message: types.Message, state: FSMContext):
             await show_qr(message)
 
         elif message.text == '📦Содержимое ячейки':
-            await show_place(message, state)
+            if not hidden():
+                await show_place(message, state)
+            else:
+                await say_ib(message, state)
 
         elif message.text == 'ℹИнформация' or message.text == 'Помощь':
             logger.info('Пользователь {} {} нажал help'.format(id, message.from_user.first_name))
@@ -634,51 +645,66 @@ async def bot_message(message: types.Message, state: FSMContext):
                 os.remove('{}/Телефоны.scv'.format(path))
 
         elif message.text == '📑Проверка единичек':
-            logger.info('Пользователь {} {} нажал Проверка единичек'.format(id, message.from_user.first_name))
-            await verification_start(message, state)
+            if not hidden():
+                logger.info('Пользователь {} {} нажал Проверка единичек'.format(id, message.from_user.first_name))
+                await verification_start(message, state)
+            else:
+                await say_ib(message, state)
+
 
         elif message.text == '📝Проверка товара':
-            data_nulls_res = {}
-            dbhandle.connect()
-            dbdate.connect()
-            data_nulls = NullProduct.select()
-            data_time = DateBase.select()
-            for key in data_nulls:
-                data_nulls_res[key.group] = key.num
+            if not hidden():
+                data_nulls_res = {}
+                dbhandle.connect()
+                dbdate.connect()
+                data_nulls = NullProduct.select()
+                data_time = DateBase.select()
+                for key in data_nulls:
+                    data_nulls_res[key.group] = key.num
 
-            await bot.send_message(message.from_user.id,
-                                   '{}\n'
-                                   'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
-                                   '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
-                                   'Прихожая: {}\n'.format(
-                                       *[i.date_V_Sales_new for i in data_time],
-                                       data_nulls_res['11'],
-                                       data_nulls_res['20'],
-                                       data_nulls_res['21'],
-                                       data_nulls_res['22'],
-                                       data_nulls_res['23'],
-                                       data_nulls_res['28'],
-                                       data_nulls_res['35'],
-                                   ))
-            await start_check_stocks(message, state)
-            dbhandle.close()
-            dbdate.close()
+                await bot.send_message(message.from_user.id,
+                                       '{}\n'
+                                       'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
+                                       '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
+                                       'Прихожая: {}\n'.format(
+                                           *[i.date_V_Sales_new for i in data_time],
+                                           data_nulls_res['11'],
+                                           data_nulls_res['20'],
+                                           data_nulls_res['21'],
+                                           data_nulls_res['22'],
+                                           data_nulls_res['23'],
+                                           data_nulls_res['28'],
+                                           data_nulls_res['35'],
+                                       ))
+                await start_check_stocks(message, state)
+                dbhandle.close()
+                dbdate.close()
+            else:
+                await say_ib(message, state)
+
         elif message.text == '💰Проданный товар':
-            dbdate.connect()
-            logger.info('Пользователь {} {} нажал Проданный товар'.format(id, message.from_user.first_name))
-            await bot.send_message(id,
-                                   'В доработке, т.к. стали принимать на весло, '
-                                   'некорректное движение теперь, с весла на склад и т.д.'
-                                   '\nВ свободное время допилю)')
-            for i in DateBase.select():
-                await bot.send_message(id, 'Проданный товар и доступность на складе\n'
-                                           'с {}\n'
-                                           'по {}.'.format(i.date_V_Sales_old, i.date_V_Sales_new))
-            dbdate.close()
-            await message.answer_document(open('{}/files/sold.xlsx'.format(path), 'rb'))
+            if not hidden():
+                dbdate.connect()
+                logger.info('Пользователь {} {} нажал Проданный товар'.format(id, message.from_user.first_name))
+                await bot.send_message(id,
+                                       'В доработке, т.к. стали принимать на весло, '
+                                       'некорректное движение теперь, с весла на склад и т.д.'
+                                       '\nВ свободное время допилю)')
+                for i in DateBase.select():
+                    await bot.send_message(id, 'Проданный товар и доступность на складе\n'
+                                               'с {}\n'
+                                               'по {}.'.format(i.date_V_Sales_old, i.date_V_Sales_new))
+                dbdate.close()
+                await message.answer_document(open('{}/files/sold.xlsx'.format(path), 'rb'))
+            else:
+                await say_ib(message, state)
+
 
         elif message.text == '🔍Поиск на складах':
-            await search(message, state)
+            if not hidden():
+                await search(message, state)
+            else:
+                await say_ib(message, state)
 
         elif message.text == 'В главное меню':
             await back(message, state)
@@ -711,18 +737,30 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == 'Сброс единичек':
             await create_table2(message)
         elif message.text == '🤬Новые Рдиффы':
-            dbdate.connect()
-            logger.info('Пользователь {} {} нажал Новые рдиффы'.format(id, message.from_user.first_name))
-            for i in DateBase.select():
-                await bot.send_message(id, 'Новые рдиффы\n'
-                                           'с {}\n'
-                                           'по {}.'.format(i.date_RDiff_old, i.date_RDiff))
-            await message.answer_document(open('{}/files/new_rdiff.xlsx'.format(path), 'rb'))
-            dbdate.close()
+            if not hidden():
+                dbdate.connect()
+                logger.info('Пользователь {} {} нажал Новые рдиффы'.format(id, message.from_user.first_name))
+                for i in DateBase.select():
+                    await bot.send_message(id, 'Новые рдиффы\n'
+                                               'с {}\n'
+                                               'по {}.'.format(i.date_RDiff_old, i.date_RDiff))
+                await message.answer_document(open('{}/files/new_rdiff.xlsx'.format(path), 'rb'))
+                dbdate.close()
+            else:
+                await say_ib(message, state)
         elif message.text == 'Обновить новые рдиффы':
             read_all_base()
             new_rdiff_to_exsel()
             await bot.send_message(id, 'Рдиффы обновленны')
+        elif message.text == 'Сники мод' and message.from_user.id in [int(i) for i in ADMINS]:
+            if hidden():
+                with open('{}/files/hidden.txt'.format(path), 'w', encoding='utf-8') as f:
+                    f.write('False')
+                await bot.send_message(id, 'Выключен')
+            else:
+                with open('{}/files/hidden.txt'.format(path), 'w', encoding='utf-8') as f:
+                    f.write('True')
+                await bot.send_message(id, 'Включен')
         else:
             answer = message.text.lower()
             await show_art_in_main_menu(message, answer)
