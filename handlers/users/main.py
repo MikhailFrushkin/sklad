@@ -105,121 +105,123 @@ async def keyboard_user(message: types.Message, state: FSMContext):
 async def keyboard(call: types.CallbackQuery, state: FSMContext):
     """смена буливого при нажатии на клавиши ,какую кнопку показывать в меню или нет"""
     async with state.proxy() as data:
-        dbhandle.close()
-        dbhandle.connect()
-        query = Users.get(Users.id_tg == call.from_user.id)
-        await delete_message(data['mes'])
-        if call.data == 'exit':
+        try:
+            dbhandle.connect()
+            query = Users.get(Users.id_tg == call.from_user.id)
+            await delete_message(data['mes'])
+            if call.data == 'exit':
+                dbhandle.close()
+                await back(call, state)
+            else:
+                if call.data == 'vsales':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.vsales:
+                        new_s.keyboard.vsales = False
+                    else:
+                        new_s.keyboard.vsales = True
+                    new_s.keyboard.save()
+
+                if call.data == 'ex_sklad':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.ex_sklad:
+                        new_s.keyboard.ex_sklad = False
+                    else:
+                        new_s.keyboard.ex_sklad = True
+                    new_s.keyboard.save()
+
+                if call.data == 'qr_cell':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.qr_cell:
+                        new_s.keyboard.qr_cell = False
+                    else:
+                        new_s.keyboard.qr_cell = True
+                    new_s.keyboard.save()
+
+                if call.data == 'text_qr':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.text_qr:
+                        new_s.keyboard.text_qr = False
+                    else:
+                        new_s.keyboard.text_qr = True
+                    new_s.keyboard.save()
+
+                if call.data == 'text_qr':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.text_qr:
+                        new_s.keyboard.text_qr = False
+                    else:
+                        new_s.keyboard.text_qr = True
+                    new_s.keyboard.save()
+
+                if call.data == 'content':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.content:
+                        new_s.keyboard.content = False
+                    else:
+                        new_s.keyboard.content = True
+                    new_s.keyboard.save()
+
+                if call.data == 'search':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.search:
+                        new_s.keyboard.search = False
+                    else:
+                        new_s.keyboard.search = True
+                    new_s.keyboard.save()
+
+                if call.data == 'check':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.check:
+                        new_s.keyboard.check = False
+                    else:
+                        new_s.keyboard.check = True
+                    new_s.keyboard.save()
+
+                if call.data == 'buy':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.buy:
+                        new_s.keyboard.buy = False
+                    else:
+                        new_s.keyboard.buy = True
+                    new_s.keyboard.save()
+
+                if call.data == 'check_one':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.check_one:
+                        new_s.keyboard.check_one = False
+                    else:
+                        new_s.keyboard.check_one = True
+                    new_s.keyboard.save()
+
+                if call.data == 'stock':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.stock:
+                        new_s.keyboard.stock = False
+                    else:
+                        new_s.keyboard.stock = True
+                    new_s.keyboard.save()
+
+                if call.data == 'info':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.info:
+                        new_s.keyboard.info = False
+                    else:
+                        new_s.keyboard.info = True
+                    new_s.keyboard.save()
+
+                if call.data == 'tel':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.tel:
+                        new_s.keyboard.tel = False
+                    else:
+                        new_s.keyboard.tel = True
+                    new_s.keyboard.save()
+                dbhandle.close()
+                message_k = await bot.send_message(call.from_user.id, 'Выберите кнопки меню:',
+                                                   reply_markup=inlane_edit_keyboard(call.from_user.id))
+                data['mes'] = message_k
+        except Exception as ex:
             dbhandle.close()
-            await back(call, state)
-        else:
-            if call.data == 'vsales':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.vsales:
-                    new_s.keyboard.vsales = False
-                else:
-                    new_s.keyboard.vsales = True
-                new_s.keyboard.save()
-
-            if call.data == 'ex_sklad':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.ex_sklad:
-                    new_s.keyboard.ex_sklad = False
-                else:
-                    new_s.keyboard.ex_sklad = True
-                new_s.keyboard.save()
-
-            if call.data == 'qr_cell':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.qr_cell:
-                    new_s.keyboard.qr_cell = False
-                else:
-                    new_s.keyboard.qr_cell = True
-                new_s.keyboard.save()
-
-            if call.data == 'text_qr':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.text_qr:
-                    new_s.keyboard.text_qr = False
-                else:
-                    new_s.keyboard.text_qr = True
-                new_s.keyboard.save()
-
-            if call.data == 'text_qr':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.text_qr:
-                    new_s.keyboard.text_qr = False
-                else:
-                    new_s.keyboard.text_qr = True
-                new_s.keyboard.save()
-
-            if call.data == 'content':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.content:
-                    new_s.keyboard.content = False
-                else:
-                    new_s.keyboard.content = True
-                new_s.keyboard.save()
-
-            if call.data == 'search':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.search:
-                    new_s.keyboard.search = False
-                else:
-                    new_s.keyboard.search = True
-                new_s.keyboard.save()
-
-            if call.data == 'check':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.check:
-                    new_s.keyboard.check = False
-                else:
-                    new_s.keyboard.check = True
-                new_s.keyboard.save()
-
-            if call.data == 'buy':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.buy:
-                    new_s.keyboard.buy = False
-                else:
-                    new_s.keyboard.buy = True
-                new_s.keyboard.save()
-
-            if call.data == 'check_one':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.check_one:
-                    new_s.keyboard.check_one = False
-                else:
-                    new_s.keyboard.check_one = True
-                new_s.keyboard.save()
-
-            if call.data == 'stock':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.stock:
-                    new_s.keyboard.stock = False
-                else:
-                    new_s.keyboard.stock = True
-                new_s.keyboard.save()
-
-            if call.data == 'info':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.info:
-                    new_s.keyboard.info = False
-                else:
-                    new_s.keyboard.info = True
-                new_s.keyboard.save()
-
-            if call.data == 'tel':
-                new_s = Users.get(Users.id_tg == call.from_user.id)
-                if query.keyboard.tel:
-                    new_s.keyboard.tel = False
-                else:
-                    new_s.keyboard.tel = True
-                new_s.keyboard.save()
-            dbhandle.close()
-            message_k = await bot.send_message(call.from_user.id, 'Выберите кнопки меню:',
-                                               reply_markup=inlane_edit_keyboard(call.from_user.id))
-            data['mes'] = message_k
 
 
 @dp.message_handler(commands=['help'], state='*')
@@ -499,6 +501,9 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
                                                ))
                     except Exception as ex:
                         logger.debug(ex)
+                    finally:
+                        dbhandle.close()
+
             else:
                 await bot.send_message(call.from_user.id, 'Ошибка при записи в csv')
     except Exception as ex:
@@ -655,30 +660,34 @@ async def bot_message(message: types.Message, state: FSMContext):
         elif message.text == '📝Проверка товара':
             if not hidden():
                 data_nulls_res = {}
-                dbhandle.connect()
-                dbdate.connect()
-                data_nulls = NullProduct.select()
-                data_time = DateBase.select()
-                for key in data_nulls:
-                    data_nulls_res[key.group] = key.num
+                try:
+                    dbhandle.connect()
+                    dbdate.connect()
+                    data_nulls = NullProduct.select()
+                    data_time = DateBase.select()
+                    for key in data_nulls:
+                        data_nulls_res[key.group] = key.num
 
-                await bot.send_message(message.from_user.id,
-                                       '{}\n'
-                                       'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
-                                       '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
-                                       'Прихожая: {}\n'.format(
-                                           *[i.date_V_Sales_new for i in data_time],
-                                           data_nulls_res['11'],
-                                           data_nulls_res['20'],
-                                           data_nulls_res['21'],
-                                           data_nulls_res['22'],
-                                           data_nulls_res['23'],
-                                           data_nulls_res['28'],
-                                           data_nulls_res['35'],
-                                       ))
-                await start_check_stocks(message, state)
-                dbhandle.close()
-                dbdate.close()
+                    await bot.send_message(message.from_user.id,
+                                           '{}\n'
+                                           'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
+                                           '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
+                                           'Прихожая: {}\n'.format(
+                                               *[i.date_V_Sales_new for i in data_time],
+                                               data_nulls_res['11'],
+                                               data_nulls_res['20'],
+                                               data_nulls_res['21'],
+                                               data_nulls_res['22'],
+                                               data_nulls_res['23'],
+                                               data_nulls_res['28'],
+                                               data_nulls_res['35'],
+                                           ))
+                    await start_check_stocks(message, state)
+                except Exception as ex:
+                    logger.debug(ex)
+                finally:
+                    dbhandle.close()
+                    dbdate.close()
             else:
                 await say_ib(message, state)
 
@@ -700,7 +709,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                 await say_ib(message, state)
 
 
-        elif message.text == '🔍Поиск на складах':
+        elif message.text == '🔍Поиск по наименованию':
             if not hidden():
                 await search(message, state)
             else:

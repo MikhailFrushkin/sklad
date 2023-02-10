@@ -118,7 +118,7 @@ def matching_rdiff():
             if len(a) == 0:
                 list_num = [0, b[0], b[0]]
             elif len(b) == 0:
-                list_num = [a[0], 0, -a[0]]
+                list_num = [a[0], 0, a[0]]
             else:
                 list_num = [a[0], b[0], b[0] - a[0]]
             result_cells.append([cell, list_num])
@@ -180,7 +180,7 @@ def new_rdiff_to_exsel():
     cell_format.set_align('center')
     cell_format.set_bold()
     cell_format.set_border(1)
-    cell_format.set_num_format('[Green]General;[Red]-General;General')
+    cell_format.set_num_format('[Green]General;[Red]General;General')
 
     cell_format2 = workbook.add_format({'align': 'left',
                                         'valign': 'vcenter',

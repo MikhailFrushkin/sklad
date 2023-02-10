@@ -6,7 +6,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from loguru import logger
 
-from data.config import path
+from data.config import path, hidden
 from handlers.users.back import back
 from keyboards.default.menu import second_menu
 from keyboards.inline.action import product_num
@@ -17,7 +17,6 @@ from utils.open_exsel import search_all_sklad
 
 
 def parse_actions():
-    # city = {'city_id': "8056649", 'xml_id': "814", 'name': "Новосибирск"}
     cookies = {
         '_userGUID': '0:l6217nxl:ONd22xw2GGQqPr5D5Ens7kc1GFjZVk64',
         '__exponea_etc__': '57e32f2a-ba60-d4dc-d067-27d24eba3882',
@@ -59,23 +58,24 @@ def parse_actions():
     offset = 1
     for i in groups_list:
         logger.info('Сканируется группа {}'.format(i))
-        time.sleep(3)
+        time.sleep(2)
         catalog = []
         for j in range(3):
             params = {
                 'category_id': i,
                 'limit': '30',
-                'offset': str(offset*30),
                 'showCount': 'true',
                 'type': 'product_list',
                 'tovary_so_skidkoi': '1',
                 'sort': 'discount_desc',
             }
-            try:
-                response = requests.get('https://hoff.ru/vue/catalog/section/',
-                                        params=params, cookies=cookies, headers=headers).json()
-                producs = response.get('data').get('items')
-                for item in producs:
+
+        try:
+            response = requests.get('https://hoff.ru/vue/catalog/section/',
+                                    params=params, cookies=cookies, headers=headers).json()
+            producs = response.get('data').get('items')
+            for item in producs:
+                try:
                     catalog.append({
                         'articul': item['articul'],
                         'name': item['name'],
@@ -87,10 +87,13 @@ def parse_actions():
                         'discount': item['discount'],
                         'in_stock': item['in_stock']
                     })
-                offset += 1
+                except Exception as ex:
+                    logger.debug(ex)
+            offset += 1
 
-            except Exception as ex:
-                logger.debug(ex)
+        except Exception as ex:
+
+            logger.debug(ex)
         offset = 1
         with open('{}/base/json/action/action{}.json'.format(path, params['category_id']), 'w',
                   encoding='utf-8') as file:
@@ -136,11 +139,12 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
                                                                                               i for i in groups_list
                                                                                               if data['group'] in i
                                                                                           ], call.data))
-                    for item in catalog:
 
+                    for item in catalog:
                         sklad_list = ['011_825', '012_825', 'A11_825', 'V_Sales', 'RDiff']
                         full_block = ['Остатки на магазине:']
                         try:
+
                             for i in sklad_list:
                                 cells = search_all_sklad(item["articul"], i)
                                 if cells:
@@ -156,7 +160,8 @@ async def view_actionss(call: types.CallbackQuery, state: FSMContext):
                                                                               item["prices"]["new"],
                                                                               item["discount"]),
                                                        reply_markup=second_menu)
-                                await bot.send_message(id, '\n'.join(full_block))
+                                if not hidden():
+                                    await bot.send_message(id, '\n'.join(full_block))
                                 time.sleep(1)
                         except Exception as ex:
                             logger.debug('Ошибка при выводе ячеек в гланом меню {}', ex)

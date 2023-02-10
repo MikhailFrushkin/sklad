@@ -40,15 +40,18 @@ async def groups(call: types.CallbackQuery, state: FSMContext):
                 asyncio.create_task(delete_message(data['message']))
             except Exception as ex:
                 logger.debug('Нет сообщения для удаления {}'.format(ex))
-
-            dbhandle.connect()
-            art_dict = {}
-            rows = Product.select().order_by(Product.minigroup_name)
-            data['TG'] = call.data
-            for prod in rows:
-                if data['TG'] == prod.group:
-                    art_dict[prod.vendor_code] = [prod.group, prod.status, prod.minigroup_name]
-            dbhandle.close()
+            try:
+                dbhandle.connect()
+                art_dict = {}
+                rows = Product.select().order_by(Product.minigroup_name)
+                data['TG'] = call.data
+                for prod in rows:
+                    if data['TG'] == prod.group:
+                        art_dict[prod.vendor_code] = [prod.group, prod.status, prod.minigroup_name]
+            except Exception as ex:
+                logger.debug(ex)
+            finally:
+                dbhandle.close()
 
             if call.data == 'exit':
                 logger.info('back')
@@ -206,24 +209,29 @@ async def get_items(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(state=Verification.edited_status_art)
 async def get_items(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        dbhandle.connect()
-        art = data['edidet']
-        status = Product.get(Product.vendor_code == art)
-        if call.data == 'ok':
-            status.status = 'Найден'
-        elif call.data == 'no':
-            status.status = 'Не найден'
-        elif call.data == 'skip_s':
-            status.status = 'Пропущен'
-        elif call.data == 'exit':
+        try:
+            dbhandle.connect()
+            art = data['edidet']
+            status = Product.get(Product.vendor_code == art)
+            if call.data == 'ok':
+                status.status = 'Найден'
+            elif call.data == 'no':
+                status.status = 'Не найден'
+            elif call.data == 'skip_s':
+                status.status = 'Пропущен'
+            elif call.data == 'exit':
+                logger.info('back')
+                await back(call, state)
+            else:
+                logger.info('edited_status_art неверный колл')
+            status.save()
+            dbhandle.close()
             logger.info('back')
             await back(call, state)
-        else:
-            logger.info('edited_status_art неверный колл')
-        status.save()
-        dbhandle.close()
-        logger.info('back')
-        await back(call, state)
+        except Exception as ex:
+            logger.debug(ex)
+        finally:
+            dbhandle.close()
 
 
 async def while_answer(state: FSMContext):

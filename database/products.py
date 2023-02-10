@@ -46,8 +46,8 @@ class Product(BaseModel):
     def update_bot():
         myfile = '{}/database/mydatabase.db'.format(path)
         if os.path.isfile(myfile):
-            dbhandle.connect()
             try:
+                dbhandle.connect()
                 with open('{}/files/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                     reader = csv.DictReader(csvfile)
                     for row in reader:
@@ -64,7 +64,6 @@ class Product(BaseModel):
                                 temp = Product.create(vendor_code=art, name=name, group=group,
                                                       place=place, minigroup_name=minigroup_name)
                                 temp.save()
-                                logger.debug(ex)
                 arts_bd = [int(i.vendor_code) for i in Product.select()]
 
                 with open('{}/files/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:

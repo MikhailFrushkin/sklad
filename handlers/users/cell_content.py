@@ -158,7 +158,7 @@ async def place_3(call: types.CallbackQuery, state: FSMContext):
             await Place.mesto_1.set()
 
 
-@dp.callback_query_handler(state=[Place.mesto_4, Search.show_all])
+@dp.callback_query_handler(state=[Place.mesto_4])
 async def answer_call(call: types.CallbackQuery, state: FSMContext):
     """Кол беки с инлайн кнопок и показ  1 картинки в ячейках"""
     async with state.proxy() as data:
