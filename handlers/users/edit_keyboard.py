@@ -18,7 +18,7 @@ KeyboardButton('🗃011_825-Exit_sklad')
 KeyboardButton('🤖Qrcode ячейки')
 KeyboardButton('📖Любой текст в Qr')
 KeyboardButton('📦Содержимое ячейки')
-KeyboardButton('🔍Поиск на складах')
+KeyboardButton('🔍Поиск по наименованию')
 KeyboardButton('📝Проверка товара')
 KeyboardButton('💰Проданный товар')
 KeyboardButton('📑Проверка единичек')
@@ -43,7 +43,7 @@ def create_keyboard(id_user):
         if query.keyboard.content:
             menu.insert(KeyboardButton('📦Содержимое ячейки'))
         if query.keyboard.search:
-            menu.insert(KeyboardButton('🔍Поиск на складах'))
+            menu.insert(KeyboardButton('🔍Поиск по наименованию'))
         if query.keyboard.check:
             menu.insert(KeyboardButton('📝Проверка товара'))
         if query.keyboard.buy:
@@ -97,9 +97,9 @@ def inlane_edit_keyboard(id_user):
             menu_inlane.insert(InlineKeyboardButton(text='❌ 📦Содержимое ячейки', callback_data='content'))
 
         if query.keyboard.search:
-            menu_inlane.insert(InlineKeyboardButton(text='✅ 🔍Поиск на складах', callback_data='search'))
+            menu_inlane.insert(InlineKeyboardButton(text='✅ 🔍Поиск по наименованию', callback_data='search'))
         else:
-            menu_inlane.insert(InlineKeyboardButton(text='❌ 🔍Поиск на складах', callback_data='search'))
+            menu_inlane.insert(InlineKeyboardButton(text='❌ 🔍Поиск по наименованию', callback_data='search'))
 
         if query.keyboard.check:
             menu_inlane.insert(InlineKeyboardButton(text='✅ 📝Проверка товара', callback_data='check'))
