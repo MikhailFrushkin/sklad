@@ -2,14 +2,11 @@ import re
 
 import cv2
 import pytesseract
-import numpy as np
 
-import matplotlib.pyplot as plt
-from PIL import Image
 from data.config import path
 
 
-def read_image(img):
+def read_image(img: str) -> list:
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     img = cv2.imread(img)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -19,6 +16,7 @@ def read_image(img):
     pattern = re.compile(r'\d{8}')
     result = re.findall(pattern, text)
     print(result)
+    return result
 
 
 if __name__ == '__main__':
