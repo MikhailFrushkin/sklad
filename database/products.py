@@ -39,7 +39,6 @@ class Product(BaseModel):
 
     @staticmethod
     def list():
-        query = Product.select()
         return Product.select()
 
     @staticmethod

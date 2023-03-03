@@ -45,7 +45,7 @@ dowload_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('A11_825'),
      KeyboardButton('V_Sales')],
     [KeyboardButton('RDiff'),
-     KeyboardButton('Мин.витрина')],
+     KeyboardButton('S_825')],
     [KeyboardButton('В главное меню')],
 ], resize_keyboard=True)
 

@@ -149,8 +149,9 @@ async def matching_stock(call, group: str, nums: int, state: FSMContext):
         if nums == 0:
             dict_art_012 = union_art('012_825', group)[1]
             dict_art_v = union_art('V_Sales', group)[1]
+            dict_art_s = union_art('S_825', group)[1]
             for key in dict_art_012.keys():
-                if key not in dict_art_v.keys():
+                if key not in dict_art_v.keys() and key not in dict_art_s.keys():
                     data['products'].append((key, dict_art_012[key]))
                     line.append('{} \nНа складе: {}'.format(' '.join(key), dict_art_012[key]))
             if len(line) > 0:

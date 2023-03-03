@@ -221,6 +221,7 @@ async def keyboard(call: types.CallbackQuery, state: FSMContext):
                                                    reply_markup=inlane_edit_keyboard(call.from_user.id))
                 data['mes'] = message_k
         except Exception as ex:
+            print(ex)
             dbhandle.close()
 
 
@@ -356,7 +357,7 @@ async def message_for_users(message: types.Message, state: FSMContext):
 async def dowload_base(message: types.Message, state: FSMContext):
     """Загрузка базы ячеек"""
     async with state.proxy() as data:
-        sklad_list = ['011_825', '012_825', 'A11_825', 'RDiff', 'V_Sales', 'Мин.витрина']
+        sklad_list = ['011_825', '012_825', 'A11_825', 'RDiff', 'V_Sales', 'S_825']
         if message.text in sklad_list:
             data['sklad'] = message.text
             await bot.send_message(message.from_user.id, 'Загрузите файл.')
@@ -466,14 +467,15 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
                         dbhandle.connect()
                         NullProduct.create_table()
                         save_exsel_pst(creat_pst())
-                        groups_list = ['11', '20', '21', '22', '23', '28', '35']
+                        groups_list = ['11', '20', '21', '22', '23', '25', '28', '35']
                         data_nulls = dict()
                         products = []
                         for group in groups_list:
                             dict_art_012 = union_art('012_825', group)[1]
                             dict_art_v = union_art('V_Sales', group)[1]
+                            dict_art_s = union_art('S_825', group)[1]
                             for key in dict_art_012.keys():
-                                if key not in dict_art_v.keys():
+                                if key not in dict_art_v.keys() and key not in dict_art_s.keys():
                                     products.append(key)
                             data_nulls[group] = products
                             products = []
@@ -490,7 +492,9 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
                         await bot.send_message(call.from_user.id,
                                                'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
                                                '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
-                                               'Прихожая: {}\n'.format(
+                                               'Прихожая: {}\n'
+                                               'Свет {}\n'
+                                               .format(
                                                    len(data_nulls['11']),
                                                    len(data_nulls['20']),
                                                    len(data_nulls['21']),
@@ -498,6 +502,7 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
                                                    len(data_nulls['23']),
                                                    len(data_nulls['28']),
                                                    len(data_nulls['35']),
+                                                   len(data_nulls['25']),
                                                ))
                     except Exception as ex:
                         logger.debug(ex)
@@ -672,7 +677,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                                            '{}\n'
                                            'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
                                            '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
-                                           'Прихожая: {}\n'.format(
+                                           'Прихожая: {}\nСвет: {}\n'.format(
                                                *[i.date_V_Sales_new for i in data_time],
                                                data_nulls_res['11'],
                                                data_nulls_res['20'],
@@ -681,6 +686,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                                                data_nulls_res['23'],
                                                data_nulls_res['28'],
                                                data_nulls_res['35'],
+                                               data_nulls_res['25'],
                                            ))
                     await start_check_stocks(message, state)
                 except Exception as ex:
