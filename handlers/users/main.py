@@ -240,9 +240,13 @@ async def handle_docs_photo(message):
     await message.photo[-1].download(f'{path}/photos/test.jpg')
     art_list = read_image(f'{path}/photos/test.jpg')
     for art in art_list:
-        if art.startswith('80'):
-            await show_art_in_main_menu(message, art)
-            time.sleep(0.5)
+        if not art.startswith('80'):
+            art = list(art)
+            art[0] = '8'
+            art[1] = '0'
+            art = ''.join(art)
+        await show_art_in_main_menu(message, art)
+        time.sleep(0.5)
 
 
 @dp.message_handler(content_types=['text'], state=Logging.log)

@@ -37,7 +37,6 @@ async def show_art_in_main_menu(message, answer):
                         full_block.append(item)
             if len(full_block) > 1:
                 await bot.send_message(id_user, '\n'.join(full_block))
-            else:
-                await bot.send_message(id_user, 'Данный товар отсутствует.')
+
         except Exception as ex:
             logger.debug('Ошибка при выводе ячеек в гланом меню {}', ex)
