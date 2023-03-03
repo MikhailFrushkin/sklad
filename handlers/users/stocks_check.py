@@ -45,7 +45,7 @@ async def check_groups(call: types.CallbackQuery, state: FSMContext):
             try:
                 for i in ['11', '20', '21', '22', '23', '28', '35']:
                     try:
-                        await call.message.answer_document(open('{}/files/pst_{}.xlsx'.format(path, i), 'rb'))
+                        await call.message.answer_document(open('{}/files/pst/pst_{}.xlsx'.format(path, i), 'rb'))
                     except Exception as ex:
                         logger.debug('Не удалось выгрузить файл {}'.format(ex))
             except Exception as ex:
@@ -292,7 +292,7 @@ def save_exsel_pst(data):
                     file.write('{}\n'.format(','.join(i)))
             try:
                 df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
-                writer = pd.ExcelWriter('{}/files/pst_{}.xlsx'.format(path, item))
+                writer = pd.ExcelWriter('{}/files/pst/pst_{}.xlsx'.format(path, item))
                 df.reset_index(drop=True).style.apply(align_left, axis=0). \
                     to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
                 writer.sheets['Sheet1'].set_column(0, 4, 20)

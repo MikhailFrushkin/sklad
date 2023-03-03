@@ -1,4 +1,5 @@
 import csv
+import os
 
 import pandas as pd
 from loguru import logger
@@ -36,6 +37,12 @@ def creat_pst():
 
 def save_exsel_pst(data):
     groups_list = ['11', '20', '21', '22', '23', '28', '35']
+    name_dir = '{}/files/pst'.format(path)
+    try:
+        for f in os.listdir(name_dir):
+            os.remove(os.path.join(name_dir, f))
+    except:
+        pass
     for item in groups_list:
         with open('{}/files/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
             file.write("Код номенклатуры,"
@@ -43,8 +50,10 @@ def save_exsel_pst(data):
                        "Доступно\n")
             for i in data[item]:
                 file.write('{}\n'.format(','.join(i)))
-        df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
-        df.to_excel('{}/files/pst_{}.xlsx'.format(path, item), 'Sheet1', index=False)
+        with pd.ExcelWriter('{}/files/pst/pst_{}.xlsx'.format(path, item), engine='xlsxwriter') as writer:
+            df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
+            print(df)
+            df.to_excel(writer, header=True, index=False, na_rep='')
 
 
 if __name__ == '__main__':
