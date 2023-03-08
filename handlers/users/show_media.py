@@ -18,8 +18,10 @@ async def show_media(message, articul):
                 await bot.send_message(message.from_user.id,  'Товар отсутствует на сайте.')
             else:
                 line = data['name']
-                for item in data['characteristic']:
+                for row, item in enumerate(data['characteristic']):
                     line += '\n{}'.format(item)
+                    if row == 5:
+                        break
                 line += '\nЦена с сайта: {} руб.'.format(data['price'])
                 await bot.send_message(message.from_user.id, line)
                 await bot.send_message(message.from_user.id, 'Упаковка:\n{}'.format('\n'.join(data['box'])))
@@ -30,7 +32,7 @@ async def show_media(message, articul):
                         for i in data['pictures']:
                             media.attach_photo(types.InputMediaPhoto(i))
                             count += 1
-                            if count == 5:
+                            if count == 3:
                                 break
                         await bot.send_media_group(message.from_user.id, media=media)
                     else:

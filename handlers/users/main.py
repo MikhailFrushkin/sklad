@@ -40,7 +40,7 @@ from state.states import Place, Logging, Messages, QR, Action
 from utils.check_bd import check
 from utils.open_exsel import dowload
 from utils.read_bd import del_orders, mail
-from utils.read_image import read_image
+from utils.read_image import read_image, rotate_image
 
 
 async def say_ib(message, state):
@@ -236,15 +236,19 @@ async def helps(message: types.Message):
 
 @dp.message_handler(content_types=['photo'], state='*')
 async def handle_docs_photo(message):
-    logger.info('фото закинуто')
-    await message.photo[-1].download(f'{path}/photos/test.jpg')
-    art_list = read_image(f'{path}/photos/test.jpg')
+    logger.info('фото загруженно')
+    await message.photo[-1].download(f'{path}/photos/фото_{message.from_user.id}.jpg')
+    art_list = read_image(f'{path}/photos/фото_{message.from_user.id}.jpg')
+    if len(art_list) == 0:
+        rotate_image(message, f'{path}/photos/фото_{message.from_user.id}.jpg')
+        art_list = read_image(f'{path}/photos/фото_90_{message.from_user.id}.png')
     for art in art_list:
         if not art.startswith('80'):
             art = list(art)
             art[0] = '8'
             art[1] = '0'
             art = ''.join(art)
+        await bot.send_message(message.from_user.id, f'Артикул: {art}')
         await show_art_in_main_menu(message, art)
         time.sleep(0.5)
 

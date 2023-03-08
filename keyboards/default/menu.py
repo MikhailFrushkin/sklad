@@ -1,18 +1,17 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton('🆚V-Sales_825'), KeyboardButton('🗃011_825-Exit_sklad'), KeyboardButton('🤖Qrcode ячейки')],
-    [KeyboardButton('📖Любой текст в Qr'),
-     KeyboardButton('📦Содержимое ячейки'),
-     KeyboardButton('🔍Поиск по наименованию')],
-    [KeyboardButton('📝Проверка товара'),
-     # KeyboardButton('💰Проданный товар'),
-     KeyboardButton('📑Проверка единичек')],
-    # KeyboardButton('📟 Мой заказ')],
-    [KeyboardButton('💳Акции'),
-     KeyboardButton('ℹИнформация'),
-     KeyboardButton('Телефоны')],
-], resize_keyboard=True)
+menu = ReplyKeyboardMarkup(row_width=2)
+menu.insert(KeyboardButton('🆚V-Sales_825'))
+menu.insert(KeyboardButton('🗃011_825-Exit_sklad'))
+menu.insert(KeyboardButton('🤖Qrcode ячейки'))
+menu.insert(KeyboardButton('📖Любой текст в Qr'))
+menu.insert(KeyboardButton('📦Содержимое ячейки'))
+menu.insert(KeyboardButton('🔍Поиск по наименованию'))
+menu.insert(KeyboardButton('📝Проверка товара'))
+menu.insert(KeyboardButton('📑Проверка единичек'))
+menu.insert(KeyboardButton('💳Акции'))
+menu.insert(KeyboardButton('ℹИнформация'))
+menu.insert(KeyboardButton('Телефоны'))
 
 second_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('В главное меню')],
@@ -35,7 +34,7 @@ menu_admin = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('Отправить')],
     [KeyboardButton('Обновить Акции'),
      KeyboardButton('Сброс единичек')],
-     [KeyboardButton('Обновить новые рдиффы'),
+    [KeyboardButton('Обновить новые рдиффы'),
      KeyboardButton('Сники мод')]
 ], resize_keyboard=True)
 
