@@ -1,9 +1,11 @@
 import re
+import time
 
 import cv2
 import pytesseract
 from PIL import Image
 from data.config import path
+from loader import bot
 
 
 def read_image(img: str) -> list:
@@ -22,14 +24,13 @@ def rotate_image(message, img):
     (h, w) = image.shape[:2]
     center = (w / 2, h / 2)
 
-    # повернем изображение на 180 градусов
     M = cv2.getRotationMatrix2D(center, 90, 1.0)
     rotated = cv2.warpAffine(image, M, (w, h))
     cv2.imwrite(f'{path}/photos/фото_90_{message.from_user.id}.png', rotated)
     return rotated
 
 
+
 if __name__ == '__main__':
     # read_image(f'{path}/photos/test2.jpg')
     rotate_image(f'{path}/photos/test2.jpg')
-
