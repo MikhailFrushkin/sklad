@@ -1,12 +1,10 @@
 import re
-import time
 
 import cv2
-import pytesseract
-from PIL import Image
-from data.config import path
 import numpy as np
-from loader import bot
+import pytesseract
+
+from data.config import path
 
 
 def read_image(img: str) -> list:
