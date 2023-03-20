@@ -30,13 +30,3 @@ async def back(message, state: FSMContext):
 
     await state.reset_state()
     await state.finish()
-
-
-# async def spam():
-#     while True:
-#         await bot.send_message(1099191065, '☺️☺️Пошел нахуй☺️☺️ 1099191065 Сергей')
-#         time.sleep(1)
-#
-#
-# if __name__ == '__main__':
-#     await spam()

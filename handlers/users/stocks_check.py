@@ -1,5 +1,7 @@
 import asyncio
 import csv
+import os
+
 import pandas as pd
 from data.config import ADMINS
 
@@ -220,54 +222,57 @@ def creat_pst():
     art_ebel = []
     groups_second_list = []
     for item in groups_list:
-        dict_art_012 = union_art('012_825', item)[1]
-        dict_art_v = union_art('V_Sales', item)[1]
-        dict_art_a11 = union_art('A11_825', item)[1]
-        count = 0
-        for key in dict_art_012.keys():
-            if key not in dict_art_v.keys():
-                art.append(key[0])
-                count += 1
-        for key in dict_art_012.keys():
-            if key not in dict_art_v.keys() and key not in dict_art_a11.keys():
-                art_ebel.append(key[0])
-        if count > 0:
-            groups_second_list.append(item)
-            with open('{}/files/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
-                reader = csv.DictReader(csvfile)
-                for row in reader:
-                    if row['ТГ'] == '35' \
-                            and row['Краткое наименование'] in mini_group \
-                            and row['Код \nноменклатуры'] in art \
-                            and row['Доступно'].replace('.0', '').isdigit() \
-                            and not row['Местоположение'].startswith('012_825-OX') \
-                            and not row['Местоположение'].startswith('012_825-Dost'):
-                        temp_list.append([row['Код \nноменклатуры'],
-                                          row['Описание товара'].replace(',', ' '),
-                                          row['Местоположение'],
-                                          row['Доступно'].replace('.0', '')])
-                    elif row['ТГ'] == item and row['Код \nноменклатуры'] in art \
-                            and row['Доступно'].replace('.0', '').isdigit() \
-                            and not row['Местоположение'].startswith('012_825-OX') \
-                            and not row['Местоположение'].startswith('012_825-Dost'):
-                        temp_list.append([row['Код \nноменклатуры'],
-                                          row['Описание товара'].replace(',', ' '),
-                                          row['Местоположение'],
-                                          row['Доступно'].replace('.0', '')])
-                    elif row['ТГ'] in ['31', '33', '34', '35', '36', '37', '38', '39', '40', '46', '49'] \
-                            and row['Код \nноменклатуры'] in art_ebel \
-                            and row['Доступно'].replace('.0', '').isdigit() \
-                            and not row['Местоположение'].startswith('012_825-OX') \
-                            and not row['Местоположение'].startswith('012_825-Dost'):
-                        temp_list_ebel.append([row['Код \nноменклатуры'],
-                                               row['Описание товара'].replace(',', ' '),
-                                               row['Местоположение'],
-                                               row['Доступно'].replace('.0', '')])
+        try:
+            dict_art_012 = union_art('012_825', item)[1]
+            dict_art_v = union_art('V_Sales', item)[1]
+            dict_art_a11 = union_art('A11_825', item)[1]
+            count = 0
+            for key in dict_art_012.keys():
+                if key not in dict_art_v.keys():
+                    art.append(key[0])
+                    count += 1
+            for key in dict_art_012.keys():
+                if key not in dict_art_v.keys() and key not in dict_art_a11.keys():
+                    art_ebel.append(key[0])
+            if count > 0:
+                groups_second_list.append(item)
+                with open('{}/files/file_012_825.csv'.format(path), newline='', encoding='utf-8') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    for row in reader:
+                        if row['ТГ'] == '35' \
+                                and row['Краткое наименование'] in mini_group \
+                                and row['Код \nноменклатуры'] in art \
+                                and row['Доступно'].replace('.0', '').isdigit() \
+                                and not row['Местоположение'].startswith('012_825-OX') \
+                                and not row['Местоположение'].startswith('012_825-Dost'):
+                            temp_list.append([row['Код \nноменклатуры'],
+                                              row['Описание товара'].replace(',', ' '),
+                                              row['Местоположение'],
+                                              row['Доступно'].replace('.0', '')])
+                        elif row['ТГ'] == item and row['Код \nноменклатуры'] in art \
+                                and row['Доступно'].replace('.0', '').isdigit() \
+                                and not row['Местоположение'].startswith('012_825-OX') \
+                                and not row['Местоположение'].startswith('012_825-Dost'):
+                            temp_list.append([row['Код \nноменклатуры'],
+                                              row['Описание товара'].replace(',', ' '),
+                                              row['Местоположение'],
+                                              row['Доступно'].replace('.0', '')])
+                        elif row['ТГ'] in ['31', '33', '34', '35', '36', '37', '38', '39', '40', '46', '49'] \
+                                and row['Код \nноменклатуры'] in art_ebel \
+                                and row['Доступно'].replace('.0', '').isdigit() \
+                                and not row['Местоположение'].startswith('012_825-OX') \
+                                and not row['Местоположение'].startswith('012_825-Dost'):
+                            temp_list_ebel.append([row['Код \nноменклатуры'],
+                                                   row['Описание товара'].replace(',', ' '),
+                                                   row['Местоположение'],
+                                                   row['Доступно'].replace('.0', '')])
 
-                temp_list2 = list(set([i[0] for i in temp_list]))
-                zero_data[item] = len(temp_list2)
-                result_for_zero[item] = sorted(temp_list)
-                temp_list = []
+                    temp_list2 = list(set([i[0] for i in temp_list]))
+                    zero_data[item] = len(temp_list2)
+                    result_for_zero[item] = sorted(temp_list)
+                    temp_list = []
+        except Exception as ex:
+            logger.debug(f'{item}{ex}')
     nulls_ebel = []
     for i in temp_list_ebel:
         if i not in nulls_ebel:
@@ -279,27 +284,90 @@ def creat_pst():
 
 
 def save_exsel_pst(data):
+    data_result = data[0]
+    print(data_result['20'])
+    directory = f'{path}/files/pst'
+    for filename in os.listdir(directory):
+        if os.path.isfile(os.path.join(directory, filename)):
+            os.remove(os.path.join(directory, filename))
     groups_list = data[1]
     groups_list2 = ['11', '20', '21', '22', '23', '28', '35']
-    for item in groups_list:
-        if item in groups_list2:
+    for item in groups_list2:
+
+        try:
             with open('{}/files/result_{}.csv'.format(path, item), 'w', encoding='utf-8') as file:
                 file.write("Код номенклатуры,"
                            "Описание товара,"
                            "Местоположение,"
                            "Доступно\n")
-                for i in data[0][item]:
+                for i in data_result[item]:
                     file.write('{}\n'.format(','.join(i)))
-            try:
-                df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
-                writer = pd.ExcelWriter('{}/files/pst/pst_{}.xlsx'.format(path, item))
-                df.reset_index(drop=True).style.apply(align_left, axis=0). \
-                    to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
-                writer.sheets['Sheet1'].set_column(0, 4, 20)
-                writer.sheets['Sheet1'].set_column(1, 1, 50)
+        except Exception as ex:
+            logger.debug(ex)
+        try:
+            df = pd.read_csv('{}/files/result_{}.csv'.format(path, item), encoding='utf-8')
+            if len(df) != 0:
+                data = {
+                    'Номенклатура': [],
+                    'Кол-во': [],
+                    'Со склада': [],
+                    'С ячейки': [],
+                    'На БЮ': [],
+                    'На склад': [],
+                    'Дата отгрузки': [],
+                    'Промо': [],
+                    'С "reason code"': [],
+                    'На "reason code"': [],
+                    'С профиля учета': [],
+                    'На профиль учета': [],
+                    'В ячейку': [],
+                    'С сайта': [],
+                    'На сайт': [],
+                    'С владельца': [],
+                    'На владельца': [],
+                    'Из партии': [],
+                    'В партию': [],
+                    'Из ГТД': [],
+                    'В ГТД': [],
+                    'С серийного номера': [],
+                    'На серийный номер': []
+                }
+
+                temp_dict = (df
+                             .groupby("Код номенклатуры")
+                             .apply(lambda x: x.drop(columns="Код номенклатуры").to_dict("records"))
+                             .to_dict())
+                for key, value in temp_dict.items():
+                    print(key, value)
+                    data['Номенклатура'].append(key)
+                    data['Кол-во'].append(value[0].get('Доступно'))
+                    data['Со склада'].append('012_825')
+                    data['С ячейки'].append(value[0].get('Местоположение'))
+                    data['На БЮ'].append('825')
+                    data['На склад'].append('V_825')
+                    data['Дата отгрузки'].append('')
+                    data['Промо'].append('')
+                    data['С "reason code"'].append('')
+                    data['На "reason code"'].append('')
+                    data['С профиля учета'].append('')
+                    data['На профиль учета'].append('')
+                    data['В ячейку'].append('V-sales_825')
+                    data['С сайта'].append('')
+                    data['На сайт'].append('')
+                    data['С владельца'].append('')
+                    data['На владельца'].append('')
+                    data['Из партии'].append('')
+                    data['В партию'].append('')
+                    data['Из ГТД'].append('')
+                    data['В ГТД'].append('')
+                    data['С серийного номера'].append('')
+                    data['На серийный номер'].append('')
+                temp_df_pst = pd.DataFrame(data=data)
+                writer = pd.ExcelWriter('{}/files/pst/pst_{}.xlsx'.format(path, item), engine='xlsxwriter')
+                temp_df_pst.to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
                 writer.close()
-            except Exception as ex:
-                logger.debug(ex)
+        except Exception as ex:
+            logger.debug(ex)
     with open('{}/files/result_ebel.csv'.format(path), 'w', encoding='utf-8') as file:
         file.write("Код номенклатуры,"
                    "Описание товара,"

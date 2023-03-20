@@ -165,11 +165,9 @@ def new_rdiff_to_exsel():
 
     df_marks = pd.DataFrame(data2)
     writer = pd.ExcelWriter('{}/files/new_rdiff.xlsx'.format(path))
-    dbdate.connect()
     for i in DateBase.select():
         date_old = i.date_RDiff_old
         date_new = i.date_RDiff
-    dbdate.close()
     df_marks.to_excel(writer, sheet_name='с {} по {}'.format(date_old[4:-14].replace('  ', ' '),
                                                              date_new[4:-14].replace('  ', ' ')), index=False,
                       na_rep='NaN')

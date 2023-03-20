@@ -1,35 +1,28 @@
-import csv
-import os
-
-from loguru import logger
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
-from database.connect_DB import *
-import peewee
-from peewee import *
+from loguru import logger
 
 from data.config import path
-from database.users import Users, Keyboard
+from database.connect_DB import *
+from database.users import Users
 
 myfile = '{}/database/mydatabase.db'.format(path)
 
-
-KeyboardButton('🆚V-Sales_825')
-KeyboardButton('🗃011_825-Exit_sklad')
-KeyboardButton('🤖Qrcode ячейки')
-KeyboardButton('📖Любой текст в Qr')
-KeyboardButton('📦Содержимое ячейки')
-KeyboardButton('🔍Поиск по наименованию')
-KeyboardButton('📝Проверка товара')
-KeyboardButton('💰Проданный товар')
-KeyboardButton('📑Проверка единичек')
-KeyboardButton('💳Акции')
-KeyboardButton('ℹИнформация')
-KeyboardButton('Телефоны')
+# KeyboardButton('🆚V-Sales_825')
+# KeyboardButton('🗃011_825-Exit_sklad')
+# KeyboardButton('🤖Qrcode ячейки')
+# KeyboardButton('📖Любой текст в Qr')
+# KeyboardButton('📦Содержимое ячейки')
+# KeyboardButton('🔍Поиск по наименованию')
+# KeyboardButton('📝Проверка товара')
+# KeyboardButton('💰Проданный товар')
+# KeyboardButton('📑Проверка единичек')
+# KeyboardButton('💳Акции')
+# KeyboardButton('ℹИнформация')
+# KeyboardButton('Телефоны')
 
 
 def create_keyboard(id_user):
     try:
-        dbhandle.connect()
         query = Users.get(Users.id_tg == id_user)
         menu = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
         if query.keyboard.vsales:
@@ -56,19 +49,15 @@ def create_keyboard(id_user):
             menu.insert(KeyboardButton('ℹИнформация'))
         if query.keyboard.tel:
             menu.insert(KeyboardButton('Телефоны'))
-        dbhandle.close()
         if len(menu['keyboard']) == 0:
             menu.insert(KeyboardButton('В главное меню'))
     except Exception as ex:
         logger.debug(ex)
-    finally:
-        dbhandle.close()
     return menu
 
 
 def inlane_edit_keyboard(id_user):
     try:
-        dbhandle.connect()
         query = Users.get(Users.id_tg == id_user)
         menu_inlane = InlineKeyboardMarkup(row_width=2)
         if query.keyboard.vsales:
@@ -134,6 +123,4 @@ def inlane_edit_keyboard(id_user):
         menu_inlane.insert(InlineKeyboardButton(text='Сохранить', callback_data='exit'))
     except Exception as ex:
         logger.debug(ex)
-    finally:
-        dbhandle.close()
     return menu_inlane

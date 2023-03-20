@@ -1,14 +1,11 @@
-import os
 import random
 import sqlite3
 import time
-from io import BytesIO
+
 import pandas as pd
-from database.connect_DB import *
-from database.date import *
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, ParseMode, InputFile
+from aiogram.types import ContentType, ParseMode
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from aiogram.utils.emoji import emojize
 from aiogram.utils.markdown import text, italic, code
@@ -17,8 +14,9 @@ from loguru import logger
 import bot
 from all_requests.parse_action import parse_actions, view_actions
 from data.config import ADMINS, PASSWORD, path, hidden
+from database.date import *
 from database.products import NullProduct
-from database.users import Users
+from database.users import Users, Keyboard, Operations
 from handlers.users.Verification import verification_start, create_table2
 from handlers.users.back import back
 from handlers.users.cell_content import show_place
@@ -107,11 +105,9 @@ async def keyboard(call: types.CallbackQuery, state: FSMContext):
     """смена буливого при нажатии на клавиши ,какую кнопку показывать в меню или нет"""
     async with state.proxy() as data:
         try:
-            dbhandle.connect()
             query = Users.get(Users.id_tg == call.from_user.id)
             await delete_message(data['mes'])
             if call.data == 'exit':
-                dbhandle.close()
                 await back(call, state)
             else:
                 if call.data == 'vsales':
@@ -217,13 +213,11 @@ async def keyboard(call: types.CallbackQuery, state: FSMContext):
                     else:
                         new_s.keyboard.tel = True
                     new_s.keyboard.save()
-                dbhandle.close()
                 message_k = await bot.send_message(call.from_user.id, 'Выберите кнопки меню:',
                                                    reply_markup=inlane_edit_keyboard(call.from_user.id))
                 data['mes'] = message_k
         except Exception as ex:
             print(ex)
-            dbhandle.close()
 
 
 @dp.message_handler(commands=['help'], state='*')
@@ -238,6 +232,8 @@ async def helps(message: types.Message):
 async def handle_docs_photo(message):
     logger.info('фото загруженно')
     await message.photo[-1].download(f'{path}/photos/фото_{message.from_user.id}.jpg')
+    operation = Operations(user_id=Users.get(id_tg=message.from_user.id), operation="Закинул изображение в главное меню")
+    operation.save()
     art_list = read_image(f'{path}/photos/фото_{message.from_user.id}.jpg')
     if not art_list:
         await bot.send_message(message.from_user.id, f'Не найдено артикулов на фото')
@@ -257,28 +253,10 @@ async def input_password(message: types.Message, state: FSMContext):
     """
     Если пароль верен, вносит в базу пользователя, перезапускает функуию старт"""
     if message.text == PASSWORD:
-        connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
-        cursor = connect.cursor()
-
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS login_id(
-        id INTEGER, 
-        name TEXT, 
-        date REAL, 
-        БЮ INTEGER, 
-        Black_status INTEGER)
-        """)
-        connect.commit()
-
-        cursor.execute('SELECT id FROM login_id WHERE id = {}'.format(message.from_user.id))
-        data = cursor.fetchone()
-        if data is None:
-            date = datetime.datetime.now()
-            shop = 0
-            black = 0
-            user_id = [message.from_user.id, message.from_user.first_name, date, shop, black]
-            cursor.execute('INSERT INTO login_id VALUES(?,?,?,?,?);', user_id)
-            connect.commit()
+        keyboards = Keyboard()
+        keyboards.save()
+        new_user = Users(id_tg=message.from_user.id, name=message.from_user.first_name, keyboard=keyboards)
+        new_user.save()
         await state.reset_state()
         logger.info('Очистил state')
         await bot_start(message)
@@ -297,44 +275,35 @@ async def message_for_users(message: types.Message, state: FSMContext):
     if message.text == 'В главное меню':
         await back(message, state)
     else:
+        users = Users.select()
         if document := message.document:
             try:
                 logger.info('{} - Загружен документ'.format(message.from_user.id))
                 media_list = ['png', 'jpg', 'jpeg']
                 ex = document.file_name.split('.')[-1]
                 if ex in media_list:
-
                     await document.download(
                         destination_file="{}/files/file.{}".format(path, ex),
                     )
-                    # photo = InputFile("{}/files/file.{}".format(path, ex))
 
-                    connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
-                    cursor = connect.cursor()
-                    cursor.execute("SELECT * FROM login_id;")
-                    one_result = cursor.fetchall()
-                    for i in one_result:
+                    for user in users:
                         try:
                             with open("{}/files/file.{}".format(path, ex), 'rb') as photo:
-                                await bot.send_photo(i[0], photo=photo)
+                                await bot.send_photo(user.id_tg, photo=photo)
                         except Exception as exp:
-                            logger.debug('Не удалось отправить фото {} {}'.format(i, exp))
+                            logger.debug('Не удалось отправить фото {} {}'.format(user.id_tg, exp))
                     await back(message, state)
 
                 else:
                     await document.download(
                         destination_file="{}/files/file.{}".format(path, ex),
                     )
-                    connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
-                    cursor = connect.cursor()
-                    cursor.execute("SELECT * FROM login_id;")
-                    one_result = cursor.fetchall()
-                    for i in one_result:
+                    for user in users:
                         try:
-                            await bot.send_document(i[0], document=open("{}/files/file.{}".format(path, ex), 'rb'))
+                            await bot.send_document(user.id_tg, document=open("{}/files/file.{}".format(path, ex), 'rb'))
 
                         except Exception as exp:
-                            logger.debug('Не удалось отправить сообщение {} {}'.format(i, exp))
+                            logger.debug('Не удалось отправить сообщение {} {}'.format(user.id_tg, exp))
                     await back(message, state)
 
 
@@ -344,31 +313,24 @@ async def message_for_users(message: types.Message, state: FSMContext):
             try:
                 print('Загрузка фото')
                 await message.photo[-1].download("{}/files/file.png".format(path))
-                connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
-                cursor = connect.cursor()
-                cursor.execute("SELECT * FROM login_id;")
-                one_result = cursor.fetchall()
-                for i in one_result:
+                for user in users:
                     try:
                         with open("{}/files/file.png".format(path), 'rb') as photo:
-                            await bot.send_photo(i[0], photo=photo)
+                            await bot.send_photo(user.id_tg, photo=photo)
                     except Exception as exp:
-                        logger.debug('Не удалось отправить сообщение {} {}'.format(i, exp))
+                        logger.debug('Не удалось отправить сообщение {} {}'.format(user.id_tg, exp))
                 await back(message, state)
             except Exception as ex:
                 logger.debug(ex)
         else:
             text_mes = '❗{}❗\n'.format(message.text)
             logger.info('Запустил рассылку - {}  от пользователя {}'.format(text_mes, message.from_user.id))
-            connect = sqlite3.connect('{}/base/BD/users.bd'.format(path))
-            cursor = connect.cursor()
-            cursor.execute("SELECT * FROM login_id;")
-            one_result = cursor.fetchall()
-            for i in one_result:
+
+            for user in users:
                 try:
-                    await bot.send_message(i[0], text_mes)
+                    await bot.send_message(user.id_tg, text_mes)
                 except Exception as ex:
-                    logger.debug('Не удалось отправить сообщение {} {}'.format(i, ex))
+                    logger.debug('Не удалось отправить сообщение {} {}'.format(user.id_tg, ex))
             await back(message, state)
 
 
@@ -404,29 +366,24 @@ async def doc_handler(message: types.Message, state: FSMContext):
                 myfile = '{}/database/DateBase.db'.format(path)
                 if data['sklad'] == 'V_Sales':
                     if os.path.isfile(myfile):
-                        dbdate.connect()
                         for i in DateBase.select():
                             i.date_V_Sales_old = date_old
                             i.save()
                     else:
-                        dbdate.connect()
                         DateBase.create_table()
                         temp = DateBase.create(date_V_Sales_old=date_old)
                         temp.save()
                         logger.info('создал бд')
                 elif data['sklad'] == 'RDiff':
                     if os.path.isfile(myfile):
-                        dbdate.connect()
                         for i in DateBase.select():
                             i.date_RDiff_old = date_old
                             i.save()
                     else:
-                        dbdate.connect()
                         DateBase.create_table()
                         temp = DateBase.create(date_RDiff_old=date_old)
                         temp.save()
                         logger.info('создал бд')
-                dbdate.close()
             except Exception as ex:
                 logger.debug(ex)
             await dowload_exs(message, state)
@@ -451,10 +408,7 @@ async def dowload_exs(message, state):
         mtime = os.path.getmtime("{}/files/file_{}.xlsx".format(path, data['sklad']))
         date_new = time.ctime(mtime)
         myfile = '{}/database/DateBase.db'.format(path)
-        if os.path.isfile(myfile):
-            dbdate.connect()
-        else:
-            dbdate.connect()
+        if not os.path.isfile(myfile):
             DateBase.create_table()
             logger.info('создал бд')
         for i in DateBase.select():
@@ -469,7 +423,6 @@ async def dowload_exs(message, state):
             elif data['sklad'] == 'RDiff':
                 i.date_RDiff = date_new
             i.save()
-        dbdate.close()
 
 
 @dp.callback_query_handler(state=Place.dowload)
@@ -481,11 +434,16 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
                 await bot.send_message(call.from_user.id, 'База обновлена', reply_markup=menu_admin)
                 if data['sklad'] == 'V_Sales':
                     try:
-                        read_base_vsl()
+                        try:
+                            read_base_vsl()
+                        except Exception as ex:
+                            logger.debug(ex)
                         await bot.send_message(call.from_user.id, 'Обновлен файл с проданным товаром')
-                        dbhandle.connect()
                         NullProduct.create_table()
-                        save_exsel_pst(creat_pst())
+                        try:
+                            save_exsel_pst(creat_pst())
+                        except Exception as ex:
+                            logger.debug(ex)
                         groups_list = ['11', '20', '21', '22', '23', '25', '28', '35']
                         data_nulls = dict()
                         products = []
@@ -507,7 +465,6 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
                             except Exception:
                                 temp = NullProduct.create(group=key, num=len(value))
                                 temp.save()
-                        dbhandle.close()
                         await bot.send_message(call.from_user.id,
                                                'Невыставленный товар:\nТекстиль: {}\nВанная комната: {}\nШторы: '
                                                '{}\nПосуда: {}\nДекор: {}\nХимия, хранение, ковры: {}\n'
@@ -525,8 +482,7 @@ async def dow_all_sklads(call: types.CallbackQuery, state: FSMContext):
                                                ))
                     except Exception as ex:
                         logger.debug(ex)
-                    finally:
-                        dbhandle.close()
+
 
             else:
                 await bot.send_message(call.from_user.id, 'Ошибка при записи в csv')
@@ -627,6 +583,8 @@ async def bot_message(message: types.Message, state: FSMContext):
     Основное, парсим через функцию requests_mediagroup, если уже есть json просто выводим инфу,
     иначе идем циклом по кортежу и выводим инф
     """
+    operation_user = message.text
+    comment = ''
     id = message.from_user.id
     if check(message) != 3 and check(message):
         if message.text == '🆚V-Sales_825':
@@ -685,8 +643,6 @@ async def bot_message(message: types.Message, state: FSMContext):
             if not hidden():
                 data_nulls_res = {}
                 try:
-                    dbhandle.connect()
-                    dbdate.connect()
                     data_nulls = NullProduct.select()
                     data_time = DateBase.select()
                     for key in data_nulls:
@@ -710,15 +666,11 @@ async def bot_message(message: types.Message, state: FSMContext):
                     await start_check_stocks(message, state)
                 except Exception as ex:
                     logger.debug(ex)
-                finally:
-                    dbhandle.close()
-                    dbdate.close()
             else:
                 await say_ib(message, state)
 
         elif message.text == '💰Проданный товар':
             if not hidden():
-                dbdate.connect()
                 logger.info('Пользователь {} {} нажал Проданный товар'.format(id, message.from_user.first_name))
                 await bot.send_message(id,
                                        'В доработке, т.к. стали принимать на весло, '
@@ -728,7 +680,6 @@ async def bot_message(message: types.Message, state: FSMContext):
                     await bot.send_message(id, 'Проданный товар и доступность на складе\n'
                                                'с {}\n'
                                                'по {}.'.format(i.date_V_Sales_old, i.date_V_Sales_new))
-                dbdate.close()
                 await message.answer_document(open('{}/files/sold.xlsx'.format(path), 'rb'))
             else:
                 await say_ib(message, state)
@@ -772,14 +723,12 @@ async def bot_message(message: types.Message, state: FSMContext):
             await create_table2(message)
         elif message.text == '🤬Новые Рдиффы':
             if not hidden():
-                dbdate.connect()
                 logger.info('Пользователь {} {} нажал Новые рдиффы'.format(id, message.from_user.first_name))
                 for i in DateBase.select():
                     await bot.send_message(id, 'Новые рдиффы\n'
                                                'с {}\n'
                                                'по {}.'.format(i.date_RDiff_old, i.date_RDiff))
                 await message.answer_document(open('{}/files/new_rdiff.xlsx'.format(path), 'rb'))
-                dbdate.close()
             else:
                 await say_ib(message, state)
         elif message.text == 'Обновить новые рдиффы':
@@ -795,9 +744,25 @@ async def bot_message(message: types.Message, state: FSMContext):
                 with open('{}/files/hidden.txt'.format(path), 'w', encoding='utf-8') as f:
                     f.write('True')
                 await bot.send_message(id, 'Включен')
+        elif message.text == 'Статистика' and message.from_user.id in [int(i) for i in ADMINS]:
+            mes = []
+            query = (Users
+                     .select(Users, fn.COUNT(Operations.id).alias('Operations_count'))
+                     .join(Operations, JOIN.LEFT_OUTER)
+                     .group_by(Users.id))
+            for user in query:
+                mes.append('{} {} - запросов: {}'.format(user.id_tg, user.name, user.Operations_count))
+            await bot.send_message(message.from_user.id, '\n'.join(mes))
         else:
+            operation_user = "Запросил артикул в главном меню"
+            comment = message.text
             answer = message.text.lower()
             await show_art_in_main_menu(message, answer)
+        if not Operations.table_exists():
+            Operations.create_table()
+            logger.debug('Таблицы созданы успешно.')
+        operation = Operations(user_id=Users.get(id_tg=message.from_user.id), operation=operation_user, comment=comment)
+        operation.save()
         for admin in ADMINS:
             if message.from_user.id not in [int(i) for i in ADMINS]:
                 await bot.send_message(admin, '{} {} {}'.

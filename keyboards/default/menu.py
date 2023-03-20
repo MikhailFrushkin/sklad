@@ -17,26 +17,45 @@ second_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('В главное меню')],
 ], resize_keyboard=True)
 
-menu_admin = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton('🆚V-Sales_825'), KeyboardButton('🗃011_825-Exit_sklad'), KeyboardButton('🤖Qrcode ячейки')],
-    [KeyboardButton('📖Любой текст в Qr'),
-     KeyboardButton('📦Содержимое ячейки'),
-     KeyboardButton('🔍Поиск по наименованию')],
-    [KeyboardButton('📝Проверка товара'),
-     # KeyboardButton('💰Проданный товар'),
-     KeyboardButton('📑Проверка единичек')],
-    # KeyboardButton('📟 Мой заказ')],
-    [KeyboardButton('💳Акции'),
-     KeyboardButton('Телефоны')],
-    [KeyboardButton('🤬Новые Рдиффы'),
-     KeyboardButton('ℹИнформация')],
-    [KeyboardButton('Загрузка базы'),
-     KeyboardButton('Отправить')],
-    [KeyboardButton('Обновить Акции'),
-     KeyboardButton('Сброс единичек')],
-    [KeyboardButton('Обновить новые рдиффы'),
-     KeyboardButton('Сники мод')]
-], resize_keyboard=True)
+menu_admin = ReplyKeyboardMarkup(row_width=2)
+menu_admin.insert(KeyboardButton('🆚V-Sales_825'))
+menu_admin.insert(KeyboardButton('🗃011_825-Exit_sklad'))
+menu_admin.insert(KeyboardButton('🤖Qrcode ячейки'))
+menu_admin.insert(KeyboardButton('📖Любой текст в Qr'))
+menu_admin.insert(KeyboardButton('📦Содержимое ячейки'))
+menu_admin.insert(KeyboardButton('🔍Поиск по наименованию'))
+menu_admin.insert(KeyboardButton('📝Проверка товара'))
+menu_admin.insert(KeyboardButton('📑Проверка единичек'))
+menu_admin.insert(KeyboardButton('💳Акции'))
+menu_admin.insert(KeyboardButton('ℹИнформация'))
+menu_admin.insert(KeyboardButton('Телефоны'))
+menu_admin.insert(KeyboardButton('Загрузка базы'))
+menu_admin.insert(KeyboardButton('Отправить'))
+menu_admin.insert(KeyboardButton('Обновить Акции'))
+menu_admin.insert(KeyboardButton('Сброс единичек'))
+menu_admin.insert(KeyboardButton('Сники мод'))
+menu_admin.insert(KeyboardButton('Статистика'))
+
+# menu_admin = ReplyKeyboardMarkup(keyboard=[
+#     [KeyboardButton('🆚V-Sales_825'), KeyboardButton('🗃011_825-Exit_sklad'), KeyboardButton('🤖Qrcode ячейки')],
+#     [KeyboardButton('📖Любой текст в Qr'),
+#      KeyboardButton('📦Содержимое ячейки'),
+#      KeyboardButton('🔍Поиск по наименованию')],
+#     [KeyboardButton('📝Проверка товара'),
+#      # KeyboardButton('💰Проданный товар'),
+#      KeyboardButton('📑Проверка единичек')],
+#     # KeyboardButton('📟 Мой заказ')],
+#     [KeyboardButton('💳Акции'),
+#      KeyboardButton('Телефоны')],
+#     [KeyboardButton('🤬Новые Рдиффы'),
+#      KeyboardButton('ℹИнформация')],
+#     [KeyboardButton('Загрузка базы'),
+#      KeyboardButton('Отправить')],
+#     [KeyboardButton('Обновить Акции'),
+#      KeyboardButton('Сброс единичек')],
+#     [KeyboardButton('Обновить новые рдиффы'),
+#      KeyboardButton('Сники мод')]
+# ], resize_keyboard=True)
 
 dowload_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('011_825'),
@@ -54,7 +73,7 @@ qr_menu = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('011_825-Exit_Dost')],
     [KeyboardButton('V-Sales_825'),
      KeyboardButton('R12_BrakIn_825'),
-     KeyboardButton('011_825-02-01-0')],
+     KeyboardButton('012_825-02-01-1')],
     [KeyboardButton('012_825-Dost_int8'),
      KeyboardButton('В главное меню')],
 ], resize_keyboard=True)

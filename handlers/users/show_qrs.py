@@ -40,7 +40,7 @@ async def showqr(message: types.Message, state: FSMContext):
     Ели сообщение удовлетворяет условию, генерирует код и отправляет.
     """
     ans_list = ['011_825-Exit_sklad', '011_825-Exit_zal', '011_825-Exit_Dost', 'V-Sales_825', 'R12_BrakIn_825',
-                '012_825-Dost_int8', '011_825-02-01-0']
+                '012_825-Dost_int8', '012_825-02-01-1']
     ans = message.text
     if ans == 'В главное меню':
         await back(message, state)

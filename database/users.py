@@ -1,14 +1,8 @@
-import csv
 import datetime
-import os
 
-from loguru import logger
-
-from database.connect_DB import *
-import peewee
 from peewee import *
 
-from data.config import path
+from database.connect_DB import *
 
 
 class BaseModel(Model):
@@ -38,7 +32,7 @@ class Keyboard(BaseModel):
 
 
 class Users(BaseModel):
-    id = PrimaryKeyField(null=False)
+    id = PrimaryKeyField()
     id_tg = IntegerField()
     name = CharField(max_length=150)
     created_at = DateTimeField(default=datetime.datetime.now)
@@ -52,3 +46,16 @@ class Users(BaseModel):
         order_by = ['created_at']
         primary_key = CompositeKey('keyboard')
 
+
+class Operations(BaseModel):
+    id = PrimaryKeyField()
+    user = ForeignKeyField(Users, on_delete='cascade', on_update='cascade')
+    date = DateTimeField(default=datetime.datetime.now)
+    operation = CharField(max_length=50)
+    comment = CharField(max_length=50)
+
+    class META:
+        database = dbhandle
+        db_table = 'Operations'
+        order_by = ['date']
+        primary_key = CompositeKey('user')

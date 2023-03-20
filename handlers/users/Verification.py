@@ -41,7 +41,6 @@ async def groups(call: types.CallbackQuery, state: FSMContext):
             except Exception as ex:
                 logger.debug('Нет сообщения для удаления {}'.format(ex))
             try:
-                dbhandle.connect()
                 art_dict = {}
                 rows = Product.select().order_by(Product.minigroup_name)
                 data['TG'] = call.data
@@ -50,14 +49,12 @@ async def groups(call: types.CallbackQuery, state: FSMContext):
                         art_dict[prod.vendor_code] = [prod.group, prod.status, prod.minigroup_name]
             except Exception as ex:
                 logger.debug(ex)
-            finally:
-                dbhandle.close()
+
 
             if call.data == 'exit':
                 logger.info('back')
                 await back(call, state)
             elif call.data == 'stat':
-                dbhandle.connect()
                 all_art = 0
                 chek_ok = 0
                 chek_no = 0
@@ -74,7 +71,6 @@ async def groups(call: types.CallbackQuery, state: FSMContext):
                             chek_no += 1
                     else:
                         chek_false += 1
-                dbhandle.close()
                 await bot.send_message(call.from_user.id, 'Статистика\n'
                                                           'Дата обновления файла с единичками:\n'
                                                           '{}\n'
@@ -92,8 +88,7 @@ async def groups(call: types.CallbackQuery, state: FSMContext):
 
     except Exception as ex:
         logger.debug(ex)
-    finally:
-        dbhandle.close()
+
 
 
 @dp.callback_query_handler(state=Verification.view_result)
@@ -156,7 +151,6 @@ async def text_ver(message: types.Message, state: FSMContext):
                 await state.update_data(dict=data['dict'])
                 await Verification.view_result.set()
                 data['answer'] = 'exit'
-                dbhandle.connect()
                 for key, value in data['dict'].items():
                     status = Product.get(Product.vendor_code == key)
                     if status.status != value[1]:
@@ -164,18 +158,14 @@ async def text_ver(message: types.Message, state: FSMContext):
                         status.user_id = message.from_user.id
                         status.updated_at = datetime.datetime.now()
                         status.save()
-                dbhandle.close()
                 await back(message, state)
             except Exception as ex:
                 logger.debug(ex)
                 await back(message, state)
-            finally:
-                dbhandle.close()
-            # await back(message, state)
+
         else:
             try:
                 art = message.text
-                dbhandle.connect()
                 query = Product.select().where(Product.vendor_code == art)
                 if query.exists():
                     async with state.proxy() as data:
@@ -192,14 +182,12 @@ async def text_ver(message: types.Message, state: FSMContext):
                 await bot.send_message(message.from_user.id, 'Неправильно введен артикул', reply_markup=second_menu)
                 await bot.send_message(message.from_user.id, 'Введите артикул для редактирования:', reply_markup=exitqr)
                 await Verification.edited_status.set()
-            finally:
-                dbhandle.close()
+
 
 
 @dp.callback_query_handler(state=Verification.edited_status)
 async def get_items(call: types.CallbackQuery, state: FSMContext):
     if call.data == 'exit':
-        dbhandle.close()
         logger.info('back')
         await back(call, state)
     else:
@@ -210,7 +198,6 @@ async def get_items(call: types.CallbackQuery, state: FSMContext):
 async def get_items(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         try:
-            dbhandle.connect()
             art = data['edidet']
             status = Product.get(Product.vendor_code == art)
             if call.data == 'ok':
@@ -225,13 +212,11 @@ async def get_items(call: types.CallbackQuery, state: FSMContext):
             else:
                 logger.info('edited_status_art неверный колл')
             status.save()
-            dbhandle.close()
             logger.info('back')
             await back(call, state)
         except Exception as ex:
             logger.debug(ex)
-        finally:
-            dbhandle.close()
+
 
 
 async def while_answer(state: FSMContext):
@@ -273,7 +258,6 @@ async def get_items(call: types.CallbackQuery, state: FSMContext):
             data['dict'][art][1] = 'Пропущен'
             await state.update_data(dict=data['dict'])
         elif call.data.startswith('exit'):
-            dbhandle.connect()
             for key, value in data['dict'].items():
                 status = Product.get(Product.vendor_code == key)
                 if status.status != value[1]:
@@ -281,12 +265,10 @@ async def get_items(call: types.CallbackQuery, state: FSMContext):
                     status.user_id = call.from_user.id
                     status.updated_at = datetime.datetime.now()
                     status.save()
-            dbhandle.close()
 
             await back(call, state)
 
         if art == last:
-            dbhandle.connect()
             for key, value in data['dict'].items():
                 status = Product.get(Product.vendor_code == key)
                 if status.status != value[1]:
@@ -294,7 +276,6 @@ async def get_items(call: types.CallbackQuery, state: FSMContext):
                     status.user_id = call.from_user.id
                     status.updated_at = datetime.datetime.now()
                     status.save()
-            dbhandle.close()
         await Verification.view_result.set()
         data['answer'] = call.data[:4]
         await data.save()
@@ -322,14 +303,12 @@ async def get_list(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(state=Verification.view_result)
 async def show_list(call: types.CallbackQuery, state,
                     filters=('Не проверен', 'Пропущен', 'Не найден', 'Найден')):
-    dbhandle.connect()
     rows = Product.select()
     art_dict = dict()
     async with state.proxy() as data:
         for prod in rows:
             if data['TG'] == prod.group:
                 art_dict[prod.vendor_code] = [prod.group, prod.status]
-    dbhandle.close()
 
     async with state.proxy() as data:
         count = 0

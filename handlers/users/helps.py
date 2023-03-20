@@ -9,7 +9,6 @@ async def bot_help(message: types.Message):
     """
     Справка бота
     """
-    dbdate.connect()
     for i in DateBase.select():
         await message.answer("Последнее обновления базы: \n"
                              "011_825 - {}\n"
@@ -19,7 +18,6 @@ async def bot_help(message: types.Message):
                              "V_Sales - {}\n".format(i.date_011_825, i.date_012_825, i.date_A11_825,
                                                      i.date_RDiff, i.date_V_Sales_new,
                                                      ))
-    dbdate.close()
     await message.answer(
         'В связи с проблемами с ИБ, многие функции бота недоступны и придеться пользоваться '
         'доисторическими методами для получения требуемого результата.'
