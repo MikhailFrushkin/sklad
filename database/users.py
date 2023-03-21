@@ -52,7 +52,7 @@ class Operations(BaseModel):
     user = ForeignKeyField(Users, on_delete='cascade', on_update='cascade')
     date = DateTimeField(default=datetime.datetime.now)
     operation = CharField(max_length=50)
-    comment = CharField(max_length=50)
+    comment = CharField(max_length=50, null=False)
 
     class META:
         database = dbhandle

@@ -88,6 +88,36 @@ async def bot_start(message: types.Message):
         await Logging.log.set()
 
 
+@dp.message_handler(commands=['statistic'], state='*')
+async def bot_start(message: types.Message):
+    list_operations = [
+        'Запросил артикул в главном меню',
+        'Закинул изображение в главное меню',
+        '🆚V-Sales_825',
+        '📝Проверка товара',
+        '📖Любой текст в Qr',
+        '📦Содержимое ячейки',
+        '📑Проверка единичек',
+        '🗃011_825-Exit_sklad',
+        '🔍Поиск по наименованию',
+        '💳Акции',
+        'ℹИнформация',
+        '🤖Qrcode ячейки',
+        'Телефоны',
+    ]
+    try:
+        user = Users.get(id_tg=message.from_user.id)
+        line = []
+        for oper in list_operations:
+            print(oper)
+            operations_count = Operations.select().where(Operations.user == user,
+                                                         Operations.operation == oper).count()
+            line.append(f'{oper}: {operations_count}')
+        await bot.send_message(message.from_user.id, '\n'.join(line))
+    except Exception as ex:
+        logger.debug(ex)
+
+
 @dp.message_handler(commands=['keyboard'], state='*')
 async def keyboard_user(message: types.Message, state: FSMContext):
     """Команда для редактирования главного меню"""
@@ -232,7 +262,8 @@ async def helps(message: types.Message):
 async def handle_docs_photo(message):
     logger.info('фото загруженно')
     await message.photo[-1].download(f'{path}/photos/фото_{message.from_user.id}.jpg')
-    operation = Operations(user_id=Users.get(id_tg=message.from_user.id), operation="Закинул изображение в главное меню")
+    operation = Operations(user_id=Users.get(id_tg=message.from_user.id),
+                           operation="Закинул изображение в главное меню", comment='')
     operation.save()
     art_list = read_image(f'{path}/photos/фото_{message.from_user.id}.jpg')
     if not art_list:
@@ -300,7 +331,8 @@ async def message_for_users(message: types.Message, state: FSMContext):
                     )
                     for user in users:
                         try:
-                            await bot.send_document(user.id_tg, document=open("{}/files/file.{}".format(path, ex), 'rb'))
+                            await bot.send_document(user.id_tg,
+                                                    document=open("{}/files/file.{}".format(path, ex), 'rb'))
 
                         except Exception as exp:
                             logger.debug('Не удалось отправить сообщение {} {}'.format(user.id_tg, exp))
@@ -585,9 +617,35 @@ async def bot_message(message: types.Message, state: FSMContext):
     """
     operation_user = message.text
     comment = ''
+    list_operations = [
+        'Запросил артикул в главном меню',
+        '🆚V-Sales_825',
+        '📝Проверка товара',
+        '📖Любой текст в Qr',
+        '📦Содержимое ячейки',
+        '📑Проверка единичек',
+        '🗃011_825-Exit_sklad',
+        '🔍Поиск по наименованию',
+        '💳Акции',
+        'ℹИнформация',
+        '🤖Qrcode ячейки',
+        'Телефоны',
+    ]
     id = message.from_user.id
     if check(message) != 3 and check(message):
-        if message.text == '🆚V-Sales_825':
+        if message.text.startswith('статистика'):
+            try:
+                user = Users.get(id_tg=message.text.split()[1])
+                line = []
+                for oper in list_operations:
+                    print(oper)
+                    operations_count = Operations.select().where(Operations.user == user,
+                                                           Operations.operation == oper).count()
+                    line.append(f'{oper}: {operations_count}')
+                await bot.send_message(id, '\n'.join(line))
+            except Exception:
+                await bot.send_message(message.from_user.id, 'Не найден пользователь')
+        elif message.text == '🆚V-Sales_825':
             await bot.send_message(id, 'V-Sales_825')
             qrc = open('{}/qcodes/V-Sales_825.jpg'.format(path), 'rb')
             logger.info('Пользователь {} {} открыл QR V-Sales_825'.format(id, message.from_user.first_name))
