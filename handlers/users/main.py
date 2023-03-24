@@ -51,10 +51,12 @@ async def say_ib(message, state):
 
 
 @dp.message_handler(commands=['start'], state='*')
-async def bot_start(message: types.Message):
+async def bot_start(message: types.Message, state: FSMContext):
     """
     Старт бота, проверка на присутствие в базе данных, если нет, запрашивает пароль
     """
+    await back(message, state)
+
     logger.info('Пользователь {}: {} {} нажал на кнопку {}'.format(
         message.from_user.id,
         message.from_user.first_name,
@@ -619,6 +621,7 @@ async def bot_message(message: types.Message, state: FSMContext):
     comment = ''
     list_operations = [
         'Запросил артикул в главном меню',
+        'Закинул изображение в главное меню',
         '🆚V-Sales_825',
         '📝Проверка товара',
         '📖Любой текст в Qr',
@@ -809,7 +812,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                      .join(Operations, JOIN.LEFT_OUTER)
                      .group_by(Users.id))
             for user in query:
-                mes.append('{} {} - запросов: {}'.format(user.id_tg, user.name, user.Operations_count))
+                mes.append('{} {}: {}'.format(user.id_tg, user.name, user.Operations_count))
             await bot.send_message(message.from_user.id, '\n'.join(mes))
         else:
             operation_user = "Запросил артикул в главном меню"
