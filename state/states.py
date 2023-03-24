@@ -64,3 +64,11 @@ class Verification(StatesGroup):
 class Graf(StatesGroup):
     check_graf = State()
     day_graf = State()
+
+
+class NewProducts(StatesGroup):
+    choice_ds = State()
+    choice_tg = State()
+    show_products = State()
+    show_new_products = State()
+
