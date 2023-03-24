@@ -641,7 +641,6 @@ async def bot_message(message: types.Message, state: FSMContext):
                 user = Users.get(id_tg=message.text.split()[1])
                 line = []
                 for oper in list_operations:
-                    print(oper)
                     operations_count = Operations.select().where(Operations.user == user,
                                                            Operations.operation == oper).count()
                     line.append(f'{oper}: {operations_count}')
