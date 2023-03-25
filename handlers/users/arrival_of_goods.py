@@ -19,8 +19,8 @@ def actual_date():
     compare_date = pd.to_datetime(f'{two_days_from_today}')
     # создаем список дат
     try:
-        df_date = pd.read_excel(f'{path}/files/file_arrival/график2.xlsx')
-        df_date = df_date[df_date['Планируемая дата'] > compare_date]
+        df_date = pd.read_excel(f'{path}/files/file_arrival/График поставок.xlsx')
+        df_date = df_date[df_date['Планируемая дата прихода в магазин'] > compare_date]
         df_date.to_csv(f'{path}/files/file_arrival/keyboards.csv')
         return df_date
     except:
@@ -43,8 +43,8 @@ def open_file_ds():
     result.reset_index(drop=True, inplace=True)
 
     if not df.empty:
-        df['union'] = df['ds'] + ' ' + df['Планируемая дата'].apply(
-            lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + df['Тип перемещения']
+        df['union'] = df['Код графика'] + ' ' + df['Планируемая дата прихода в магазин'].apply(
+            lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + df['Тип операции']
         list_ds = df['union'].to_list()
     if list_ds:
         print(list_ds)
@@ -68,8 +68,9 @@ def out_df_merged(name):
         merged_df = pd.read_excel(f'{path}/files/file_arrival/result/{name}.xlsx')
     else:
         df_ds = pd.read_excel(f'{path}/files/file_arrival/DSs/{name}.xlsx',
-                              dtype={'Номенклатура': str, 'Описание': str, 'Количество': int,
+                              dtype={'Код номенклатуры': str, 'Наименование номенклатуры': str, 'Количество': int,
                                      'Объем': float})
+        df_ds = df_ds.rename(columns={'Код номенклатуры': 'Номенклатура'})
         df_min = pd.read_excel(f'{path}/files/file_arrival/art_tg.xlsx',
                                dtype={'Номенклатура': str, 'name': str, 'SG': str})
         merged_df = pd.merge(df_ds, df_min[['Номенклатура', 'SG']], on='Номенклатура', how='left')
@@ -108,8 +109,10 @@ def new_products(union_df, name):
     df_merged = out_df_merged(name)
     result_new = pd.merge(df_merged, union_df, on='Номенклатура', how='left')
     result_new = result_new[result_new['Доступно'].isnull()]
-    result_new = result_new.drop(['Описание товара', 'ТГ', 'Доступно'], axis=1)
+
+    result_new = result_new.drop(['Описание товара', 'ТГ'], axis=1)
     result_new = result_new.rename(columns={'SG': 'ТГ'})
+
     try:
         wb = Workbook()
         ws = wb.active

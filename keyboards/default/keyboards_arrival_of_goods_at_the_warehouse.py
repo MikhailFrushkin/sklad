@@ -12,8 +12,8 @@ def generate_choice_menu():
     menu_choice = ReplyKeyboardMarkup(row_width=1)
     list_ds = pd.read_csv(f'{path}/files/file_arrival/keyboards.csv')
     if not list_ds.empty:
-        list_ds['union'] = list_ds['ds'] + ' ' + list_ds['Планируемая дата'].apply(
-            lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + list_ds['Тип перемещения']
+        list_ds['union'] = list_ds['Код графика'] + ' ' + list_ds['Планируемая дата прихода в магазин'].apply(
+            lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + list_ds['Тип операции']
         list_ds = list_ds['union'].to_list()
     if list_ds:
         for key in list_ds:

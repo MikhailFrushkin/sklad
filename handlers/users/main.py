@@ -99,6 +99,7 @@ async def bot_start(message: types.Message):
         'Закинул изображение в главное меню',
         '🆚V-Sales_825',
         '📝Проверка товара',
+        '🚛Приход товара',
         '📖Любой текст в Qr',
         '📦Содержимое ячейки',
         '📑Проверка единичек',
@@ -113,7 +114,6 @@ async def bot_start(message: types.Message):
         user = Users.get(id_tg=message.from_user.id)
         line = []
         for oper in list_operations:
-            print(oper)
             operations_count = Operations.select().where(Operations.user == user,
                                                          Operations.operation == oper).count()
             line.append(f'{oper}: {operations_count}')
@@ -150,6 +150,14 @@ async def keyboard(call: types.CallbackQuery, state: FSMContext):
                         new_s.keyboard.vsales = False
                     else:
                         new_s.keyboard.vsales = True
+                    new_s.keyboard.save()
+
+                if call.data == 'new':
+                    new_s = Users.get(Users.id_tg == call.from_user.id)
+                    if query.keyboard.new_prod:
+                        new_s.keyboard.new_prod = False
+                    else:
+                        new_s.keyboard.new_prod = True
                     new_s.keyboard.save()
 
                 if call.data == 'ex_sklad':
@@ -654,13 +662,22 @@ async def new_prod_tg_art(message: types.Message, state: FSMContext):
             df = pd.read_excel(f'{path}/files/file_arrival/result/{data["ds"]}.xlsx')
             df = df[df['SG'] == message.text]
             df['Номенклатура'] = df['Номенклатура'].astype(str)
-            df['Описание'] = df['Описание'].astype(str)
+            df['Наименование номенклатуры'] = df['Наименование номенклатуры'].astype(str)
             df['Количество'] = df['Количество'].astype(str)
             df['Объем'] = df['Объем'].astype(str)
-            df['union'] = df['Номенклатура'] + ' - ' + df['Описание'] + '\nКоличество: ' + df[
+            df['union'] = df['Номенклатура'] + ' - ' + df['Наименование номенклатуры'] + '\nКоличество: ' + df[
                 'Количество'] + ' Объем: ' + df['Объем']
             table = df['union'].to_list()
-            await bot.send_message(message.from_user.id, '\n'.join(table), reply_markup=second_menu)
+            count = 0
+            list_mes = []
+            for i in table:
+                count += 1
+                list_mes.append(i)
+                if count == 20:
+                    await bot.send_message(message.from_user.id, '\n'.join(list_mes), reply_markup=second_menu)
+                    count = 0
+                    list_mes = []
+            await bot.send_message(message.from_user.id, '\n'.join(list_mes), reply_markup=second_menu)
 
 
 @dp.message_handler(content_types=['text'], state=NewProducts.show_new_products)
@@ -674,11 +691,10 @@ async def new_prod_tg_new_art(message: types.Message, state: FSMContext):
             df['Номенклатура'] = df['Номенклатура'].astype(int)
             dict_art = df.to_dict('index')
             await bot.send_message(message.from_user.id, 'Список товаров:', reply_markup=second_menu)
-            print(dict_art)
             for key, value in dict_art.items():
                 print(value)
                 await bot.send_message(message.from_user.id,
-                                       f'{value["Номенклатура"]} - {value["Описание"]}'
+                                       f'{value["Номенклатура"]} - {value["Наименование номенклатуры"]}'
                                        f'\nКоличество: {value["Количество"]} Объем: {value["Объем"]}',
                                        reply_markup=InlineKeyboardMarkup().add(
                                            InlineKeyboardButton(text='Показать фото',
@@ -702,6 +718,7 @@ async def bot_message(message: types.Message, state: FSMContext):
         'Закинул изображение в главное меню',
         '🆚V-Sales_825',
         '📝Проверка товара',
+        '🚛Приход товара',
         '📖Любой текст в Qr',
         '📦Содержимое ячейки',
         '📑Проверка единичек',

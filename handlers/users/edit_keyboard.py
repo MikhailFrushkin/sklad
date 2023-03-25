@@ -7,6 +7,7 @@ from database.users import Users
 
 myfile = '{}/database/mydatabase.db'.format(path)
 
+
 # KeyboardButton('🆚V-Sales_825')
 # KeyboardButton('🗃011_825-Exit_sklad')
 # KeyboardButton('🤖Qrcode ячейки')
@@ -49,6 +50,8 @@ def create_keyboard(id_user):
             menu.insert(KeyboardButton('ℹИнформация'))
         if query.keyboard.tel:
             menu.insert(KeyboardButton('Телефоны'))
+        if query.keyboard.new_prod:
+            menu.insert(KeyboardButton('🚛Приход товара'))
         if len(menu['keyboard']) == 0:
             menu.insert(KeyboardButton('В главное меню'))
     except Exception as ex:
@@ -119,6 +122,11 @@ def inlane_edit_keyboard(id_user):
             menu_inlane.insert(InlineKeyboardButton(text='✅ Телефоны', callback_data='tel'))
         else:
             menu_inlane.insert(InlineKeyboardButton(text='❌ Телефоны', callback_data='tel'))
+
+        if query.keyboard.new_prod:
+            menu_inlane.insert(InlineKeyboardButton(text='✅ Приход товара', callback_data='new'))
+        else:
+            menu_inlane.insert(InlineKeyboardButton(text='❌ Приход товара', callback_data='new'))
 
         menu_inlane.insert(InlineKeyboardButton(text='Сохранить', callback_data='exit'))
     except Exception as ex:

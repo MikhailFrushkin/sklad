@@ -24,6 +24,7 @@ class Keyboard(BaseModel):
     stock = BooleanField(default=True)
     info = BooleanField(default=True)
     tel = BooleanField(default=True)
+    new_prod = BooleanField(default=True)
 
     class META:
         database = dbhandle
@@ -52,7 +53,7 @@ class Operations(BaseModel):
     user = ForeignKeyField(Users, on_delete='cascade', on_update='cascade')
     date = DateTimeField(default=datetime.datetime.now)
     operation = CharField(max_length=50)
-    comment = CharField(max_length=50, null=False)
+    comment = CharField(max_length=50)
 
     class META:
         database = dbhandle
