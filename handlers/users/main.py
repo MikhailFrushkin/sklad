@@ -31,7 +31,7 @@ from handlers.users.sold_product import read_base_vsl
 from handlers.users.stocks_check import start_check_stocks, save_exsel_pst, creat_pst, union_art
 from keyboards.default import menu
 from keyboards.default.keyboards_arrival_of_goods_at_the_warehouse import generate_choice_menu, menu_choice_tg, \
-    menu_first, menu_choice_tg_new
+    menu_first, menu_choice_tg_new, menu_arrival
 from keyboards.default.menu import second_menu, menu_admin, dowload_menu
 from keyboards.inline.graf import graf_check
 from loader import dp, bot
@@ -625,6 +625,7 @@ async def new_prod_ds(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if message.text == 'В главное меню':
             await back(message, state)
+            return
         data['ds'] = message.text.split()[0]
         await bot.send_message(message.from_user.id, 'Выберите действие:',
                                reply_markup=menu_first)
@@ -647,7 +648,8 @@ async def new_prod_tg(message: types.Message, state: FSMContext):
                           + df['Объем']
 
             table = df['union'].to_list()
-            await bot.send_message(message.from_user.id, '\n'.join(table), reply_markup=second_menu)
+            await bot.send_message(message.from_user.id, '\n'.join(table), reply_markup=menu_arrival)
+            await NewProducts.choice_ds_f.set()
         elif message.text == 'Просмотр всех товаров':
             await bot.send_message(message.from_user.id, 'Выберите товарную группу:',
                                    reply_markup=menu_choice_tg(data['ds']))
@@ -656,6 +658,9 @@ async def new_prod_tg(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, 'Выберите товарную группу:',
                                    reply_markup=menu_choice_tg_new(data['ds']))
             await NewProducts.show_new_products.set()
+        elif message.text == 'Назад':
+            await bot.send_message(message.from_user.id, 'Выберите поставку:', reply_markup=generate_choice_menu())
+            await NewProducts.choice_ds.set()
         elif message.text == 'В главное меню':
             await back(message, state)
 
@@ -665,6 +670,10 @@ async def new_prod_tg_art(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if message.text == 'В главное меню':
             await back(message, state)
+        elif message.text == 'Назад':
+            await bot.send_message(message.from_user.id, 'Выберите действие:',
+                                   reply_markup=menu_first)
+            await NewProducts.choice_tg.set()
         else:
             df = pd.read_excel(f'{path}/files/file_arrival/result/{data["ds"]}.xlsx')
             df = df[df['SG'] == message.text]
@@ -681,23 +690,50 @@ async def new_prod_tg_art(message: types.Message, state: FSMContext):
                 count += 1
                 list_mes.append(i)
                 if count == 20:
-                    await bot.send_message(message.from_user.id, '\n'.join(list_mes), reply_markup=second_menu)
+                    await bot.send_message(message.from_user.id, '\n'.join(list_mes), reply_markup=menu_arrival)
                     count = 0
                     list_mes = []
-            await bot.send_message(message.from_user.id, '\n'.join(list_mes), reply_markup=second_menu)
+            await bot.send_message(message.from_user.id, '\n'.join(list_mes), reply_markup=menu_arrival)
+            await NewProducts.show_products_f.set()
 
 
-@dp.message_handler(content_types=['text'], state=NewProducts.show_new_products)
+@dp.message_handler(content_types=['text'], state=[NewProducts.show_products_f])
+async def new_prod_tg_new_art_f(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text == 'В главное меню':
+            await back(message, state)
+        elif message.text == 'Назад':
+            await bot.send_message(message.from_user.id, 'Выберите товарную группу:',
+                                   reply_markup=menu_choice_tg(data['ds']))
+            await NewProducts.show_products.set()
+
+
+@dp.message_handler(content_types=['text'], state=[NewProducts.choice_ds_f])
+async def new_prod_tg_new_art_f(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text == 'В главное меню':
+            await back(message, state)
+        elif message.text == 'Назад':
+            await bot.send_message(message.from_user.id, 'Выберите действие:',
+                                   reply_markup=menu_first)
+            await NewProducts.choice_tg.set()
+
+
+@dp.message_handler(content_types=['text'], state=[NewProducts.show_new_products])
 async def new_prod_tg_new_art(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if message.text == 'В главное меню':
             await back(message, state)
+        elif message.text == 'Назад':
+            await bot.send_message(message.from_user.id, 'Выберите действие:',
+                                   reply_markup=menu_first)
+            await NewProducts.choice_tg.set()
         else:
             df = pd.read_excel(f'{path}/files/file_arrival/result/{data["ds"]}_result_new.xlsx')
             df = df[df['ТГ'] == message.text]
             df['Номенклатура'] = df['Номенклатура'].astype(int)
             dict_art = df.to_dict('index')
-            await bot.send_message(message.from_user.id, 'Список товаров:', reply_markup=second_menu)
+            await bot.send_message(message.from_user.id, 'Список товаров:', reply_markup=menu_arrival)
             for key, value in dict_art.items():
                 await bot.send_message(message.from_user.id,
                                        f'{value["Номенклатура"]} - {value["Наименование номенклатуры"]}'
@@ -708,6 +744,17 @@ async def new_prod_tg_new_art(message: types.Message, state: FSMContext):
                                                                     value['Номенклатура']
                                                                 ))))
             await Place.mesto_4.set()
+
+
+@dp.message_handler(content_types=['text'], state=[Place.mesto_4])
+async def new_prod_tg_new_art_f(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text == 'В главное меню':
+            await back(message, state)
+        elif message.text == 'Назад':
+            await bot.send_message(message.from_user.id, 'Выберите товарную группу:',
+                                   reply_markup=menu_choice_tg_new(data['ds']))
+            await NewProducts.show_new_products.set()
 
 
 @dp.message_handler(content_types=['text'], state='*')

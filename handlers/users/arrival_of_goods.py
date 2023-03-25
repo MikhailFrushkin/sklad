@@ -6,6 +6,11 @@ from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 import numpy as np
 from data.config import path
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.dispatcher.filters import Text
+
+from loader import dp
+from state.states import NewProducts
 
 
 def actual_date():
@@ -15,7 +20,7 @@ def actual_date():
     today = datetime.date.today()
 
     # вычисляем дату минус два дня от текущей
-    two_days_from_today = today - datetime.timedelta(days=2)
+    two_days_from_today = today - datetime.timedelta(days=5)
     compare_date = pd.to_datetime(f'{two_days_from_today}')
     # создаем список дат
     try:
@@ -146,6 +151,51 @@ def new_products(union_df, name):
         # print(unique_sorted_tg)
     except Exception as ex:
         logger.debug(ex)
+
+
+# back_button = KeyboardButton('Назад')
+# main_keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(
+#     KeyboardButton('Уровень 1'),
+#     # ...
+# )
+# level1_keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(
+#     KeyboardButton('Опция 1'),
+#     back_button,
+# )
+#
+#
+# @dp.message_handler(Text(equals='Назад'),
+#                     state=[NewProducts.choice_ds, NewProducts.choice_tg, NewProducts.show_products,
+#                            NewProducts.show_new_products])
+# async def process_message_back(message: Message, state: FSMContext):
+#     current_state = await state.get_state()
+#     if current_state is None:
+#         return
+#
+#     # Возврат на предыдущий уровень меню
+#     await state.set_state(previous_state)
+#     previous_keyboard = await get_keyboard(previous_state)
+#     await bot.send_message(
+#         message.chat.id,
+#         await get_menu_text(previous_state),
+#         reply_markup=previous_keyboard,
+#     )
+#
+#
+# async def get_keyboard(state: str) -> ReplyKeyboardMarkup:
+#     if state == MenuLevels.main:
+#         keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(
+#             KeyboardButton('Уровень 1'),
+#             # ...
+#         )
+#     elif state == MenuLevels.level1:
+#         keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(
+#             KeyboardButton('Опция 1'),
+#             back_button,
+#         )
+#     elif state == MenuLevels.level2:
+#         pass
+#     return keyboard
 
 
 if __name__ == '__main__':

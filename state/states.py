@@ -68,7 +68,10 @@ class Graf(StatesGroup):
 
 class NewProducts(StatesGroup):
     choice_ds = State()
+    choice_ds_f = State()
     choice_tg = State()
     show_products = State()
+    show_products_f = State()
     show_new_products = State()
+    show_new_products_f = State()
 

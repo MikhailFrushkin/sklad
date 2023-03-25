@@ -27,7 +27,12 @@ menu_first = ReplyKeyboardMarkup(row_width=1)
 menu_first.insert(KeyboardButton('Просмотр по объему и кол-ву'))
 menu_first.insert(KeyboardButton('Просмотр всех товаров'))
 menu_first.insert(KeyboardButton('Просмотр новинок'))
+menu_first.insert(KeyboardButton('Назад'))
 menu_first.insert(KeyboardButton('В главное меню'))
+
+menu_arrival = ReplyKeyboardMarkup(row_width=1)
+menu_arrival.insert(KeyboardButton('Назад'))
+menu_arrival.insert(KeyboardButton('В главное меню'))
 
 
 def menu_choice_tg(name):
@@ -35,7 +40,9 @@ def menu_choice_tg(name):
     df = pd.read_excel(f'{path}/files/file_arrival/result/{name}.xlsx')
     df['SG'] = df['SG'].astype(str)
     for group in sorted(df['SG'].unique().tolist()):
-        choice_tg.insert(KeyboardButton(f'{group}'))
+        if group != 'nan':
+            choice_tg.insert(KeyboardButton(f'{group}'))
+    choice_tg.insert(KeyboardButton('Назад'))
     choice_tg.insert(KeyboardButton('В главное меню'))
     return choice_tg
 
@@ -45,7 +52,9 @@ def menu_choice_tg_new(name):
     df = pd.read_excel(f'{path}/files/file_arrival/result/{name}_result_new.xlsx')
     df['ТГ'] = df['ТГ'].astype(str)
     for group in sorted(df['ТГ'].unique().tolist()):
-        choice_tg.insert(KeyboardButton(f'{group}'))
+        if group != 'nan':
+            choice_tg.insert(KeyboardButton(f'{group}'))
+    choice_tg.insert(KeyboardButton('Назад'))
     choice_tg.insert(KeyboardButton('В главное меню'))
     return choice_tg
 
