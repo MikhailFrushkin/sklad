@@ -47,7 +47,6 @@ def open_file_ds():
             lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + df['Тип операции']
         list_ds = df['union'].to_list()
     if list_ds:
-        print(list_ds)
         for ds in list_ds:
             try:
                 name = ds.split()[0]
@@ -74,6 +73,12 @@ def out_df_merged(name):
         df_min = pd.read_excel(f'{path}/files/file_arrival/art_tg.xlsx',
                                dtype={'Номенклатура': str, 'name': str, 'SG': str})
         merged_df = pd.merge(df_ds, df_min[['Номенклатура', 'SG']], on='Номенклатура', how='left')
+        merged_df = merged_df.groupby(['Номенклатура']).agg({'Номенклатура': 'first',
+                                                             'Наименование номенклатуры': 'first',
+                                                             'Количество': 'sum',
+                                                             'Объем': 'sum',
+                                                             'SG': 'first',
+                                                             })
 
         wb = Workbook()
         ws = wb.active
@@ -92,8 +97,14 @@ def out_df_grouped(name):
     else:
         merged_df = out_df_merged(name)
         merged_df['SG'] = merged_df['SG'].fillna('Нет данных о ТГ')
-
-        grouped_df = merged_df.groupby(['SG']).agg({'SG': 'first', 'Количество': 'sum', 'Объем': 'sum'})
+        merged_df = merged_df.assign(count=1)
+        grouped_df = merged_df.groupby(['SG']).agg({'SG': 'first', 'Количество': 'sum', 'Объем': 'sum', 'count': 'count'
+                                                    })
+        # print(grouped_df.columns)
+        # grouped_df2 = merged_df.groupby('SG').size().reset_index(name='count')
+        # print(grouped_df2.dtypes)
+        # result = pd.merge(grouped_df, grouped_df2, on='SG', how='left')
+        # print(result)
         wb = Workbook()
         ws = wb.active
         for r in dataframe_to_rows(grouped_df, index=False, header=True):
@@ -102,6 +113,7 @@ def out_df_grouped(name):
             length = max(len(str(cell.value)) for cell in column_cells)
             ws.column_dimensions[column_cells[0].column_letter].width = length + 2
         wb.save(f'{path}/files/file_arrival/result/{name}_grouped.xlsx')
+
     return grouped_df
 
 
@@ -110,7 +122,7 @@ def new_products(union_df, name):
     result_new = pd.merge(df_merged, union_df, on='Номенклатура', how='left')
     result_new = result_new[result_new['Доступно'].isnull()]
 
-    result_new = result_new.drop(['Описание товара', 'ТГ'], axis=1)
+    result_new = result_new.drop(['Описание товара', 'ТГ', 'Доступно'], axis=1)
     result_new = result_new.rename(columns={'SG': 'ТГ'})
 
     try:

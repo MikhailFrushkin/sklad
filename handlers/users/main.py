@@ -638,7 +638,14 @@ async def new_prod_tg(message: types.Message, state: FSMContext):
             df = pd.read_excel(f'{path}/files/file_arrival/result/{data["ds"]}_grouped.xlsx')
             df['Количество'] = df['Количество'].astype(str)
             df['Объем'] = df['Объем'].astype(str)
-            df['union'] = df['SG'] + '- Кол-во: ' + df['Количество'] + ' Объем: ' + df['Объем']
+            df['count'] = df['count'].astype(str)
+            df['union'] = df['SG'] \
+                          + ' Кол-во артикулов: ' \
+                          + df['count'] \
+                          + '\nКол-во: ' \
+                          + df['Количество'] + ' Объем: ' \
+                          + df['Объем']
+
             table = df['union'].to_list()
             await bot.send_message(message.from_user.id, '\n'.join(table), reply_markup=second_menu)
         elif message.text == 'Просмотр всех товаров':
@@ -692,7 +699,6 @@ async def new_prod_tg_new_art(message: types.Message, state: FSMContext):
             dict_art = df.to_dict('index')
             await bot.send_message(message.from_user.id, 'Список товаров:', reply_markup=second_menu)
             for key, value in dict_art.items():
-                print(value)
                 await bot.send_message(message.from_user.id,
                                        f'{value["Номенклатура"]} - {value["Наименование номенклатуры"]}'
                                        f'\nКоличество: {value["Количество"]} Объем: {value["Объем"]}',
