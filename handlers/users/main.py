@@ -1,3 +1,4 @@
+import json
 import random
 import sqlite3
 import time
@@ -10,6 +11,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTyp
 from aiogram.utils.emoji import emojize
 from aiogram.utils.markdown import text, italic, code
 from loguru import logger
+from all_requests.parse_on_requests import parse
 
 import bot
 from all_requests.parse_action import parse_actions, view_actions
@@ -648,7 +650,8 @@ async def new_prod_tg(message: types.Message, state: FSMContext):
                           + df['Объем']
 
             table = df['union'].to_list()
-            await bot.send_message(message.from_user.id, '\n'.join(table), reply_markup=menu_arrival)
+            await bot.send_message(message.from_user.id, '\n'.join(table), reply_markup=menu_arrival,
+                                   parse_mode=ParseMode.HTML)
             await NewProducts.choice_ds_f.set()
         elif message.text == 'Просмотр всех товаров':
             await bot.send_message(message.from_user.id, 'Выберите товарную группу:',
@@ -735,14 +738,28 @@ async def new_prod_tg_new_art(message: types.Message, state: FSMContext):
             dict_art = df.to_dict('index')
             await bot.send_message(message.from_user.id, 'Список товаров:', reply_markup=menu_arrival)
             for key, value in dict_art.items():
+                data = parse(value['Номенклатура'])
+                try:
+                    if data['pictures'] != [
+                        'https://upload.wikimedia.org/wikipedia/commons/9/9a/'
+                        '%D0%9D%D0%B5%D1%82_%D1%84%D0%BE%D1%82%D0%BE.png']:
+                        await bot.send_photo(message.from_user.id, photo=data['pictures'][0])
+                except Exception as ex:
+                    file_path = f'{path}/base/json/{value["Номенклатура"]}.json'
+                    os.remove(file_path)
+                    print(f'Файл {file_path} удален успешно')
+                    logger.debug(f'{value} херовое фото')
+                    try:
+                        data = parse(value['Номенклатура'])
+                        if data['pictures'] != [
+                            'https://upload.wikimedia.org/wikipedia/commons/9/9a/'
+                            '%D0%9D%D0%B5%D1%82_%D1%84%D0%BE%D1%82%D0%BE.png']:
+                            await bot.send_photo(message.from_user.id, photo=data['pictures'][0])
+                    except Exception as ex:
+                        logger.debug(f'{value} херовое фото')
                 await bot.send_message(message.from_user.id,
                                        f'{value["Номенклатура"]} - {value["Наименование номенклатуры"]}'
-                                       f'\nКоличество: {value["Количество"]} Объем: {value["Объем"]}',
-                                       reply_markup=InlineKeyboardMarkup().add(
-                                           InlineKeyboardButton(text='Показать фото',
-                                                                callback_data='{}'.format(
-                                                                    value['Номенклатура']
-                                                                ))))
+                                       f'\nКоличество: {value["Количество"]} Объем: {value["Объем"]}')
             await Place.mesto_4.set()
 
 
