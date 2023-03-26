@@ -298,13 +298,18 @@ async def input_password(message: types.Message, state: FSMContext):
     """
     Если пароль верен, вносит в базу пользователя, перезапускает функуию старт"""
     if message.text == PASSWORD:
-        keyboards = Keyboard()
-        keyboards.save()
-        new_user = Users(id_tg=message.from_user.id, name=message.from_user.first_name, keyboard=keyboards)
-        new_user.save()
-        await state.reset_state()
-        logger.info('Очистил state')
-        await bot_start(message)
+        try:
+            keyboards = Keyboard()
+            keyboards.save()
+            new_user = Users(id_tg=message.from_user.id, name=message.from_user.first_name, keyboard=keyboards)
+            new_user.save()
+            await state.reset_state()
+            logger.info('Очистил state')
+            await bot_start(message)
+        except Exception as ex:
+            logger.debug(f'{message.from_user.id}{message.from_user.first_name}{ex}')
+        finally:
+            dbhandle.close()
     else:
         await bot.send_message(ADMINS[0], '{} {}\nНеверно ввел пароль'.format(message.from_user.id,
                                                                               message.from_user.first_name))

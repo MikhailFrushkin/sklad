@@ -4,7 +4,7 @@ from aiogram.utils.exceptions import (Unauthorized, InvalidQueryID, TelegramAPIE
                                       CantParseEntities, MessageCantBeDeleted)
 from loguru import logger
 
-from loader import dp
+from loader import dp, bot
 
 
 @dp.errors_handler()
@@ -43,6 +43,8 @@ async def errors_handler(update, exception):
 
     if isinstance(exception, TelegramAPIError):
         logger.error(f'TelegramAPIError: {exception} \nUpdate: {update}')
+        if bot.session is not None:
+            bot.session.close()
         return True
     if isinstance(exception, RetryAfter):
         logger.error(f'RetryAfter: {exception} \nUpdate: {update}')
