@@ -46,7 +46,6 @@ class Product(BaseModel):
         myfile = '{}/database/mydatabase.db'.format(path)
         if os.path.isfile(myfile):
             try:
-                dbhandle.connect()
                 with open('{}/files/file_V_Sales.csv'.format(path), newline='', encoding='utf-8') as csvfile:
                     reader = csv.DictReader(csvfile)
                     for row in reader:
@@ -82,10 +81,7 @@ class Product(BaseModel):
                 logger.info('База единичек обновлена')
             except peewee.InternalError as px:
                 logger.debug(str(px))
-            finally:
-                dbhandle.close()
         else:
-            dbhandle.connect()
             Product.create_table()
             try:
 
@@ -105,8 +101,6 @@ class Product(BaseModel):
                 arts_bd = [i.vendor_code for i in Product.select()]
             except peewee.InternalError as px:
                 logger.debug(str(px))
-            finally:
-                dbhandle.close()
         return len(arts_bd)
 
     class META:

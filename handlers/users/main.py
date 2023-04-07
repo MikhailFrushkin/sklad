@@ -989,7 +989,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                 with open('{}/files/hidden.txt'.format(path), 'w', encoding='utf-8') as f:
                     f.write('True')
                 await bot.send_message(id, 'Включен')
-        elif message.text == 'Статистика' and message.from_user.id in [int(i) for i in ADMINS]:
+        elif message.text.lower() == 'cтатистика' and message.from_user.id in [int(i) for i in ADMINS]:
             mes = []
             query = (Users
                      .select(Users, fn.COUNT(Operations.id).alias('Operations_count'))

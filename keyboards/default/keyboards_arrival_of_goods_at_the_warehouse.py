@@ -12,13 +12,17 @@ def generate_choice_menu():
     menu_choice = ReplyKeyboardMarkup(row_width=1)
     list_ds = pd.read_csv(f'{path}/files/file_arrival/keyboards.csv')
     if not list_ds.empty:
-        list_ds['union'] = list_ds['Код графика'] + ' ' + list_ds['Планируемая дата прихода в магазин'].apply(
-            lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + list_ds['Тип операции']
+        list_ds['union'] = list_ds['Код графика'] + '  ' + \
+                           list_ds['Планируемая дата прихода в магазин'].apply(
+                               lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + \
+                           '  ' + list_ds['Тип операции'] + \
+                           '  ' + list_ds['Объем'].apply(lambda x: str(x))
         list_ds = list_ds['union'].to_list()
+        print(list_ds)
     if list_ds:
         for key in list_ds:
-            temp = key.split()
-            menu_choice.insert(KeyboardButton(f'{temp[0]} {temp[2]} {temp[1]}'))
+            temp = key.split('  ')
+            menu_choice.insert(KeyboardButton(f'{temp[0]} {temp[1]}\n{temp[2]} - {temp[3]} куба'))
     menu_choice.insert(KeyboardButton('В главное меню'))
     return menu_choice
 

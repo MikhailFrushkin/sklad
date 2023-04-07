@@ -58,9 +58,10 @@ def open_file_ds():
 
     if not df.empty:
         df['union'] = df['Код графика'] + ' ' + df['Планируемая дата прихода в магазин'].apply(
-            lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + df['Тип операции']
+            lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + df['Тип операции']+ \
+                           ' ' + df['Объем'].apply(lambda x: str(x))
         list_ds = df['union'].to_list()
-        print(list_ds)
+        # print(list_ds)
     if list_ds:
         for ds in list_ds:
             try:
