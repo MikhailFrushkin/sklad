@@ -699,7 +699,10 @@ async def new_prod_tg_art(message: types.Message, state: FSMContext):
                                    reply_markup=menu_first)
         else:
             df = pd.read_excel(f'{path}/files/file_arrival/result/{data["ds"]}.xlsx')
-            df = df[df['SG'] == message.text]
+            if message.text == 'Нет данных о ТГ':
+                df = df[df['SG'].isna()]
+            else:
+                df = df[df['SG'] == message.text]
             df['Номенклатура'] = df['Номенклатура'].astype(str)
             df['Наименование номенклатуры'] = df['Наименование номенклатуры'].astype(str)
             df['Количество'] = df['Количество'].astype(str)
@@ -753,7 +756,10 @@ async def new_prod_tg_new_art(message: types.Message, state: FSMContext):
                                    reply_markup=menu_first)
         else:
             df = pd.read_excel(f'{path}/files/file_arrival/result/{data["ds"]}_result_new.xlsx')
-            df = df[df['ТГ'] == message.text]
+            if message.text == 'Нет данных о ТГ':
+                df = df[df['ТГ'].isna()]
+            else:
+                df = df[df['ТГ'] == message.text]
             df['Номенклатура'] = df['Номенклатура'].astype(int)
             dict_art = df.to_dict('index')
             await Place.mesto_4.set()

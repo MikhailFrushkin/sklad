@@ -43,9 +43,12 @@ def menu_choice_tg(name):
     choice_tg = ReplyKeyboardMarkup(row_width=1)
     df = pd.read_excel(f'{path}/files/file_arrival/result/{name}.xlsx')
     df['SG'] = df['SG'].astype(str)
-    for group in sorted(df['SG'].unique().tolist()):
+    list_tg = sorted(df['SG'].unique().tolist())
+    for group in list_tg:
         if group != 'nan':
             choice_tg.insert(KeyboardButton(f'{group}'))
+        else:
+            choice_tg.insert(KeyboardButton('Нет данных о ТГ'))
     choice_tg.insert(KeyboardButton('Назад'))
     choice_tg.insert(KeyboardButton('В главное меню'))
     return choice_tg
@@ -58,6 +61,8 @@ def menu_choice_tg_new(name):
     for group in sorted(df['ТГ'].unique().tolist()):
         if group != 'nan':
             choice_tg.insert(KeyboardButton(f'{group}'))
+        else:
+            choice_tg.insert(KeyboardButton('Нет данных о ТГ'))
     choice_tg.insert(KeyboardButton('Назад'))
     choice_tg.insert(KeyboardButton('В главное меню'))
     return choice_tg
