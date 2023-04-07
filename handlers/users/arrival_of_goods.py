@@ -1,16 +1,12 @@
+import glob
 import os
 
 import pandas as pd
 from loguru import logger
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
-import numpy as np
-from data.config import path
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram.dispatcher.filters import Text
 
-from loader import dp
-from state.states import NewProducts
+from data.config import path
 
 
 def actual_date():
@@ -24,8 +20,21 @@ def actual_date():
     compare_date = pd.to_datetime(f'{two_days_from_today}')
     # создаем список дат
     try:
-        df_date = pd.read_excel(f'{path}/files/file_arrival/График поставок.xlsx')
+        df1 = pd.read_excel(f'{path}/files/file_arrival/График поставок.xlsx',
+                            usecols=['Код графика', 'Тип операции', 'Объем', 'Планируемая дата прихода в магазин'])
+        df2 = pd.read_excel(f'{path}/files/file_arrival/График перемещений и мебели.xlsx',
+                            usecols=['Код графика', 'Тип операции', 'Объем', 'Планируемая дата прихода в магазин'])
+        df_date = pd.concat([df1, df2])
+        df_date.to_excel('asdasdas.xlsx')
         df_date = df_date[df_date['Планируемая дата прихода в магазин'] > compare_date]
+        list_ds_files = []
+        folder_path = f"{path}/files/file_arrival/DSs/"
+        files = os.listdir(folder_path)
+        for file in files:
+            if os.path.isfile(os.path.join(folder_path, file)):
+                filename, extension = os.path.splitext(file)
+                list_ds_files.append(filename)
+        df_date = df_date[df_date['Код графика'].isin(list_ds_files)]
         df_date.to_csv(f'{path}/files/file_arrival/keyboards.csv')
         return df_date
     except:
@@ -51,6 +60,7 @@ def open_file_ds():
         df['union'] = df['Код графика'] + ' ' + df['Планируемая дата прихода в магазин'].apply(
             lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + df['Тип операции']
         list_ds = df['union'].to_list()
+        print(list_ds)
     if list_ds:
         for ds in list_ds:
             try:
@@ -74,6 +84,10 @@ def out_df_merged(name):
         df_ds = pd.read_excel(f'{path}/files/file_arrival/DSs/{name}.xlsx',
                               dtype={'Код номенклатуры': str, 'Наименование номенклатуры': str, 'Количество': int,
                                      'Объем': float})
+        try:
+            df_ds = df_ds.rename(columns={'Отгруженное количество': 'Количество'})
+        except Exception:
+            ...
         df_ds = df_ds.rename(columns={'Код номенклатуры': 'Номенклатура'})
         df_min = pd.read_excel(f'{path}/files/file_arrival/art_tg.xlsx',
                                dtype={'Номенклатура': str, 'name': str, 'SG': str})
@@ -85,14 +99,14 @@ def out_df_merged(name):
                                                              'SG': 'first',
                                                              })
 
-        wb = Workbook()
-        ws = wb.active
-        for r in dataframe_to_rows(merged_df, index=False, header=True):
-            ws.append(r)
-        for column_cells in ws.columns:
-            length = max(len(str(cell.value)) for cell in column_cells)
-            ws.column_dimensions[column_cells[0].column_letter].width = length + 2
-        wb.save(f'{path}/files/file_arrival/result/{name}.xlsx')
+    wb = Workbook()
+    ws = wb.active
+    for r in dataframe_to_rows(merged_df, index=False, header=True):
+        ws.append(r)
+    for column_cells in ws.columns:
+        length = max(len(str(cell.value)) for cell in column_cells)
+        ws.column_dimensions[column_cells[0].column_letter].width = length + 2
+    wb.save(f'{path}/files/file_arrival/result/{name}.xlsx')
     return merged_df
 
 
@@ -103,13 +117,14 @@ def out_df_grouped(name):
         merged_df = out_df_merged(name)
         merged_df['SG'] = merged_df['SG'].fillna('Нет данных о ТГ')
         merged_df = merged_df.assign(count=1)
-        grouped_df = merged_df.groupby(['SG']).agg({'SG': 'first', 'Количество': 'sum', 'Объем': 'sum', 'count': 'count'
-                                                    })
-        # print(grouped_df.columns)
-        # grouped_df2 = merged_df.groupby('SG').size().reset_index(name='count')
-        # print(grouped_df2.dtypes)
-        # result = pd.merge(grouped_df, grouped_df2, on='SG', how='left')
-        # print(result)
+        try:
+            grouped_df = merged_df.groupby(['SG']).agg(
+                {'SG': 'first', 'Количество': 'sum', 'Объем': 'sum', 'count': 'count'
+                 })
+        except Exception:
+            grouped_df = merged_df.groupby(['SG']).agg(
+                {'SG': 'first', 'Количество': 'sum', 'Объем': 'sum', 'count': 'count'
+                 })
         wb = Workbook()
         ws = wb.active
         for r in dataframe_to_rows(grouped_df, index=False, header=True):
@@ -146,56 +161,8 @@ def new_products(union_df, name):
                 logger.debug(ex)
 
         wb.save(f'{path}/files/file_arrival/result/{name}_result_new.xlsx')
-
-        # unique_sorted_tg = np.sort(np.unique(result_new['SG']))
-        # print(unique_sorted_tg)
     except Exception as ex:
         logger.debug(ex)
-
-
-# back_button = KeyboardButton('Назад')
-# main_keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(
-#     KeyboardButton('Уровень 1'),
-#     # ...
-# )
-# level1_keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(
-#     KeyboardButton('Опция 1'),
-#     back_button,
-# )
-#
-#
-# @dp.message_handler(Text(equals='Назад'),
-#                     state=[NewProducts.choice_ds, NewProducts.choice_tg, NewProducts.show_products,
-#                            NewProducts.show_new_products])
-# async def process_message_back(message: Message, state: FSMContext):
-#     current_state = await state.get_state()
-#     if current_state is None:
-#         return
-#
-#     # Возврат на предыдущий уровень меню
-#     await state.set_state(previous_state)
-#     previous_keyboard = await get_keyboard(previous_state)
-#     await bot.send_message(
-#         message.chat.id,
-#         await get_menu_text(previous_state),
-#         reply_markup=previous_keyboard,
-#     )
-#
-#
-# async def get_keyboard(state: str) -> ReplyKeyboardMarkup:
-#     if state == MenuLevels.main:
-#         keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(
-#             KeyboardButton('Уровень 1'),
-#             # ...
-#         )
-#     elif state == MenuLevels.level1:
-#         keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(
-#             KeyboardButton('Опция 1'),
-#             back_button,
-#         )
-#     elif state == MenuLevels.level2:
-#         pass
-#     return keyboard
 
 
 if __name__ == '__main__':

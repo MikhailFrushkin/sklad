@@ -389,12 +389,11 @@ async def message_for_users(message: types.Message, state: FSMContext):
 async def dowload_base(message: types.Message, state: FSMContext):
     """Загрузка базы ячеек"""
     async with state.proxy() as data:
-        sklad_list = ['011_825', '012_825', 'A11_825', 'RDiff', 'V_Sales', 'S_825']
+        sklad_list = ['011_825', '012_825', 'A11_825', 'RDiff', 'V_Sales', 'S_825',
+                      'График поставок', 'График перемещений и мебели', 'Ds']
         if message.text in sklad_list:
             data['sklad'] = message.text
             await bot.send_message(message.from_user.id, 'Загрузите файл.')
-        elif message.text == 'В главное меню':
-            await back(message, state)
         else:
             await bot.send_message(message.from_user.id, 'Неверно выбран склад.')
             await back(message, state)
@@ -404,40 +403,56 @@ async def dowload_base(message: types.Message, state: FSMContext):
                     state=[Place.dowload])
 async def doc_handler(message: types.Message, state: FSMContext):
     """Ловит документ(EXSEL) и загружает"""
+    arrival = ['График поставок', 'График перемещений и мебели', 'Ds']
     try:
         async with state.proxy() as data:
-            try:
-                if os.path.exists('{}/files/file_old_{}.xlsx'.format(path, data['sklad'])):
-                    os.remove('{}/files/file_old_{}.xlsx'.format(path, data['sklad']))
-                old_name = '{}/files/file_{}.xlsx'.format(path, data['sklad'])
-                mtime = os.path.getmtime(old_name)
-                date_old = time.ctime(mtime)
-                os.rename(old_name, '{}/files/file_old_{}.xlsx'.format(path, data['sklad']))
-                dowload('old_{}'.format(data['sklad']))
-                myfile = '{}/database/DateBase.db'.format(path)
-                if data['sklad'] == 'V_Sales':
-                    if os.path.isfile(myfile):
-                        for i in DateBase.select():
-                            i.date_V_Sales_old = date_old
-                            i.save()
-                    else:
-                        DateBase.create_table()
-                        temp = DateBase.create(date_V_Sales_old=date_old)
-                        temp.save()
-                        logger.info('создал бд')
-                elif data['sklad'] == 'RDiff':
-                    if os.path.isfile(myfile):
-                        for i in DateBase.select():
-                            i.date_RDiff_old = date_old
-                            i.save()
-                    else:
-                        DateBase.create_table()
-                        temp = DateBase.create(date_RDiff_old=date_old)
-                        temp.save()
-                        logger.info('создал бд')
-            except Exception as ex:
-                logger.debug(ex)
-            await dowload_exs(message, state)
+            if document := message.document:
+                if data['sklad'] not in arrival:
+                    try:
+                        if os.path.exists('{}/files/file_old_{}.xlsx'.format(path, data['sklad'])):
+                            os.remove('{}/files/file_old_{}.xlsx'.format(path, data['sklad']))
+                        old_name = '{}/files/file_{}.xlsx'.format(path, data['sklad'])
+                        mtime = os.path.getmtime(old_name)
+                        date_old = time.ctime(mtime)
+                        os.rename(old_name, '{}/files/file_old_{}.xlsx'.format(path, data['sklad']))
+                        dowload('old_{}'.format(data['sklad']))
+                        myfile = '{}/database/DateBase.db'.format(path)
+                        if data['sklad'] == 'V_Sales':
+                            if os.path.isfile(myfile):
+                                for i in DateBase.select():
+                                    i.date_V_Sales_old = date_old
+                                    i.save()
+                            else:
+                                DateBase.create_table()
+                                temp = DateBase.create(date_V_Sales_old=date_old)
+                                temp.save()
+                                logger.info('создал бд')
+                        elif data['sklad'] == 'RDiff':
+                            if os.path.isfile(myfile):
+                                for i in DateBase.select():
+                                    i.date_RDiff_old = date_old
+                                    i.save()
+                            else:
+                                DateBase.create_table()
+                                temp = DateBase.create(date_RDiff_old=date_old)
+                                temp.save()
+                                logger.info('создал бд')
+                    except Exception as ex:
+                        logger.debug(ex)
+                    await dowload_exs(message, state)
+                else:
+                    file_name = message.document.file_name
+                    if data['sklad'] == 'Ds':
+                        path_arrival = "{}/files/file_arrival/DSs/{}".format(path, file_name)
+                    elif data['sklad'] == 'График поставок':
+                        path_arrival = "{}/files/file_arrival/График поставок".format(path)
+                    elif data['sklad'] == 'График перемещений и мебели':
+                        path_arrival = "{}/files/file_arrival/График перемещений и мебели".format(path)
+                    try:
+                        await document.download(destination_file=path_arrival)
+                        await bot.send_message(message.from_user.id, 'Успешно')
+                    except Exception as ex:
+                        logger.error(f'Ошибка загрузки файлов прихода {ex}')
 
     except Exception as ex:
         await bot.send_message(message.from_user.id, 'Ошибка при загрузке эксель {}'.format(ex))
