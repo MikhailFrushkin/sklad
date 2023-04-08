@@ -1002,8 +1002,11 @@ async def bot_message(message: types.Message, state: FSMContext):
                 mes.append('{} {}: {}'.format(user.id_tg, user.name, user.Operations_count))
             await bot.send_message(message.from_user.id, '\n'.join(mes))
         elif message.text == '🚛Приход товара':
-            await bot.send_message(id, 'Выберите поставку:', reply_markup=generate_choice_menu())
-            await NewProducts.choice_ds.set()
+            if not hidden():
+                await bot.send_message(id, 'Выберите поставку:', reply_markup=generate_choice_menu())
+                await NewProducts.choice_ds.set()
+            else:
+                await say_ib(message, state)
         else:
             operation_user = "Запросил артикул в главном меню"
             comment = message.text
