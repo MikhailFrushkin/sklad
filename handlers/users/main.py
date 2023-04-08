@@ -1,6 +1,5 @@
-import json
 import random
-import sqlite3
+import random
 import time
 
 import pandas as pd
@@ -10,12 +9,11 @@ from aiogram.types import ContentType, ParseMode
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ContentTypes
 from aiogram.utils.emoji import emojize
 from aiogram.utils.markdown import text, italic, code
-from loguru import logger
-from all_requests.parse_on_requests import parse
 
 import bot
 from all_requests.parse_action import parse_actions, view_actions
-from data.config import ADMINS, PASSWORD, path, hidden
+from all_requests.parse_on_requests import parse
+from data.config import ADMINS, PASSWORD, hidden
 from database.date import *
 from database.products import NullProduct
 from database.users import Users, Keyboard, Operations
@@ -95,7 +93,7 @@ async def bot_start(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(commands=['statistic'], state='*')
-async def bot_start(message: types.Message):
+async def bot_statistic(message: types.Message):
     list_operations = [
         'Запросил артикул в главном меню',
         'Закинул изображение в главное меню',
@@ -305,11 +303,10 @@ async def input_password(message: types.Message, state: FSMContext):
             new_user.save()
             await state.reset_state()
             logger.info('Очистил state')
-            await bot_start(message)
         except Exception as ex:
             logger.debug(f'{message.from_user.id}{message.from_user.first_name}{ex}')
         finally:
-            dbhandle.close()
+            await back(message, state)
     else:
         await bot.send_message(ADMINS[0], '{} {}\nНеверно ввел пароль'.format(message.from_user.id,
                                                                               message.from_user.first_name))
@@ -827,7 +824,7 @@ async def bot_message(message: types.Message, state: FSMContext):
     ]
     id = message.from_user.id
     if check(message) != 3 and check(message):
-        if message.text.startswith('статистика'):
+        if message.text.lower().startswith('статистика'):
             try:
                 user = Users.get(id_tg=message.text.split()[1])
                 line = []
@@ -995,7 +992,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                 with open('{}/files/hidden.txt'.format(path), 'w', encoding='utf-8') as f:
                     f.write('True')
                 await bot.send_message(id, 'Включен')
-        elif message.text.lower() == 'cтатистика' and message.from_user.id in [int(i) for i in ADMINS]:
+        elif message.text == 'Cтатистика общая' and message.from_user.id in [int(i) for i in ADMINS]:
             mes = []
             query = (Users
                      .select(Users, fn.COUNT(Operations.id).alias('Operations_count'))

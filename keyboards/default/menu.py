@@ -36,7 +36,7 @@ menu_admin.insert(KeyboardButton('Отправить'))
 menu_admin.insert(KeyboardButton('Обновить Акции'))
 menu_admin.insert(KeyboardButton('Сброс единичек'))
 menu_admin.insert(KeyboardButton('Сники мод'))
-menu_admin.insert(KeyboardButton('Статистика'))
+menu_admin.insert(KeyboardButton('Cтатистика общая'))
 
 # menu_admin = ReplyKeyboardMarkup(keyboard=[
 #     [KeyboardButton('🆚V-Sales_825'), KeyboardButton('🗃011_825-Exit_sklad'), KeyboardButton('🤖Qrcode ячейки')],
