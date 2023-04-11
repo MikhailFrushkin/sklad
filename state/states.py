@@ -75,3 +75,7 @@ class NewProducts(StatesGroup):
     show_new_products = State()
     show_new_products_f = State()
 
+
+class DowloadNewProducts(StatesGroup):
+    choice_dowload = State()
+

@@ -61,7 +61,6 @@ def open_file_ds():
             lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + df['Тип операции']+ \
                            ' ' + df['Объем'].apply(lambda x: str(x))
         list_ds = df['union'].to_list()
-        # print(list_ds)
     if list_ds:
         for ds in list_ds:
             try:
@@ -83,7 +82,7 @@ def out_df_merged(name):
         merged_df = pd.read_excel(f'{path}/files/file_arrival/result/{name}.xlsx')
     else:
         df_ds = pd.read_excel(f'{path}/files/file_arrival/DSs/{name}.xlsx',
-                              dtype={'Код номенклатуры': str, 'Наименование номенклатуры': str, 'Количество': int,
+                              dtype={'Код номенклатуры': str, 'Наименование номенклатуры': str,
                                      'Объем': float})
         try:
             df_ds = df_ds.rename(columns={'Отгруженное количество': 'Количество'})

@@ -1,4 +1,4 @@
-import random
+import json
 import random
 import time
 
@@ -18,6 +18,7 @@ from database.date import *
 from database.products import NullProduct
 from database.users import Users, Keyboard, Operations
 from handlers.users.Verification import verification_start, create_table2
+from handlers.users.arrival_of_goods import open_file_ds
 from handlers.users.back import back
 from handlers.users.cell_content import show_place
 from handlers.users.delete_message import delete_message
@@ -442,9 +443,9 @@ async def doc_handler(message: types.Message, state: FSMContext):
                     if data['sklad'] == 'Ds':
                         path_arrival = "{}/files/file_arrival/DSs/{}".format(path, file_name)
                     elif data['sklad'] == 'График поставок':
-                        path_arrival = "{}/files/file_arrival/График поставок".format(path)
+                        path_arrival = "{}/files/file_arrival/График поставок.xlsx".format(path)
                     elif data['sklad'] == 'График перемещений и мебели':
-                        path_arrival = "{}/files/file_arrival/График перемещений и мебели".format(path)
+                        path_arrival = "{}/files/file_arrival/График перемещений и мебели.xlsx".format(path)
                     try:
                         await document.download(destination_file=path_arrival)
                         await bot.send_message(message.from_user.id, 'Успешно')
@@ -1007,6 +1008,12 @@ async def bot_message(message: types.Message, state: FSMContext):
                 await NewProducts.choice_ds.set()
             else:
                 await say_ib(message, state)
+        elif message.text == 'Обновить приход':
+            try:
+                open_file_ds()
+            except Exception as ex:
+                logger.error(f'не удалось обновить приход {ex}')
+
         else:
             operation_user = "Запросил артикул в главном меню"
             comment = message.text

@@ -43,8 +43,6 @@ async def errors_handler(update, exception):
 
     if isinstance(exception, TelegramAPIError):
         logger.error(f'TelegramAPIError: {exception} \nUpdate: {update}')
-        if bot.session is not None:
-            bot.session.close()
         return True
     if isinstance(exception, RetryAfter):
         logger.error(f'RetryAfter: {exception} \nUpdate: {update}')
