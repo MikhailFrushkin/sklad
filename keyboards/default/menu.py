@@ -78,7 +78,7 @@ qr_menu = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton('011_825-Exit_Dost')],
     [KeyboardButton('V-Sales_825'),
      KeyboardButton('R12_BrakIn_825'),
-     KeyboardButton('012_825-02-01-1')],
+     KeyboardButton('012_825-01-01-1')],
     [KeyboardButton('012_825-Dost_int8'),
      KeyboardButton('В главное меню')],
 ], resize_keyboard=True)
