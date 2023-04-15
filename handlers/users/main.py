@@ -18,6 +18,7 @@ from database.date import *
 from database.products import NullProduct
 from database.users import Users, Keyboard, Operations
 from handlers.users.Verification import verification_start, create_table2
+from handlers.users.arrival_of_goods import open_file_ds
 from handlers.users.back import back
 from handlers.users.cell_content import show_place
 from handlers.users.delete_message import delete_message
@@ -1007,6 +1008,13 @@ async def bot_message(message: types.Message, state: FSMContext):
                 await NewProducts.choice_ds.set()
             else:
                 await say_ib(message, state)
+        elif message.text == 'Обновить Приход':
+            try:
+                open_file_ds()
+            except Exception as ex:
+                logger.debug(f'Ошибка обновления прихода - {ex}')
+            finally:
+                await bot.send_message(id, 'Обновленно!')
         else:
             operation_user = "Запросил артикул в главном меню"
             comment = message.text
