@@ -1009,9 +1009,10 @@ async def bot_message(message: types.Message, state: FSMContext):
                 await NewProducts.choice_ds.set()
             else:
                 await say_ib(message, state)
-        elif message.text == 'Обновить приход':
+        elif message.text.lower() == 'обновить приход':
             try:
                 open_file_ds()
+                await bot.send_message(id, 'Обновлено')
             except Exception as ex:
                 logger.error(f'не удалось обновить приход {ex}')
 
