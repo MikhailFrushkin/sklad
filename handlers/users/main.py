@@ -568,6 +568,7 @@ async def unknown_message(message: types.Message):
 
 @dp.message_handler(content_types=[ContentType.VOICE], state='*')
 async def voice_message_handler(message: types.Message):
+    """чтение голового сообщения отправленного в бота"""
     import uuid
     import os
     try:

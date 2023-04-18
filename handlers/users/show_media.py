@@ -37,6 +37,7 @@ async def show_media(message, articul):
                         await bot.send_media_group(message.from_user.id, media=media)
                     else:
                         await bot.send_photo(message.from_user.id, data['pictures'][0])
+
                 except Exception as ex:
                     logger.debug('Первое фото не пошло {}', ex)
                     await bot.send_photo(message.from_user.id, data['pictures'][random.randint(1, 3)])
@@ -58,3 +59,5 @@ async def show_media(message, articul):
 
     except Exception as ex:
         logger.debug('{}'.format(ex))
+        os.remove("{}/base/json/{}.json".format(path, articul))
+        await show_media(message, articul)
