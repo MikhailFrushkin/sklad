@@ -11,10 +11,8 @@ from data.config import path
 
 def actual_date():
     import datetime
-
     # находим текущую дату
     today = datetime.date.today()
-
     # вычисляем дату минус два дня от текущей
     two_days_from_today = today - datetime.timedelta(days=5)
     compare_date = pd.to_datetime(f'{two_days_from_today}')
@@ -44,18 +42,20 @@ def actual_date():
 def open_file_ds():
     list_ds = []
     df = actual_date()
-
-    df1 = pd.read_csv(f'{path}/files/file_011_825.csv')
-    df2 = pd.read_csv(f'{path}/files/file_012_825.csv')
-    df3 = pd.read_csv(f'{path}/files/file_S_825.csv')
-    df4 = pd.read_csv(f'{path}/files/file_V_Sales.csv')
-    result = pd.concat([df1, df2, df3, df4])
-    result = result[~(result['Доступно'].isnull())]
-    result = result.rename(columns={'Код \nноменклатуры': 'Номенклатура'})
-    result = result.groupby(['Номенклатура']).agg(
-        {'Номенклатура': 'first', 'Описание товара': 'first', 'ТГ': 'first', 'Доступно': 'sum'})
-    result.reset_index(drop=True, inplace=True)
-
+    try:
+        df1 = pd.read_csv(f'{path}/files/file_011_825.csv')
+        df2 = pd.read_csv(f'{path}/files/file_012_825.csv')
+        df3 = pd.read_csv(f'{path}/files/file_S_825.csv')
+        df4 = pd.read_csv(f'{path}/files/file_V_Sales.csv')
+        result = pd.concat([df1, df2, df3, df4])
+        result = result[~(result['Доступно'].isnull())]
+        result = result.rename(columns={'Код \nноменклатуры': 'Номенклатура'})
+        print(result.columns)
+        result = result.groupby(['Номенклатура']).agg(
+            {'Номенклатура': 'first', 'Описание товара': 'first', 'ТГ': 'first', 'Доступно': 'sum'})
+        result.reset_index(drop=True, inplace=True)
+    except Exception as ex:
+        logger.debug(f'{ex}')
     if not df.empty:
         df['union'] = df['Код графика'] + ' ' + df['Планируемая дата прихода в магазин'].apply(
             lambda x: pd.to_datetime(x).strftime("%d.%m.%Y")) + ' ' + df['Тип операции'] + \
@@ -65,15 +65,15 @@ def open_file_ds():
         for ds in list_ds:
             try:
                 name = ds.split()[0]
-
+                print(name)
                 try:
                     merged_df = out_df_merged(name)
                 except Exception as ex:
-                    print(ex)
+                    logger.debug(f'{ds} - {ex}')
                 try:
                     grouped_df = out_df_grouped(name)
                 except Exception as ex:
-                    print(ex)
+                    logger.debug(f'{ds} - {ex}')
                 new_products(union_df=result, name=name)
 
 
@@ -91,7 +91,7 @@ def out_df_merged(name):
         try:
             df_ds = df_ds.rename(columns={'Отгруженное количество': 'Количество'})
         except Exception:
-            ...
+            pass
         df_ds = df_ds.rename(columns={'Код номенклатуры': 'Номенклатура'})
         df_min = pd.read_excel(f'{path}/files/file_arrival/art_tg.xlsx',
                                dtype={'Номенклатура': str, 'name': str, 'SG': str})
@@ -170,4 +170,7 @@ def new_products(union_df, name):
 
 
 if __name__ == '__main__':
-    open_file_ds()
+    name = 'DS00951346'
+    # open_file_ds()
+    out_df_merged(name)
+    out_df_grouped(name)
