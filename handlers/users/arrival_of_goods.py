@@ -66,10 +66,14 @@ def open_file_ds():
             try:
                 name = ds.split()[0]
 
-                merged_df = out_df_merged(name)
-
-                grouped_df = out_df_grouped(name)
-
+                try:
+                    merged_df = out_df_merged(name)
+                except Exception as ex:
+                    print(ex)
+                try:
+                    grouped_df = out_df_grouped(name)
+                except Exception as ex:
+                    print(ex)
                 new_products(union_df=result, name=name)
 
 
