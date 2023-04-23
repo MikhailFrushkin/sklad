@@ -60,9 +60,9 @@ def menu_choice_tg_new(name):
     df['ТГ'] = df['ТГ'].astype(str)
     for group in sorted(df['ТГ'].unique().tolist()):
         if group != 'nan':
-            choice_tg.insert(KeyboardButton(f'{group}'))
+            choice_tg.insert(KeyboardButton(f'{group}. Артикулов: {len(df[df["ТГ"] == group])}'))
         else:
-            choice_tg.insert(KeyboardButton('Нет данных о ТГ'))
+            choice_tg.insert(KeyboardButton(f'Нет данных о ТГ. Артикулов: {len(df[df["ТГ"] == group])}'))
     choice_tg.insert(KeyboardButton('Назад'))
     choice_tg.insert(KeyboardButton('В главное меню'))
     return choice_tg

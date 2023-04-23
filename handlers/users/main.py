@@ -754,11 +754,12 @@ async def new_prod_tg_new_art(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, 'Выберите действие:',
                                    reply_markup=menu_first)
         else:
+            print(message.text)
             df = pd.read_excel(f'{path}/files/file_arrival/result/{data["ds"]}_result_new.xlsx')
-            if message.text == 'Нет данных о ТГ':
+            if message.text.split('.')[0] == 'Нет данных о ТГ':
                 df = df[df['ТГ'].isna()]
             else:
-                df = df[df['ТГ'] == message.text]
+                df = df[df['ТГ'] == message.text.split('.')[0]]
             df['Номенклатура'] = df['Номенклатура'].astype(int)
             dict_art = df.to_dict('index')
             await Place.mesto_4.set()
